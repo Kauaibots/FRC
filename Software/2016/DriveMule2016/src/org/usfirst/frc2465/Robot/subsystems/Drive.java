@@ -69,10 +69,10 @@ public class Drive extends PIDSubsystem {
        
     CANTalon.ControlMode currControlMode;
     int maxOutputSpeed;
-    int maxTicksPer10MS;    
+    int maxTicksPer100MS;    
     double tolerance_degrees;
-    final int ticksPerRev = 256;
-    final int num10msPerSec = 100;
+    final int ticksPerRev = 4*256;
+    final int num100msPerSec = 10;
     final float motorRPMs = 2650.0f;
     final float transRatio = 4.41f;
     
@@ -97,7 +97,7 @@ public class Drive extends PIDSubsystem {
             leftRearSC.getPowerCycled();
             rightRearSC.getPowerCycled();*/
             
-            maxTicksPer10MS = (int)((motorRPMs/transRatio)*ticksPerRev)/num10msPerSec; /* ~20 Feet/Sec */
+            maxTicksPer100MS = (int)((motorRPMs/transRatio)*ticksPerRev)/num100msPerSec; /* ~20 Feet/Sec */
             
             setMode( CANTalon.ControlMode.Speed);
         } catch (Exception ex) {
@@ -122,17 +122,19 @@ public class Drive extends PIDSubsystem {
             if ( currControlMode == CANTalon.ControlMode.Speed )
             {
                 //motor.configMaxOutputVoltage(12.0);
-            	motor.enableBrakeMode(true); //motor.configNeutralMode(CANTalon.NeutralMode.Brake);
                 motor.setFeedbackDevice(FeedbackDevice.QuadEncoder); //motor.setSpeedMode(CANTalon.kQuadEncoder, 256, .4, .01, 0);
             	//We don't tell the motor controller the number of ticks per encoder revolution
                 //The Talon needs to be told the number of encoder ticks per 10 ms to rotate
-                motor.setPID(.8, 0, 0);
+                motor.setPID(.025, 0, 0);
                 motor.changeControlMode(ControlMode.Speed);
+                motor.setCloseLoopRampRate(0);
             }
             else
             {
             	motor.changeControlMode(ControlMode.PercentVbus);
             }
+            motor.enableBrakeMode(true);
+            motor.setVoltageRampRate(0);
             motor.enableControl();
         } catch (Exception ex) {
             ex.printStackTrace();
@@ -145,7 +147,7 @@ public class Drive extends PIDSubsystem {
 
         if ( currControlMode == CANTalon.ControlMode.Speed )
         {
-                maxOutputSpeed = maxTicksPer10MS;
+                maxOutputSpeed = maxTicksPer100MS;
         }
         else // kPercentVbus
         {
