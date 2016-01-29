@@ -9,17 +9,17 @@
 // it from being updated in the future.
 
 
-package org.usfirst.frc2465.Robot.subsystems;
+package org.usfirst.frc2465.StrongholdBot16.subsystems;
 
-import org.usfirst.frc2465.Robot.RobotMap;
+import org.usfirst.frc2465.StrongholdBot16.RobotMap;
 
 import edu.wpi.first.wpilibj.*;
 import edu.wpi.first.wpilibj.CANTalon.FeedbackDevice;
 import edu.wpi.first.wpilibj.command.PIDSubsystem;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 
-import org.usfirst.frc2465.Robot.RobotPreferences;
-import org.usfirst.frc2465.Robot.commands.StickDrive;
+import org.usfirst.frc2465.StrongholdBot16.RobotPreferences;
+import org.usfirst.frc2465.StrongholdBot16.commands.StickDrive;
 
 import com.kauailabs.navx.frc.AHRS;
 
