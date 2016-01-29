@@ -14,7 +14,6 @@ package org.usfirst.frc2465.Robot.subsystems;
 import org.usfirst.frc2465.Robot.RobotMap;
 
 import edu.wpi.first.wpilibj.*;
-import edu.wpi.first.wpilibj.CANTalon.ControlMode;
 import edu.wpi.first.wpilibj.CANTalon.FeedbackDevice;
 import edu.wpi.first.wpilibj.command.PIDSubsystem;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
@@ -99,7 +98,7 @@ public class Drive extends PIDSubsystem {
             
             maxTicksPer100MS = (int)((motorRPMs/transRatio)*ticksPerRev)/num100msPerSec; /* ~20 Feet/Sec */
             
-            setMode( CANTalon.ControlMode.Speed);
+            setMode( CANTalon.TalonControlMode.Speed);
         } catch (Exception ex) {
             ex.printStackTrace();
         }
@@ -119,19 +118,19 @@ public class Drive extends PIDSubsystem {
 
     void initMotor( CANTalon motor ) {
         try {
-            if ( currControlMode == CANTalon.ControlMode.Speed )
+            if ( currControlMode == CANTalon.TalonControlMode.Speed )
             {
                 //motor.configMaxOutputVoltage(12.0);
                 motor.setFeedbackDevice(FeedbackDevice.QuadEncoder); //motor.setSpeedMode(CANTalon.kQuadEncoder, 256, .4, .01, 0);
             	//We don't tell the motor controller the number of ticks per encoder revolution
                 //The Talon needs to be told the number of encoder ticks per 10 ms to rotate
                 motor.setPID(.025, 0, 0);
-                motor.changeControlMode(ControlMode.Speed);
+                motor.changeControlMode(CANTalon.TalonControlMode.Speed);
                 motor.setCloseLoopRampRate(0);
             }
             else
             {
-            	motor.changeControlMode(ControlMode.PercentVbus);
+            	motor.changeControlMode(CANTalon.TalonControlMode.PercentVbus);
             }
             motor.enableBrakeMode(true);
             motor.setVoltageRampRate(0);
@@ -145,7 +144,7 @@ public class Drive extends PIDSubsystem {
         
         currControlMode = controlMode;
 
-        if ( currControlMode == CANTalon.ControlMode.Speed )
+        if ( currControlMode == CANTalon.TalonControlMode.Speed )
         {
                 maxOutputSpeed = maxTicksPer100MS;
         }
@@ -162,7 +161,7 @@ public class Drive extends PIDSubsystem {
     
     void checkForRestartedMotor( CANTalon motor, String strDescription )
     {
-        if ( currControlMode != CANTalon.ControlMode.Speed )   // kSpeed is the default
+        if ( currControlMode != CANTalon.TalonControlMode.Speed )   // kSpeed is the default
         {
             try {
             	if ( !motor.isAlive() )
@@ -307,8 +306,8 @@ public class Drive extends PIDSubsystem {
     }
     
     public boolean getAutoRotation() {
-        SmartDashboard.putBoolean( "AutoRotateEnabled", getPIDController().isEnable());
-        return getPIDController().isEnable();
+        SmartDashboard.putBoolean( "AutoRotateEnabled", getPIDController().isEnabled());
+        return getPIDController().isEnabled();
     }
     
     public void setFODEnabled(boolean enabled) {
