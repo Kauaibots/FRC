@@ -3,11 +3,14 @@ package org.usfirst.frc2465.StrongholdBot16.subsystems;
 import java.util.TimerTask;
 import edu.wpi.first.wpilibj.I2C;
 import edu.wpi.first.wpilibj.Timer;
+import edu.wpi.first.wpilibj.livewindow.LiveWindowSendable;
+import edu.wpi.first.wpilibj.tables.ITable;
 import edu.wpi.first.wpilibj.I2C.Port;
 import edu.wpi.first.wpilibj.PIDSource;
 import edu.wpi.first.wpilibj.PIDSourceType;
+import edu.wpi.first.wpilibj.SensorBase;
 
-public class LidarLITE implements PIDSource{
+public class LidarLITE extends SensorBase implements PIDSource, LiveWindowSendable {
 	private I2C i2c;
 	private byte[] distance;
 	private java.util.Timer updater;
@@ -15,6 +18,8 @@ public class LidarLITE implements PIDSource{
 	private final int LIDAR_ADDR = 0x62;
 	private final int LIDAR_CONFIG_REGISTER = 0x00;
 	private final int LIDAR_DISTANCE_REGISTER = 0x8f;
+	
+    ITable table;	
 	
 	public LidarLITE(Port port) {
 		i2c = new I2C(port, LIDAR_ADDR);
@@ -25,12 +30,12 @@ public class LidarLITE implements PIDSource{
 	}
 	
 	// Distance in cm
-	public int getDistance() {
+	public int getDistanceCM() {
 		return (int)Integer.toUnsignedLong(distance[0] << 8) + Byte.toUnsignedInt(distance[1]);
 	}
 
 	public double pidGet() {
-		return getDistance();
+		return getDistanceCM();
 	}
 	
 	// Start 10Hz polling
@@ -83,5 +88,37 @@ public class LidarLITE implements PIDSource{
 	public void setPIDSourceType(PIDSourceType arg0) {
 		// TODO Auto-generated method stub
 		
+	}
+
+	@Override
+	public String getSmartDashboardType() {
+		// TODO is ultrasonic the correct type?
+		return "Ultrasonic";
+	}
+
+	@Override
+	public ITable getTable() {
+		return table;
+	}
+
+	@Override
+	public void initTable(ITable itable) {
+        table = itable;
+        updateTable();
+	}
+
+	@Override
+	public void startLiveWindowMode() {
+	}
+
+	@Override
+	public void stopLiveWindowMode() {
+	}
+
+	@Override
+	public void updateTable() {
+        if (table != null) {
+            table.putNumber("Value", getDistanceCM());
+        }
 	}
 }
