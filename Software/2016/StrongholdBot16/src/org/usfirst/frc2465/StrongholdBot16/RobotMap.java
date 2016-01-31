@@ -16,6 +16,8 @@ import edu.wpi.first.wpilibj.*;
 import edu.wpi.first.wpilibj.livewindow.LiveWindow;
 import java.util.Vector;
 
+import org.usfirst.frc2465.StrongholdBot16.subsystems.AngleSensor;
+
 import com.kauailabs.navx.frc.AHRS;
 
 /**
@@ -32,25 +34,29 @@ public class RobotMap {
     public static DigitalInput wristAngleData;
     public static DigitalOutput wristAngleClock;
     public static DigitalOutput wristAngleChipSelect;
+    public static AngleSensor wristAngleSensor;
     public static DigitalInput elbowHighLimit;
     public static DigitalInput elbowLowLimit;
     public static SpeedController elbowSpeedController;
     public static DigitalInput elbowAngleData;
     public static DigitalOutput elbowAngleClock;
     public static DigitalOutput elbowAngleChipSelect;
+    public static AngleSensor elbowAngleSensor;    
     public static DigitalInput shoulderHighLimit;
     public static DigitalInput shoulderLowLimit;
     public static SpeedController shoulderSpeedController;
     public static DigitalInput shoulderAngleData;
     public static DigitalOutput shoulderAngleClock;
     public static DigitalOutput shoulderAngleChipSelect;
+    public static AngleSensor shoulderAngleSensor;        
     public static AnalogInput turretHighLimit;
     public static AnalogInput turretLowLimit;
     public static DigitalInput turretHomeLimit;
     public static SpeedController turretSpeedController;
-    public static DigitalInput turretAngleData;
-    public static DigitalOutput turretAngleClock;
-    public static DigitalOutput turretAngleChipSelect;
+    public static DigitalInput turretEncoderA;
+    public static DigitalInput turretEncoderB;
+    public static DigitalInput turretEncoderIndex;
+    public static Encoder turretEncoder;
     public static DigitalInput winchLimit;
     public static Relay winchMotorRelay;
     public static AnalogInput ultrasonicFrontSensor;
@@ -59,7 +65,8 @@ public class RobotMap {
     public static AnalogInput ultrasonicRightSensor;
     public static AnalogInput infraredFrontSensor;
     public static AnalogInput infraredBackSensor;
-    public static Servo visionServo;
+    public static Servo visionServoH;
+    public static Servo visionServoV;
     public static Relay visionRingLightRelay;
     public static Servo lIDARServo;
     public static SerialPort serialPort;
@@ -92,6 +99,9 @@ public class RobotMap {
         wristAngleChipSelect = new DigitalOutput(2);
         LiveWindow.addActuator("Wrist", "AngleChipSelect", wristAngleChipSelect);
         
+        wristAngleSensor = new AngleSensor(wristAngleData, wristAngleChipSelect, wristAngleClock);
+        LiveWindow.addActuator("Wrist", "AngleSensor", wristAngleSensor);
+        
         elbowHighLimit = new DigitalInput(19);
         LiveWindow.addSensor("Elbow", "HighLimit", elbowHighLimit);
         
@@ -109,6 +119,9 @@ public class RobotMap {
         
         elbowAngleChipSelect = new DigitalOutput(5);
         LiveWindow.addActuator("Elbow", "AngleChipSelect", elbowAngleChipSelect);
+        
+        elbowAngleSensor = new AngleSensor(elbowAngleData, elbowAngleChipSelect, elbowAngleClock);
+        LiveWindow.addActuator("Elbow", "AngleSensor", elbowAngleSensor);
         
         shoulderHighLimit = new DigitalInput(21);
         LiveWindow.addSensor("Shoulder", "HighLimit", shoulderHighLimit);
@@ -128,6 +141,9 @@ public class RobotMap {
         shoulderAngleChipSelect = new DigitalOutput(8);
         LiveWindow.addActuator("Shoulder", "AngleChipSelect", shoulderAngleChipSelect);
         
+        shoulderAngleSensor = new AngleSensor(shoulderAngleData, shoulderAngleChipSelect, shoulderAngleClock);
+        LiveWindow.addActuator("Shoulder", "AngleSensor", shoulderAngleSensor);                
+        
         turretHighLimit = new AnalogInput(6);
         LiveWindow.addSensor("Turret", "HighLimit", turretHighLimit);
         
@@ -140,14 +156,17 @@ public class RobotMap {
         turretSpeedController = new Talon(3);
         LiveWindow.addActuator("Turret", "SpeedController", (Talon) turretSpeedController);
         
-        turretAngleData = new DigitalInput(10);
-        LiveWindow.addSensor("Turret", "AngleData", turretAngleData);
+        turretEncoderA = new DigitalInput(10);
+        LiveWindow.addSensor("Turret", "AngleData", turretEncoderA);
         
-        turretAngleClock = new DigitalOutput(11);
-        LiveWindow.addActuator("Turret", "AngleClock", turretAngleClock);
+        turretEncoderB = new DigitalInput(11);
+        LiveWindow.addActuator("Turret", "AngleClock", turretEncoderB);
         
-        turretAngleChipSelect = new DigitalOutput(12);
-        LiveWindow.addActuator("Turret", "AngleChipSelect", turretAngleChipSelect);
+        turretEncoderIndex = new DigitalInput(12);
+        LiveWindow.addActuator("Turret", "AngleChipSelect", turretEncoderIndex);
+        
+        turretEncoder = new Encoder(turretEncoderA, turretEncoderB, turretEncoderIndex);
+        LiveWindow.addSensor("Turret", "Encoder", turretEncoder);
         
         winchLimit = new DigitalInput(23);
         LiveWindow.addSensor("Winch", "Limit", winchLimit);
@@ -173,8 +192,11 @@ public class RobotMap {
         infraredBackSensor = new AnalogInput(5);
         LiveWindow.addSensor("Infrared", "BackSensor", infraredBackSensor);
         
-        visionServo = new Servo(5);
-        LiveWindow.addActuator("Vision", "Servo", visionServo);
+        visionServoH = new Servo(5);
+        LiveWindow.addActuator("Vision", "ServoH", visionServoH);
+        
+        visionServoV = new Servo(6);
+        LiveWindow.addActuator("Vision", "ServoV", visionServoV);
         
         visionRingLightRelay = new Relay(1);
         LiveWindow.addActuator("Vision", "RingLightRelay", visionRingLightRelay);
