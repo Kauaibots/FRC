@@ -76,7 +76,7 @@ public class AngleSensor extends SensorBase implements PIDSource, LiveWindowSend
     	{
     		clock_pin.set(false);
     		clock_pin.set(true);
-    		/* 500ms delay needed here */
+    		/* 500ns delay needed here */
     		delayNS();
     		bit = data_pin.get() ? 1:0;
     		angle = angle<<1;
@@ -127,7 +127,7 @@ public class AngleSensor extends SensorBase implements PIDSource, LiveWindowSend
     }
 
     public String getSmartDashboardType() {
-        return "Gyroscope";
+        return "Gyro";
     }
 
 	@Override

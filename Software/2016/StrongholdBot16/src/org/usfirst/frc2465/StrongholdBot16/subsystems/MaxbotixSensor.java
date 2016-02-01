@@ -62,7 +62,7 @@ public class MaxbotixSensor extends SensorBase implements PIDSource, LiveWindowS
         // voltage to CM is:  distance_cm = (Vcc/1024)
         //
         double distance_cm = 0.0;
-        distance_cm = voltage / 1024;
+        distance_cm = voltage/(5.0/1024);
         return distance_cm;
     }
     
