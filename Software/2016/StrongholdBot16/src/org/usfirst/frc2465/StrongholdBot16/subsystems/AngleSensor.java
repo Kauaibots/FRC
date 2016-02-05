@@ -62,19 +62,18 @@ public class AngleSensor extends SensorBase implements PIDSource, LiveWindowSend
      */
     double getAngle()
     {
-    	chipselect_pin.set(true);
     	int angle=0;
     	
     	int bit;
     	double real_Angle;
     	
-    	clock_pin.set(true);
     	chipselect_pin.set(false);
     	delayNS();
     	
     	for (int i=0;i<12;i++)
     	{
     		clock_pin.set(false);
+    		//delayNS();
     		clock_pin.set(true);
     		/* 500ns delay needed here */
     		delayNS();
