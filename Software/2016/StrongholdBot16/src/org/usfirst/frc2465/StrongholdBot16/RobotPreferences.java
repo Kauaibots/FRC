@@ -18,7 +18,7 @@ public class RobotPreferences {
     
     static public double getAutoRotateP() {
         //return Preferences.getInstance().getDouble("AutoRotateP", 0.0002);
-    	return 0.0008;
+    	return 0.0040;
     }
     static public double getAutoRotateI() {
         //return Preferences.getInstance().getDouble("AutoRotateI", 0.00005);

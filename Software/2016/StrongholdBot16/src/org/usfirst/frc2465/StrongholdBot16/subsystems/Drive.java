@@ -41,7 +41,7 @@ public class Drive extends PIDSubsystem {
 
     static final double cWidth          = 25.0;                 // Distance between left/right wheels
     static final double cLength         = 17.5;                 // Distance btwn front/back wheels
-    static final double wheelDiameter   = 8.0;                  // Per AndyMark Specs
+    static final double wheelDiameter   = 10.0;                  // Per AndyMark Specs
     static final double wheelRadius     = wheelDiameter / 2;
 
     public static final int ROTATE_DIRECTION  = -1;
@@ -73,7 +73,7 @@ public class Drive extends PIDSubsystem {
     final int ticksPerRev = 4*256;
     final int num100msPerSec = 10;
     final float motorRPMs = 2650.0f;
-    final float transRatio = 4.41f;
+    final float transRatio = 8.45f;
     
     public Drive() {
         super(  "Drive",
@@ -124,10 +124,11 @@ public class Drive extends PIDSubsystem {
                 motor.setFeedbackDevice(FeedbackDevice.QuadEncoder); //motor.setSpeedMode(CANTalon.kQuadEncoder, 256, .4, .01, 0);
             	//We don't tell the motor controller the number of ticks per encoder revolution
                 //The Talon needs to be told the number of encoder ticks per 10 ms to rotate
-                motor.setPID(.025, 0, 0);
+                motor.setPID(.05, 0, 0);
                 motor.changeControlMode(CANTalon.TalonControlMode.Speed);
                 motor.setCloseLoopRampRate(0);
             }
+            //hello
             else
             {
             	motor.changeControlMode(CANTalon.TalonControlMode.PercentVbus);
