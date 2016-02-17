@@ -127,6 +127,10 @@ public class  StickDrive extends Command {
         {
         	Robot.drive.setAutoRotation(true);
         }
+        if (driver.getRawButton(9))
+        {
+        	
+        }
         if ( op.getRawButton(7))
         {
         	Robot.drive.setAutoRotation(true);
