@@ -96,7 +96,7 @@ public class  StickDrive extends Command {
     // Called repeatedly when this Command is scheduled to run
     protected void execute() {
         
-        JoystickResponseCurveSet current = conservative;
+        JoystickResponseCurveSet current = linear;
         
         Joystick driver = Robot.oi.driver;
         Joystick op = Robot.oi.opJoystick;

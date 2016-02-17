@@ -15,8 +15,11 @@ import edu.wpi.first.wpilibj.IterativeRobot;
 import edu.wpi.first.wpilibj.command.Command;
 import edu.wpi.first.wpilibj.command.Scheduler;
 import edu.wpi.first.wpilibj.livewindow.LiveWindow;
+import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 
 import org.usfirst.frc2465.StrongholdBot16.subsystems.Drive;
+import org.usfirst.frc2465.StrongholdBot16.Robot;
+import org.usfirst.frc2465.StrongholdBot16.RobotMap;
 import org.usfirst.frc2465.StrongholdBot16.commands.*;
 import org.usfirst.frc2465.StrongholdBot16.subsystems.*;
 
@@ -119,6 +122,7 @@ public class Robot extends IterativeRobot {
      */
     public void teleopPeriodic() {
         Scheduler.getInstance().run();
+        updateDashboard();
     }
 
     /**
@@ -126,5 +130,21 @@ public class Robot extends IterativeRobot {
      */
     public void testPeriodic() {
         LiveWindow.run();
+    }
+    
+    public void updateDashboard() {
+        // Drive
+        
+        if(RobotMap.imu != null)
+        {
+	    	SmartDashboard.putBoolean("IMU_Connected",      RobotMap.imu.isConnected());
+	        SmartDashboard.putNumber( "IMU_Yaw",            RobotMap.imu.getYaw());
+	        SmartDashboard.putNumber( "IMU_CompassHeading", RobotMap.imu.getCompassHeading());
+        }
+        
+        if(Robot.drive != null)
+        {
+        	SmartDashboard.putBoolean("FOD_Enabled",        Robot.drive.getFODEnabled() );
+        }
     }
 }
