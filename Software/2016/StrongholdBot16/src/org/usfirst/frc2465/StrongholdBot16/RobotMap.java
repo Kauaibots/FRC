@@ -72,6 +72,7 @@ public class RobotMap {
     public static RobotDrive robotDrive;
     public static ProximitySensor infraredFrontSensor;
     public static ProximitySensor infraredBackSensor;
+    public static ProximitySensor infraredBallGrabberSensor;
     public static VictorSP ballGrabSpeedController;
     public static AnalogInput ballGrabLimit;
     
@@ -165,13 +166,10 @@ public class RobotMap {
         LiveWindow.addSensor("Turret", "Encoder", turretEncoder);
       
         infraredFrontInput = new AnalogInput(0);
-        LiveWindow.addSensor("Infrared", "FrontInput", infraredFrontInput);
         
         infraredBackInput = new AnalogInput(1);
-        LiveWindow.addSensor("Infrared", "BackInput", infraredBackInput);
         
         infraredBallGrabber = new AnalogInput(2);
-        LiveWindow.addSensor("Infrared", "BallGrabber", infraredBallGrabber);
         
         infraredFrontSensor = new ProximitySensor(infraredFrontInput, ProximitySensor.kMediumRange);
         LiveWindow.addSensor("Infrared", "FrontSensor", infraredFrontSensor);
@@ -179,10 +177,13 @@ public class RobotMap {
         infraredBackSensor = new ProximitySensor(infraredBackInput, ProximitySensor.kMediumRange);
         LiveWindow.addSensor("Infrared", "BackSensor", infraredBackSensor);
         
+        infraredBallGrabberSensor = new ProximitySensor(infraredBallGrabber, ProximitySensor.kMediumRange);
+        LiveWindow.addSensor("Infrared", "BallGrabber", infraredBallGrabber);
+        
         visionRingLightRelay = new Relay(1);
         LiveWindow.addActuator("Vision", "RingLightRelay", visionRingLightRelay);
 
-        ballGrabSpeedController = new VictorSP(7);
+        ballGrabSpeedController = new VictorSP(4);
         LiveWindow.addActuator("BallGrab", "SpeedController", ballGrabSpeedController);        
         
         try { 
