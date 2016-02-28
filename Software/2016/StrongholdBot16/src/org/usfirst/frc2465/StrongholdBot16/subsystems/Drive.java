@@ -103,7 +103,7 @@ public class Drive extends PIDSubsystem {
             
             maxTicksPer100MS = (int)((motorRPMs/transRatio)*ticksPerRev)/num100msPerSec; /* ~20 Feet/Sec */
             
-            setMode( CANTalon.TalonControlMode.Speed);
+            setMode( CANTalon.TalonControlMode.PercentVbus);
         } catch (Exception ex) {
             ex.printStackTrace();
         }
