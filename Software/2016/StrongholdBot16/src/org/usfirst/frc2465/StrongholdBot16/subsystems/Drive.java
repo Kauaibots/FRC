@@ -103,7 +103,7 @@ public class Drive extends PIDSubsystem {
             
             maxTicksPer100MS = (int)((motorRPMs/transRatio)*ticksPerRev)/num100msPerSec; /* ~20 Feet/Sec */
             
-            setMode( CANTalon.TalonControlMode.Speed);
+            setMode( CANTalon.TalonControlMode.PercentVbus);
         } catch (Exception ex) {
             ex.printStackTrace();
         }
@@ -129,9 +129,9 @@ public class Drive extends PIDSubsystem {
                 motor.setFeedbackDevice(FeedbackDevice.QuadEncoder); //motor.setSpeedMode(CANTalon.kQuadEncoder, 256, .4, .01, 0);
             	//We don't tell the motor controller the number of ticks per encoder revolution
                 //The Talon needs to be told the number of encoder ticks per 10 ms to rotate
-                motor.setPID(.05, 0, 0);
+                motor.setPID(.2, 0, 0);
                 motor.changeControlMode(CANTalon.TalonControlMode.Speed);
-                motor.setCloseLoopRampRate(0);
+                //motor.setCloseLoopRampRate(0);
             }
             //hello
             else
@@ -259,10 +259,10 @@ public class Drive extends PIDSubsystem {
             
             byte syncGroup = (byte)0x80;
             
-            checkForRestartedMotor( leftFrontSC, "Front Left" );
+            /*checkForRestartedMotor( leftFrontSC, "Front Left" );
             checkForRestartedMotor( rightFrontSC, "Front Right" );
             checkForRestartedMotor( leftRearSC, "Rear Left" );
-            checkForRestartedMotor( rightRearSC, "Rear Right" );
+            checkForRestartedMotor( rightRearSC, "Rear Right" );*/
             
             leftFrontSC.set(maxOutputSpeed * wheelSpeeds[0] * -1, syncGroup );
             rightFrontSC.set(maxOutputSpeed * wheelSpeeds[1], syncGroup);
@@ -280,6 +280,11 @@ public class Drive extends PIDSubsystem {
             SmartDashboard.putNumber( "Speed_RearLeft", leftRearSC.getEncVelocity());
             SmartDashboard.putNumber( "Speed_FrontRight", rightFrontSC.getEncVelocity());
             SmartDashboard.putNumber( "Speed_RearRight", rightRearSC.getEncVelocity());
+            
+            SmartDashboard.putNumber("Position_FrontLeft", leftFrontSC.getPosition());
+            SmartDashboard.putNumber("Position_RearLeft", leftRearSC.getPosition());
+            SmartDashboard.putNumber("Position_FrontRight", rightFrontSC.getPosition());
+            SmartDashboard.putNumber("Position_RearRight", rightRearSC.getPosition());
             
         } catch (Exception ex) {
             ex.printStackTrace();
@@ -324,12 +329,15 @@ public class Drive extends PIDSubsystem {
     
     public void configureAutoStop(CANTalon sc, double distance_pulse) {
     	sc.setPosition(0);
+    	sc.enableLimitSwitch(true, true);
     	sc.setForwardSoftLimit(distance_pulse);
     	sc.ConfigFwdLimitSwitchNormallyOpen(true);
     	sc.enableForwardSoftLimit(true);
     	sc.setReverseSoftLimit(-distance_pulse);
     	sc.ConfigRevLimitSwitchNormallyOpen(true);
     	sc.enableReverseSoftLimit(true);
+    	sc.reverseSensor(true);
+        sc.enableBrakeMode(true);
     }
     
     
@@ -345,10 +353,10 @@ public class Drive extends PIDSubsystem {
     }
     
     public boolean isStopped() {
-    	boolean leftFrontStopped = leftFrontSC.isFwdLimitSwitchClosed() || leftFrontSC.isRevLimitSwitchClosed();
-    	boolean leftRearStopped = leftRearSC.isFwdLimitSwitchClosed() || leftRearSC.isRevLimitSwitchClosed();
-    	boolean rightFrontStopped = rightFrontSC.isFwdLimitSwitchClosed() || rightFrontSC.isRevLimitSwitchClosed();
-    	boolean rightRearStopped = rightRearSC.isFwdLimitSwitchClosed() || rightRearSC.isRevLimitSwitchClosed();
+    	boolean leftFrontStopped = (leftFrontSC.getFaultForSoftLim() != 0) || (leftFrontSC.getFaultRevSoftLim() != 0);
+    	boolean leftRearStopped = (leftRearSC.getFaultForSoftLim() != 0) || (leftRearSC.getFaultRevSoftLim() != 0);
+    	boolean rightFrontStopped = (rightFrontSC.getFaultForSoftLim() != 0) || (rightFrontSC.getFaultRevSoftLim() != 0);
+    	boolean rightRearStopped = (rightRearSC.getFaultForSoftLim() != 0) || (rightRearSC.getFaultRevSoftLim() != 0);
     	boolean stopped = leftFrontStopped && leftRearStopped && rightFrontStopped && rightRearStopped;
     	return stopped;
     }

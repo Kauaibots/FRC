@@ -97,6 +97,7 @@ public class  StickDrive extends Command {
     protected void execute() {
         
         JoystickResponseCurveSet current = linear;
+        JoystickResponseCurveSet temp = conservative;
         
         Joystick driver = Robot.oi.driver;
         Joystick op = Robot.oi.opJoystick;
@@ -114,6 +115,12 @@ public class  StickDrive extends Command {
 	            RobotMap.imu.zeroYaw();
         	}
         }
+        if ( driver.getRawButton(1))
+        {
+        	 vX = temp.transformStrafe(vX);
+             vY = temp.transformForward(vY);
+             vRot = temp.transformRotate(vRot);
+        }
         
         if ( driver.getRawButton(5))
         {
@@ -123,15 +130,37 @@ public class  StickDrive extends Command {
         {
             Robot.drive.setFODEnabled(false);
         }
-        if (driver.getRawButton(1))
+        if (driver.getRawButton(11))
         {
         	Robot.drive.setAutoRotation(true);
         }
-        if (driver.getRawButton(9))
+        
+        if (driver.getRawButton(6))
         {
-        	
+        	Robot.drive.setAutoRotation(true);
+        	Robot.drive.setSetpoint(0.0);
         }
-        if ( op.getRawButton(7))
+        else if (driver.getRawButton(7))
+        {
+        	Robot.drive.setAutoRotation(true);
+        	Robot.drive.setSetpoint(90.0);
+        }
+        else if (driver.getRawButton(8))
+        {
+        	Robot.drive.setAutoRotation(true);
+        	Robot.drive.setSetpoint(-179.0);
+        }
+        else if (driver.getRawButton(9))
+        {
+        	Robot.drive.setAutoRotation(true);
+        	Robot.drive.setSetpoint(-90.0);
+        }
+        else 
+        {
+        	Robot.drive.setAutoRotation(false);
+        }
+        
+        /*if ( op.getRawButton(7))
         {
         	Robot.drive.setAutoRotation(true);
         	Robot.drive.setSetpoint(-90.0);
@@ -154,7 +183,7 @@ public class  StickDrive extends Command {
         else
         {
         	Robot.drive.setAutoRotation(false);
-        }
+        }*/
         
         if(RobotMap.robotDrive != null)
         {

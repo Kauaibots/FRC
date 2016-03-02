@@ -19,7 +19,9 @@ public class DriveDistance extends Command {
         this.distance_inches = distance_inches;
         this.fwd = fwd;
         this.strafe = strafe;
+        requires(Robot.drive);
     }
+    
 
     // Called just before this Command runs the first time
     protected void initialize() {
@@ -27,7 +29,6 @@ public class DriveDistance extends Command {
     	Robot.drive.setFODEnabled(false);
     	RobotMap.imu.zeroYaw();
     	Robot.drive.enableAutoStop(distance_inches);
-
     }
 
     // Called repeatedly when this Command is scheduled to run
