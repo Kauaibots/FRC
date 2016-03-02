@@ -10,6 +10,7 @@
 #include <sys/stat.h>
 #include <fstream>
 #include <chrono>
+#include <signal.h>
 #include "SafeQueue.h"
 
 using namespace cv;
@@ -76,6 +77,16 @@ int kbhit(void)
         return 0;
 }
 
+bool quit = false;
+
+void sigproc(int sig);
+
+/* sigproc() - invoked when ctrl-c is pressed. */
+void sigproc(int sig)
+{
+    quit = true;
+}
+
 int main(int argc, char** argv)
 {
 	if ( argc < 2 ) {
@@ -88,6 +99,7 @@ int main(int argc, char** argv)
 		printf("Invalid algorithm number.\n");
 		return -2;
 	}
+        signal(SIGINT,sigproc);
 	if ( argc > 2 ) {
 		std::string arg(argv[2]);
 		if( (arg.substr(arg.find_last_of(".") + 1) == "mp4") ||
@@ -212,6 +224,9 @@ int camera_main(char *video_file, int algorithm)
 	} else {
 		if(kbhit() > 0) break;
 	}
+        if ( quit ) {
+            break;
+        }
         std::chrono::steady_clock::time_point wait_end = std::chrono::steady_clock::now();
         std::cout << "waitKey (us):  " << std::chrono::duration_cast<std::chrono::microseconds>(wait_end - wait_begin).count() << std::endl;
 
