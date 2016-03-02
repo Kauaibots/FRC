@@ -7,6 +7,10 @@
 #include <string>
 #include <climits>
 #include <errno.h>
+#include <sys/stat.h>
+#include <fstream>
+#include <chrono>
+#include "SafeQueue.h"
 
 using namespace cv;
 
@@ -19,13 +23,58 @@ int process_circles(Mat& src, Mat& grayscale, Mat& cdst);
 #define ALGORITHM_SHIELD_DIVIDER               1
 #define ALGORITHM_TOWER_RETROREFLECTIVE_TAPE   2
 #define ALGORITHM_TOWER_OPENING                3
+#define ALGORITHM_NONE                         4
 #define ALGORITHM_FIRST			       1
-#define ALGORITHM_LAST                         ALGORITHM_TOWER_OPENING			      
+#define ALGORITHM_LAST                         ALGORITHM_NONE			      
 
 int camera_main(char *video_file, int algorithm);
 int image_main(char *img, int algorithm);
 
-//#define printf(...)
+#define printf(...)
+
+const char *output_video_file_suffix = "/media/ubuntu/9C33-6BBD/video_capture_";
+const char *output_video_file_extension = ".avi";
+
+bool write_cam_data_to_file = true;
+
+bool find_next_output_video_file_name( std::string& output ) 
+{
+    char filename[1024];
+    struct stat file_attributes;
+    for ( int i = 0; i < 1000; i++ ) {
+        sprintf(filename,"%s%d%s", output_video_file_suffix,
+                i, output_video_file_extension);
+        std::ifstream file_stream(filename);
+        if ( !file_stream ) {
+            /* File does not exist */
+            output = filename;
+            return true;
+        }
+    }
+    return false;
+}
+
+int kbhit(void)
+{
+        struct timeval tv;  fd_set
+        read_fd;  /* Do not wait at all, not even a microsecond */
+        tv.tv_sec=0;
+        tv.tv_usec=0;  /* Must be done first to initialize read_fd */
+        FD_ZERO(&read_fd);  /* Makes select() ask if input is ready:   *
+                               0 is the file descriptor for stdin      */
+        FD_SET(0,&read_fd);  /* The first parameter is the number of the *
+                                largest file descriptor to check + 1. */
+        if(select(1, &read_fd, NULL, /*No writes*/ NULL, /*No exceptions*/
+&tv) == -1)
+                return 0; /* An error occured */
+
+          /* read_fd now holds a bit map of files that are   *
+           readable. We test the entry for the standard    *
+           input (file 0). */
+          if(FD_ISSET(0,&read_fd))    /* Character pending on stdin */
+                  return 1;  /* no characters were pending */
+        return 0;
+}
 
 int main(int argc, char** argv)
 {
@@ -82,8 +131,10 @@ int image_main(char *img, int algorithm)
 
 int camera_main(char *video_file, int algorithm)
 {
+    bool live_camera_source = true;
     printf("camera_main()\n");
     VideoCapture *cap;
+    VideoWriter *writer = NULL;
     if ( video_file == NULL ) {
         cap = new VideoCapture(0); // open the default camera
     } else {
@@ -91,6 +142,7 @@ int camera_main(char *video_file, int algorithm)
         long vid_device_number = strtol(video_file,&p,10);
         if ((p != video_file && *p != '\0') && (errno == ERANGE)) {
             cap = new VideoCapture(video_file);
+            live_camera_source = false;
         } else {
             cap = new VideoCapture((int)vid_device_number);
         }
@@ -107,21 +159,38 @@ int camera_main(char *video_file, int algorithm)
     printf("Frame Height:  %i\n", (int)cap->get(CV_CAP_PROP_FRAME_HEIGHT));
     printf("FPS:  %i\n", (int)cap->get(CV_CAP_PROP_FPS));
 
+    Size size(640,480);//the dst image size
+    if ( live_camera_source ) {
+        string output_filename;
+        if ( find_next_output_video_file_name( output_filename ) ) {
+            bool color = true;
+            writer = new VideoWriter( output_filename, 0/*CV_FOURCC('M','J','P','G')*/, 29.997, size, color);
+        } else {
+            printf("Unable to find available video output file name.\n");
+        }
+    }
+
     Mat edges;
     Mat grayscale;
     Mat grayscale_blur;
     Mat cdst;
     namedWindow("edges",1);
     namedWindow("lines",1);
+    startWindowThread();
     for(;;)
     {
         Mat inframe;
 	Mat frame;
 
-        *cap >> inframe; // get a new frame from camera
-	Size size(640,480);//the dst image size
-	resize(inframe,frame,size);//resize image
+        std::chrono::steady_clock::time_point begin = std::chrono::steady_clock::now();
+        *cap >> frame;
+        std::chrono::steady_clock::time_point end = std::chrono::steady_clock::now();
+        std::cout << "Camera Read (us):  " << std::chrono::duration_cast<std::chrono::microseconds>(end - begin).count() << std::endl;
+        //*cap >> inframe; // get a new frame from camera
+	//Size size(640,480);//the dst image size
+	//resize(inframe,frame,size);//resize image
 
+        std::chrono::steady_clock::time_point algo_begin = std::chrono::steady_clock::now();
 	if ( algorithm == ALGORITHM_SHIELD_DIVIDER ) {
 		process_frame_shield_divider(frame, grayscale, grayscale_blur, cdst, edges);
 	} else if ( algorithm == ALGORITHM_TOWER_RETROREFLECTIVE_TAPE ) {
@@ -129,11 +198,26 @@ int camera_main(char *video_file, int algorithm)
 	} else if ( algorithm == ALGORITHM_TOWER_OPENING ) {
 		process_tower_openings(frame, grayscale, grayscale_blur, cdst, edges);
 	}
+        std::chrono::steady_clock::time_point algo_end = std::chrono::steady_clock::now();
+        std::cout << "Algorithm (us):  " << std::chrono::duration_cast<std::chrono::microseconds>(algo_end - algo_begin).count() << std::endl;
+        if ( writer ) {
+            std::chrono::steady_clock::time_point begin = std::chrono::steady_clock::now();
+            writer->write(frame);
+            std::chrono::steady_clock::time_point end = std::chrono::steady_clock::now();
+            std::cout << "Frame Write (us):  " << std::chrono::duration_cast<std::chrono::microseconds>(end - begin).count() << std::endl;
+         }
+        std::chrono::steady_clock::time_point wait_begin = std::chrono::steady_clock::now();
 	if (video_file == NULL) {
-	        if(waitKey(30) >= 0) break;
+	        if(kbhit() > 0) break;
 	} else {
-		if(waitKey(2) >= 0) break;
+		if(kbhit() > 0) break;
 	}
+        std::chrono::steady_clock::time_point wait_end = std::chrono::steady_clock::now();
+        std::cout << "waitKey (us):  " << std::chrono::duration_cast<std::chrono::microseconds>(wait_end - wait_begin).count() << std::endl;
+
+    }
+    if ( writer ) {
+        delete writer;
     }
     // the camera will be deinitialized automatically in VideoCapture destructor
     delete cap;
