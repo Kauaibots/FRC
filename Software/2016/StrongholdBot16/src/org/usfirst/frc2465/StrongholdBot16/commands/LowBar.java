@@ -7,7 +7,6 @@ import edu.wpi.first.wpilibj.command.CommandGroup;
 /**
  *
  */
-//Hello
 public class LowBar extends CommandGroup {
 	
 	public LowBar(){
