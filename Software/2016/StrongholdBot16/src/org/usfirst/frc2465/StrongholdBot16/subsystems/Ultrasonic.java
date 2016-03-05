@@ -78,30 +78,32 @@ public class Ultrasonic extends Subsystem {
                     byte[] received_data = serial_port.read(256);
                     int bytes_read = received_data.length;
                     while (bytes_read > 0){
+							String packet_string = new String(received_data, "US-ASCII");
+		
 	                    	/*  Break the packet into chunks, since doit only takes one */
 	                    	// if short packet -- throw it away
-	                    	if (bytes_read < 29){
+	                    	if (bytes_read < 23){
 	                    		reset_serial_port();
 	                    		bytes_read = 0;
 	                    		break;
 	                    	}
-	                    	if ( bytes_read >= 29 ) {
+	                    	if ( bytes_read >= 23 ) {
 	                    		if (!Ultrasonic.this.doit(received_data)){
 		                    		reset_serial_port();
 		                    		bytes_read = 0;
 		                    		break;
 		                    	}                  	
 	                    		last_data_received_timestamp = Timer.getFPGATimestamp();
-	                    		if (bytes_read > 29 ){
+	                    		if (bytes_read > 23 ){
 	                    			//move buffer contents down
 	                    			int j = 0;
-	                    			for (int i=30;i<bytes_read-29 ;i++)received_data[j++]=received_data[i];	
+	                    			for (int i=24;i<bytes_read-23 ;i++)received_data[j++]=received_data[i];	
 	                    		}
-	                    		bytes_read -= 29;
+	                    		bytes_read -= 23;
 	                    	}
 	                    }
                     } 
-                    catch (RuntimeException ex) {
+                    catch (RuntimeException | UnsupportedEncodingException ex) {
                     // This exception typically indicates a Timeout, but can also be a buffer overrun error.
                     ex.printStackTrace();
                     reset_serial_port();
@@ -138,11 +140,11 @@ public class Ultrasonic extends Subsystem {
 		{
 			if (checksum_ok) {
 				String packet_string = new String(packet, "US-ASCII");		
-				if ( packet_string.substring(24,25) == "\n" && 	
-						packet_string.substring(3,4) == "," && 
-						packet_string.substring(7,8) == "," && 
-						packet_string.substring(11,12) == "," && 
-						packet_string.substring(15,16) == ","){
+				if ( packet[0] == (byte)'0' && 	
+					 packet[3] == (byte)',' && 
+					 packet[7] == (byte)',' && 
+					 packet[11] ==(byte)',' && 
+					 packet[15] ==(byte)','){
 					frontRight = Integer.valueOf(packet_string.substring(0,3));
 					frontLeft = Integer.valueOf(packet_string.substring(4,7));
 					backRight = Integer.valueOf(packet_string.substring(8,11));

@@ -16,6 +16,7 @@ import edu.wpi.first.wpilibj.SerialPort;
 import edu.wpi.first.wpilibj.command.Command;
 import edu.wpi.first.wpilibj.command.Scheduler;
 import edu.wpi.first.wpilibj.livewindow.LiveWindow;
+import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 
 import org.usfirst.frc2465.StrongholdBot16.subsystems.Drive;
 import org.usfirst.frc2465.StrongholdBot16.commands.*;
@@ -120,6 +121,12 @@ public class Robot extends IterativeRobot {
      */
     public void teleopPeriodic() {
         Scheduler.getInstance().run();
+        SmartDashboard.putBoolean("Ultrasonic Connected", ultrasonic.isConnected());
+        SmartDashboard.putNumber("Ultrasonic front left (CM)", ultrasonic.frontLeft);
+        SmartDashboard.putNumber("Ultrasonic front right (CM)", ultrasonic.frontRight);
+        SmartDashboard.putNumber("Ultrasonic back left  (CM)", ultrasonic.backLeft);
+        SmartDashboard.putNumber("Ultrasonic back right (CM)", ultrasonic.backRight);
+        SmartDashboard.putNumber("Ultrasonic front center (CM)", ultrasonic.frontCenter);
     }
 
     /**
