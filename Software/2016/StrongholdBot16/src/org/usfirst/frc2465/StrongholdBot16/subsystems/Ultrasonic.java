@@ -35,7 +35,7 @@ public class Ultrasonic extends Subsystem {
     /* Runnable Interface Implementation                       */
     /***********************************************************/
     
-    static class IOThread implements Runnable {
+    class IOThread implements Runnable {
     
         Thread              m_thread;
         boolean             stop;
@@ -43,6 +43,7 @@ public class Ultrasonic extends Subsystem {
         double last_data_received_timestamp = 0;
         
         public void start(SerialPort serial_port) {
+        	this.serial_port = serial_port;
             m_thread = new Thread(this);
             m_thread.start();
             stop = false;
@@ -85,7 +86,7 @@ public class Ultrasonic extends Subsystem {
 	                    		break;
 	                    	}
 	                    	if ( bytes_read >= 29 ) {
-	                    		if (!doit(received_data)){
+	                    		if (!Ultrasonic.this.doit(received_data)){
 		                    		reset_serial_port();
 		                    		bytes_read = 0;
 		                    		break;
@@ -128,38 +129,38 @@ public class Ultrasonic extends Subsystem {
     // Put methods for controlling this subsystem
     // here. Call these from Commands.
 
-	private boolean doit(byte[] packet){
+	private boolean doit(byte[] packet) {
 //                           1         2
 //                 0123456789012345678901234
 //String packet_string = "001,004,129,109,234AF\r\n";
 		boolean checksum_ok = verifyChecksum(packet,0,19);
-	try
-	{
-	
-	if (checksum_ok) {
-			String packet_string = new String(packet, "US-ASCII");		
-			if ( packet_string.substring(24,25) == "\n" && 	
-					packet_string.substring(3,4) == "," && 
-					packet_string.substring(7,8) == "," && 
-					packet_string.substring(11,12) == "," && 
-					packet_string.substring(15,16) == ","){
-				frontRight = Integer.valueOf(packet_string.substring(0,3));
-				frontLeft = Integer.valueOf(packet_string.substring(4,7));
-				backRight = Integer.valueOf(packet_string.substring(8,11));
-				backLeft = Integer.valueOf(packet_string.substring(12,15));
-				frontCenter = Integer.valueOf(packet_string.substring(16,19));
-				return true;
+		try
+		{
+			if (checksum_ok) {
+				String packet_string = new String(packet, "US-ASCII");		
+				if ( packet_string.substring(24,25) == "\n" && 	
+						packet_string.substring(3,4) == "," && 
+						packet_string.substring(7,8) == "," && 
+						packet_string.substring(11,12) == "," && 
+						packet_string.substring(15,16) == ","){
+					frontRight = Integer.valueOf(packet_string.substring(0,3));
+					frontLeft = Integer.valueOf(packet_string.substring(4,7));
+					backRight = Integer.valueOf(packet_string.substring(8,11));
+					backLeft = Integer.valueOf(packet_string.substring(12,15));
+					frontCenter = Integer.valueOf(packet_string.substring(16,19));
+					return true;
+				}
 			}
+			return false;
 		}
-	return false;
+		catch(NumberFormatException ex){
+			return false;
+		} 
+		catch (UnsupportedEncodingException e) {
+			return false;
+		}
 	}
-	catch(NumberFormatException ex){
-		return false;
-	} 
-	catch (UnsupportedEncodingException e) {
-		return false;
-	}
-}
+	
     public static byte decodeUint8(byte[] checksum, int offset) {
         byte first_digit = (byte) (checksum[0 + offset] <= '9' ? checksum[0 + offset] - '0' : ((checksum[0 + offset] - 'A') + 10));
         byte second_digit = (byte) (checksum[1 + offset] <= '9' ? checksum[1 + offset] - '0' : ((checksum[1 + offset] - 'A') + 10));
