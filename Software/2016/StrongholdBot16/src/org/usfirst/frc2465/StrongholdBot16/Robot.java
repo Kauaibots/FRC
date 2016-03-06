@@ -12,14 +12,13 @@
 package org.usfirst.frc2465.StrongholdBot16;
 
 import edu.wpi.first.wpilibj.IterativeRobot;
+import edu.wpi.first.wpilibj.SerialPort;
 import edu.wpi.first.wpilibj.command.Command;
 import edu.wpi.first.wpilibj.command.Scheduler;
 import edu.wpi.first.wpilibj.livewindow.LiveWindow;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 
 import org.usfirst.frc2465.StrongholdBot16.subsystems.Drive;
-import org.usfirst.frc2465.StrongholdBot16.Robot;
-import org.usfirst.frc2465.StrongholdBot16.RobotMap;
 import org.usfirst.frc2465.StrongholdBot16.commands.*;
 import org.usfirst.frc2465.StrongholdBot16.subsystems.*;
 
@@ -62,7 +61,7 @@ public class Robot extends IterativeRobot {
         turret = new Turret();
         arm = new Arm();
         driverCamera = new DriverCamera();
-        ultrasonic = new Ultrasonic();
+        ultrasonic = new Ultrasonic(SerialPort.Port.kMXP);
         infrared = new Infrared();
         vision = new Vision();
         drive = new Drive();
@@ -121,9 +120,6 @@ public class Robot extends IterativeRobot {
         updateDashboard();
     }
 
-    /**
-     * This function is called periodically during test mode
-     */
     public void testPeriodic() {
         LiveWindow.run();
     }
