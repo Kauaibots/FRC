@@ -136,11 +136,51 @@ public class Robot extends IterativeRobot {
 	    	SmartDashboard.putBoolean("IMU_Connected",      RobotMap.imu.isConnected());
 	        SmartDashboard.putNumber( "IMU_Yaw",            RobotMap.imu.getYaw());
 	        SmartDashboard.putNumber( "IMU_CompassHeading", RobotMap.imu.getCompassHeading());
+	        SmartDashboard.putNumber("Pitch_X", RobotMap.imu.getPitch());
+	        SmartDashboard.putNumber("Roll_Y", RobotMap.imu.getRoll());
         }
         
         if(Robot.drive != null)
         {
         	SmartDashboard.putBoolean("FOD_Enabled",        Robot.drive.getFODEnabled() );
         }
+    }
+   
+    public enum RobotPosition {
+        kFlat(0),
+        kOn_Ramp(1),
+        kSkewed(2);
+        
+        private int value;
+        
+        private RobotPosition(int value) {
+            this.value = value;
+        }
+        public int getValue() {
+            return this.value;
+        }
+    }
+    
+    public RobotPosition getRobotPosition()
+    { 
+    	float pitch = RobotMap.imu.getPitch();
+    	float roll = RobotMap.imu.getRoll();
+    	RobotPosition position = RobotPosition.kFlat;
+    	//FLAT
+    	if(roll < 2 || roll > 0 && pitch < 2 || pitch > 0)
+    	{
+    		position = RobotPosition.kFlat; 
+    	}
+    	//ON_RAMP DETECTION
+    	if(roll < 3 || roll > 0)
+    	{
+    		position = RobotPosition.kOn_Ramp; 
+    	}
+    	//SKEWED
+    	if(roll < 6 || roll > 0 && pitch < 6 || pitch > 0)
+    	{
+    		position = RobotPosition.kSkewed; 
+    	}
+    	return position;
     }
 }
