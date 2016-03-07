@@ -8,10 +8,23 @@
 #include <climits>
 #include <errno.h>
 #include <sys/stat.h>
+#include <sys/types.h>
+#include <sys/param.h>
+#include <netdb.h>
+#include <netinet/in.h>
+#include <arpa/inet.h>
 #include <fstream>
 #include <chrono>
 #include <signal.h>
 #include "SafeQueue.h"
+#include <dirent.h>
+#include <errno.h>
+#include <sstream>
+#include <cstdio>
+#include <thread>
+#include "ntcore.h"
+#include "networktables/NetworkTable.h"
+
 
 using namespace cv;
 
@@ -25,16 +38,53 @@ int process_circles(Mat& src, Mat& grayscale, Mat& cdst);
 #define ALGORITHM_TOWER_RETROREFLECTIVE_TAPE   2
 #define ALGORITHM_TOWER_OPENING                3
 #define ALGORITHM_NONE                         4
-#define ALGORITHM_FIRST			       1
+#define ALGORITHM_FIRST			               1
 #define ALGORITHM_LAST                         ALGORITHM_NONE			      
 
-int camera_main(char *video_file, int algorithm);
+
+typedef struct {
+    bool enable_algorithm;
+    bool enable_stream_out;
+    bool enable_file_out;
+    int  algorithm;
+    int  input_camera;
+    double algorithm_param1;
+    double algorithm_param2;    
+} videoproc_settings;
+
+int camera_main(char *video_file, videoproc_settings& settings);
 int image_main(char *img, int algorithm);
 
 #define printf(...)
 
-const char *output_video_file_suffix = "/media/ubuntu/9C33-6BBD/video_capture_";
+const char *output_video_dir_root = "/media/ubuntu";
+const char *output_video_filename_prefix = "video_capture_";
 const char *output_video_file_extension = ".avi";
+
+const char *output_mjpeg_streamer_dir = "streamer";
+const char *output_mjpeg_streamer_filename = "current.jpg";
+
+bool get_first_in_dir(std::string& first_dir)
+{
+   DIR *dp;
+   struct dirent *dirp;
+   dp = opendir(output_video_dir_root);
+   if (dp == NULL) {
+       std::cout << "Error opening video out dir " << output_video_dir_root << "Errno:  " << errno << std::endl;
+       return false;
+   }
+   while ((dirp = readdir(dp)) != NULL ) {
+       if ((strcmp(".", dirp->d_name) != 0) &&
+           (strcmp("..", dirp->d_name) != 0)) {
+           first_dir = output_video_dir_root;
+           first_dir += "/";
+           first_dir += dirp->d_name;
+           first_dir += "/";
+           std::cout << "Found first entry:  " << first_dir << std::endl;
+           return true;
+       }
+   }
+}
 
 bool write_cam_data_to_file = true;
 
@@ -42,8 +92,11 @@ bool find_next_output_video_file_name( std::string& output )
 {
     char filename[1024];
     struct stat file_attributes;
+    std::string output_dir;
+    get_first_in_dir(output_dir);
+    std::string output_file_prefix = output_dir + output_video_filename_prefix;
     for ( int i = 0; i < 1000; i++ ) {
-        sprintf(filename,"%s%d%s", output_video_file_suffix,
+        sprintf(filename,"%s%d%s", output_file_prefix.c_str(),
                 i, output_video_file_extension);
         std::ifstream file_stream(filename);
         if ( !file_stream ) {
@@ -53,6 +106,37 @@ bool find_next_output_video_file_name( std::string& output )
         }
     }
     return false;
+}
+
+bool get_mjpg_streamer_dir( std::string& dir, bool& created )
+{
+    std::string output_dir;
+    get_first_in_dir(output_dir);
+    // Create directory for mjpeg-streamer
+    dir = output_dir;
+    dir += output_mjpeg_streamer_dir;
+    int result = mkdir(dir.c_str(), S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH );
+    if ( result == 0 ) {
+        created = true;
+        return true;
+    } else {
+        if ( errno == EEXIST ) {
+            created = false;
+            return true;
+        }
+    }
+    return false;
+}
+
+bool file_exists( std::string& file_path )
+{
+    FILE *fp = fopen(file_path.c_str(),"r");
+    if ( fp ) {
+        fclose(fp);
+        return true;
+    } else {
+        return false;
+    }
 }
 
 int kbhit(void)
@@ -77,39 +161,193 @@ int kbhit(void)
         return 0;
 }
 
-bool quit = false;
+bool quit_algorithm = false;
+bool quit_application = false;
+bool quit_networktables = false;
+bool settings_change = false;
 
 void sigproc(int sig);
 
 /* sigproc() - invoked when ctrl-c is pressed. */
 void sigproc(int sig)
 {
-    quit = true;
+    quit_algorithm = true;
+    quit_application = true;
+    quit_networktables = true;    
 }
+
+void init_videoproc_settings(videoproc_settings& settings) {
+    settings.enable_algorithm = false;
+    settings.enable_stream_out = false;
+    settings.enable_file_out = false;
+    settings.algorithm = 999;
+    settings.input_camera = 999;
+    settings.algorithm_param1 = 999.0;
+    settings.algorithm_param2 = 999.0;
+}
+
+bool compare_settings(videoproc_settings& settings1, videoproc_settings& settings2) {
+    if ( ( settings1.enable_algorithm != settings2.enable_algorithm ) ||
+         ( settings1.enable_stream_out != settings2.enable_stream_out ) ||
+         ( settings1.enable_file_out != settings2.enable_file_out ) ||
+         ( settings1.algorithm != settings2.algorithm ) ||
+         ( settings1.input_camera != settings2.input_camera ) ||         
+         ( settings1.algorithm_param1 != settings2.algorithm_param1 ) ||
+         ( settings1.algorithm_param2 != settings2.algorithm_param2 ) ) {
+         return false;
+    }
+    return true;
+}
+
+videoproc_settings curr_settings;
+  
+void run_under_remote_control (char *server_ip_address) 
+{
+  std::cout << "Running under remote control.  ServerIP:  " << server_ip_address << std::endl;
+  auto nt = NetworkTable::GetTable("videoproc");
+  
+  nt->SetClientMode();
+  hostent * record = gethostbyname(server_ip_address);
+  if ( record == NULL ) {
+      std::cout << "Unable to retrieve ip address for: " << server_ip_address << std::endl;
+      quit_networktables = true;
+      return;
+  }
+  in_addr *address = (in_addr *)record->h_addr;
+  std::string ip_addr = inet_ntoa(*address);
+  ip_addr += "\n"; /* ??? */
+  nt->SetIPAddress(ip_addr.c_str());
+  
+  nt->Initialize();
+  std::this_thread::sleep_for(std::chrono::seconds(5));
+
+  videoproc_settings new_settings;
+  init_videoproc_settings(new_settings);
+
+  while (!quit_networktables) { 
+    int i = rand() % 1000 + 1;
+    nt->PutNumber("target_distance_inches", i);
+    nt->PutNumber("target_angle_degrees", i+1);
+    nt->PutBoolean("target_detected", (i%2) ? true : false);
+    if ( nt->ContainsKey("enable_algorithm") ) {
+       new_settings.enable_algorithm = nt->GetBoolean("enable_algorithm",false);
+       //std::cout << "enable_algorithm:  " << new_settings.enable_algorithm << std::endl;
+    }
+    if ( nt->ContainsKey("enable_stream_out") ) {
+       new_settings.enable_stream_out = nt->GetBoolean("enable_stream_out",false);
+       //std::cout << "enable_stream_out:  " << new_settings.enable_stream_out << std::endl;
+    }  
+    if ( nt->ContainsKey("enable_file_out") ) {
+       new_settings.enable_file_out = nt->GetBoolean("enable_file_out",false);
+       //std::cout << "enable_file_out:  " << new_settings.enable_file_out << std::endl;
+    }  
+    if ( nt->ContainsKey("algorithm") ) {
+       new_settings.algorithm = (int)nt->GetNumber("algorithm",999);
+       //std::cout << "algorithm:  " << new_settings.algorithm << std::endl;
+    }
+    if ( nt->ContainsKey("input_camera") ) {
+       new_settings.input_camera = (int)nt->GetNumber("input_camera",999);
+       //std::cout << "input_camera:  " << new_settings.input_camera << std::endl;
+    } 
+    if ( nt->ContainsKey("algorithm_param1") ) {
+       new_settings.algorithm_param1 = nt->GetNumber("algorithm_param1",999);
+       //std::cout << "algorithm_param1:  " << new_settings.algorithm_param1 << std::endl;
+    }    
+    if ( nt->ContainsKey("algorithm_param2") ) {
+       new_settings.algorithm_param2 = nt->GetNumber("algorithm_param2",999);
+       //std::cout << "algorithm_param2:  " << new_settings.algorithm_param2 << std::endl;
+    }        
+    if ( nt->ContainsKey("ping") ) {
+       double ping_value = nt->GetNumber("ping",-1.0);
+       //std::cout << "ping:  " << ping_value << std::endl;
+       nt->PutNumber("ping_response",ping_value);
+    }    
+    
+    if ( !compare_settings( curr_settings, new_settings ) ) {
+        std::cout << "SETTINGS CHANGED!" << std::endl;
+        curr_settings = new_settings;
+        settings_change = true;
+    }
+           
+    std::this_thread::sleep_for(std::chrono::milliseconds(200));
+  }
+}
+
+VideoCapture *cam0 = NULL;
+VideoCapture *cam1 = NULL;
 
 int main(int argc, char** argv)
 {
+    std::cout << "Starting detector." << std::endl;
 	if ( argc < 2 ) {
-		printf("Parameters:  <1-3> <filename>\n");
-		return -1;
+		std::cout << "Parameters:  <ip_address or algorithm #[1-3]> <filename/camera_number>" << std::endl;
+	} else {
+	    std::cout << "argv[1]: " << argv[1] << std::endl;
 	}
-	int algorithm = atoi(argv[1]);
-	if ( ( algorithm < ALGORITHM_FIRST ) ||
-	     ( algorithm > ALGORITHM_LAST ) ) {
-		printf("Invalid algorithm number.\n");
-		return -2;
-	}
+	
+    init_videoproc_settings(curr_settings);
+	char *ip_address = NULL;
+	std::istringstream convert(argv[1]);
+	if ( strlen(argv[1]) > 2 ) {
+	    ip_address = argv[1];
+	    std::cout << "IP Address:  " << ip_address << std::endl;
+	    /* Run in remote control mode, using the ip_address as the NetworkTables server. */
+	    std::thread t1(run_under_remote_control,ip_address);
+	    
+	    while (!quit_application) {
+	         /* Run the algorithm based upon the current settings */
+	         if ( settings_change ) {
+	             videoproc_settings settings_copy = curr_settings;
+	             settings_change = false;
+	             if ( settings_copy.enable_algorithm ) {
+	                 std::cout << "Invoking camera_main() with new settings." << std::endl;
+                     camera_main(NULL, settings_copy);
+                     /* This will return when either application exit has been requested,*/
+                     /* or when the current settings have been changed by the remote     */
+                     /* controller.                                                      */	         
+                 }
+	         } else {
+	             std::this_thread::sleep_for(std::chrono::milliseconds(25));
+	         }
+	    }
+	    
+	    t1.join();
+	    
+	} else { 
+	    int algorithm;
+	    convert >> algorithm;
+	    std::cout << "Running in manual (command-line) mode.  Algorithm:  " << algorithm << std::endl;
+	    if ( ( algorithm < ALGORITHM_FIRST ) ||
+	         ( algorithm > ALGORITHM_LAST ) ) {
+		    std::cout << "Invalid algorithm number." << std::endl;
+		    return -2;
+	    }
+	    curr_settings.algorithm = algorithm;
+	    curr_settings.enable_algorithm = true;
+	    curr_settings.enable_file_out = true;
+	    curr_settings.enable_stream_out = true;
+        curr_settings.algorithm_param1 = 999.0;
+        curr_settings.algorithm_param2 = 999.0;	    	    
         signal(SIGINT,sigproc);
-	if ( argc > 2 ) {
-		std::string arg(argv[2]);
-		if( (arg.substr(arg.find_last_of(".") + 1) == "mp4") ||
-		    (arg.substr(arg.find_last_of(".") + 1) == "avi") ||
-                    (arg == "0") ||
-                    (arg == "1")) {
-			camera_main(argv[2], algorithm);
-		} else {
-			image_main(argv[2], algorithm);
-		}
+	    if ( argc > 2 ) {
+		    std::string arg(argv[2]);
+		    if( (arg.substr(arg.find_last_of(".") + 1) == "mp4") ||
+		        (arg.substr(arg.find_last_of(".") + 1) == "avi") ) {
+			    camera_main(argv[2], curr_settings);
+			} else if ((arg == "0") ||
+                       (arg == "1")) {
+                curr_settings.input_camera = atoi(arg.c_str());
+                camera_main(NULL, curr_settings);
+		    } else {
+			    image_main(argv[2], algorithm);
+		    }
+	    }
+	}
+	if ( cam0 != NULL ) {
+	    delete cam0;
+	}
+	if ( cam1 != NULL ) {
+	    delete cam1;
 	}
 }
 
@@ -141,46 +379,69 @@ int image_main(char *img, int algorithm)
 	return -1;
 }
 
-int camera_main(char *video_file, int algorithm)
+int camera_main(char *video_file, videoproc_settings& settings)
 {
     bool live_camera_source = true;
     printf("camera_main()\n");
     VideoCapture *cap;
     VideoWriter *writer = NULL;
-    if ( video_file == NULL ) {
-        cap = new VideoCapture(0); // open the default camera
+    VideoWriter *still_writer = NULL; /* Output MJPG File for reading by mjpg-streamer */
+    if ( video_file != NULL ) {
+        cap = new VideoCapture(video_file);
+        live_camera_source = false;
     } else {
-        char *p;
-        long vid_device_number = strtol(video_file,&p,10);
-        if ((p != video_file && *p != '\0') && (errno == ERANGE)) {
-            cap = new VideoCapture(video_file);
-            live_camera_source = false;
-        } else {
-            cap = new VideoCapture((int)vid_device_number);
-        }
+        if ( settings.input_camera == 0 ) {
+            if ( cam0 == NULL ) {
+                std::cout << "Opening camera " << settings.input_camera << std::endl;
+                cam0 = new VideoCapture(0);
+                printf("Opened camera.\n");
+                }
+            cap = cam0;
+        } else if ( settings.input_camera == 1 ) {
+            if ( cam1 == NULL ) {
+                std::cout << "Opening camera " << settings.input_camera << std::endl;            
+                cam1 = new VideoCapture(1);
+                printf("Opened camera.\n");
+            }
+            cap = cam1;
+        } 
     }
     printf("VideoCapture instantiated.\n");
     if(!cap->isOpened())  // check if we succeeded
         return -1;
-
-    printf("Opened camera.\n");
-    cap->set(CV_CAP_PROP_FRAME_WIDTH,1280);
-    cap->set(CV_CAP_PROP_FRAME_HEIGHT,720);
 
     printf("Frame Width:  %i\n", (int)cap->get(CV_CAP_PROP_FRAME_WIDTH));
     printf("Frame Height:  %i\n", (int)cap->get(CV_CAP_PROP_FRAME_HEIGHT));
     printf("FPS:  %i\n", (int)cap->get(CV_CAP_PROP_FPS));
 
     Size size(640,480);//the dst image size
+    std::string mjpg_streamer_dir;
+    bool mjpg_streamer_dir_created;
+    std::string mjpg_streamer_file;
+    bool mjpg_streamer_output = false;
     if ( live_camera_source ) {
         string output_filename;
-        if ( find_next_output_video_file_name( output_filename ) ) {
+        if ( settings.enable_file_out && find_next_output_video_file_name( output_filename ) ) {
             bool color = true;
             writer = new VideoWriter( output_filename, 0/*CV_FOURCC('M','J','P','G')*/, 29.997, size, color);
+            if ( settings.enable_stream_out && get_mjpg_streamer_dir( mjpg_streamer_dir, mjpg_streamer_dir_created ) ) {
+                std::cout << "mjpg streamer dir:  " << mjpg_streamer_dir << " Created:  " << mjpg_streamer_dir_created << std::endl;
+                mjpg_streamer_file = mjpg_streamer_dir;
+                mjpg_streamer_file += "/";
+                mjpg_streamer_file += output_mjpeg_streamer_filename;
+                mjpg_streamer_output = true;
+                std::cout << "Outputting to mjpg streamer file:  " << mjpg_streamer_file << std::endl;
+            } else {
+                std::cout << "Error retrieving mjpg streamer dir" << std::endl;
+            }
         } else {
             printf("Unable to find available video output file name.\n");
         }
     }
+    
+    vector<int> compression_params; 
+    compression_params.push_back(CV_IMWRITE_JPEG_QUALITY);
+    compression_params.push_back(60);
 
     Mat edges;
     Mat grayscale;
@@ -189,53 +450,45 @@ int camera_main(char *video_file, int algorithm)
     namedWindow("edges",1);
     namedWindow("lines",1);
     startWindowThread();
-    for(;;)
+    while(!settings_change && !quit_algorithm)
     {
         Mat inframe;
-	Mat frame;
+	    Mat frame;
 
         std::chrono::steady_clock::time_point begin = std::chrono::steady_clock::now();
         *cap >> frame;
         std::chrono::steady_clock::time_point end = std::chrono::steady_clock::now();
         std::cout << "Camera Read (us):  " << std::chrono::duration_cast<std::chrono::microseconds>(end - begin).count() << std::endl;
-        //*cap >> inframe; // get a new frame from camera
-	//Size size(640,480);//the dst image size
-	//resize(inframe,frame,size);//resize image
 
         std::chrono::steady_clock::time_point algo_begin = std::chrono::steady_clock::now();
-	if ( algorithm == ALGORITHM_SHIELD_DIVIDER ) {
-		process_frame_shield_divider(frame, grayscale, grayscale_blur, cdst, edges);
-	} else if ( algorithm == ALGORITHM_TOWER_RETROREFLECTIVE_TAPE ) {
-		process_retroreflective_tape(frame, grayscale, grayscale_blur, cdst, edges);
-	} else if ( algorithm == ALGORITHM_TOWER_OPENING ) {
-		process_tower_openings(frame, grayscale, grayscale_blur, cdst, edges);
-	}
+	    if ( settings.algorithm == ALGORITHM_SHIELD_DIVIDER ) {
+		    process_frame_shield_divider(frame, grayscale, grayscale_blur, cdst, edges);
+	    } else if ( settings.algorithm == ALGORITHM_TOWER_RETROREFLECTIVE_TAPE ) {
+		   process_retroreflective_tape(frame, grayscale, grayscale_blur, cdst, edges);
+	    } else if ( settings.algorithm == ALGORITHM_TOWER_OPENING ) {
+		    process_tower_openings(frame, grayscale, grayscale_blur, cdst, edges);
+	    }	    
         std::chrono::steady_clock::time_point algo_end = std::chrono::steady_clock::now();
         std::cout << "Algorithm (us):  " << std::chrono::duration_cast<std::chrono::microseconds>(algo_end - algo_begin).count() << std::endl;
+        
         if ( writer ) {
             std::chrono::steady_clock::time_point begin = std::chrono::steady_clock::now();
             writer->write(frame);
+            if ( mjpg_streamer_output ) {
+                if ( !file_exists( mjpg_streamer_file ) ) {
+                    imwrite(mjpg_streamer_file,frame,compression_params);
+                }
+            }
             std::chrono::steady_clock::time_point end = std::chrono::steady_clock::now();
             std::cout << "Frame Write (us):  " << std::chrono::duration_cast<std::chrono::microseconds>(end - begin).count() << std::endl;
          }
         std::chrono::steady_clock::time_point wait_begin = std::chrono::steady_clock::now();
-	if (video_file == NULL) {
-	        if(kbhit() > 0) break;
-	} else {
-		if(kbhit() > 0) break;
-	}
-        if ( quit ) {
-            break;
-        }
-        std::chrono::steady_clock::time_point wait_end = std::chrono::steady_clock::now();
-        std::cout << "waitKey (us):  " << std::chrono::duration_cast<std::chrono::microseconds>(wait_end - wait_begin).count() << std::endl;
-
     }
+    std::cout << "Cleaning up camera_main()" << settings_change << " " << quit_algorithm << std::endl;
     if ( writer ) {
         delete writer;
     }
-    // the camera will be deinitialized automatically in VideoCapture destructor
-    delete cap;
+    destroyAllWindows();
 }
 
 #define BORDER_WIDTH_PIXELS 0
