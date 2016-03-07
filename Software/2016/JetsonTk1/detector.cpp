@@ -28,20 +28,6 @@
 
 using namespace cv;
 
-void process_frame_shield_divider( Mat& frame, Mat& grayscale, Mat& grayscale_blur, Mat& cdst, Mat& edges );
-void process_retroreflective_tape( Mat& frame, Mat& grayscale, Mat& grayscale_blur, Mat& cdst, Mat& edges );
-void process_tower_openings( Mat& frame, Mat& grayscale, Mat& grayscale_blur, Mat& cdst, Mat& edges );
-
-int process_circles(Mat& src, Mat& grayscale, Mat& cdst);
-
-#define ALGORITHM_SHIELD_DIVIDER               1
-#define ALGORITHM_TOWER_RETROREFLECTIVE_TAPE   2
-#define ALGORITHM_TOWER_OPENING                3
-#define ALGORITHM_NONE                         4
-#define ALGORITHM_FIRST			               1
-#define ALGORITHM_LAST                         ALGORITHM_NONE			      
-
-
 typedef struct {
     bool enable_algorithm;
     bool enable_stream_out;
@@ -51,6 +37,81 @@ typedef struct {
     double algorithm_param1;
     double algorithm_param2;    
 } videoproc_settings;
+
+typedef struct {
+    bool   algorithm_active;
+    int    last_algorithm_time_us;
+    int    last_read_time_us;
+    int    last_write_time_us;
+} algorithm_stats;
+
+typedef struct {
+    bool   target_detected;
+    double target_distance_inches;
+    double target_angle_degrees;
+    double snr;
+    int    successive_detection_count;
+} algorithm_results;
+
+void process_frame_shield_divider( Mat& frame, Mat& grayscale, Mat& grayscale_blur, Mat& cdst, Mat& edges, algorithm_results& results );
+void process_retroreflective_tape( Mat& frame, Mat& grayscale, Mat& grayscale_blur, Mat& cdst, Mat& edges, algorithm_results& results );
+void process_tower_openings( Mat& frame, Mat& grayscale, Mat& grayscale_blur, Mat& cdst, Mat& edges, algorithm_results& results );
+
+int process_circles(Mat& src, Mat& grayscale, Mat& cdst, algorithm_results& results);
+
+#define ALGORITHM_SHIELD_DIVIDER               1
+#define ALGORITHM_TOWER_RETROREFLECTIVE_TAPE   2
+#define ALGORITHM_TOWER_OPENING                3
+#define ALGORITHM_NONE                         4
+#define ALGORITHM_FIRST			               1
+#define ALGORITHM_LAST                         ALGORITHM_NONE			      
+
+std::mutex alg_stats_mutex;
+algorithm_stats curr_alg_stats;
+
+std::mutex alg_results_mutex;
+algorithm_results curr_alg_results;
+
+void init_algorithm_stats( algorithm_stats& stats ) 
+{
+    stats.algorithm_active = false;
+    stats.last_algorithm_time_us = 0;
+    stats.last_read_time_us = 0;
+    stats.last_write_time_us = 0;    
+}
+
+void get_algorithm_stats( algorithm_stats& stats )
+{
+    std::lock_guard<std::mutex> lock (alg_stats_mutex);
+    stats = curr_alg_stats;
+}
+
+void set_algorithm_stats( algorithm_stats& stats )
+{
+    std::lock_guard<std::mutex> lock (alg_stats_mutex);
+    curr_alg_stats = stats;
+}
+
+void init_algorithm_results( algorithm_results& results ) 
+{
+    results.target_detected = false;
+    results.target_distance_inches = 0;
+    results.target_angle_degrees = 0;
+    results.snr = 0;
+    results.successive_detection_count = 0;    
+}
+
+void get_algorithm_results( algorithm_results& results )
+{
+    std::lock_guard<std::mutex> lock (alg_results_mutex);
+    results = curr_alg_results;
+}
+
+void set_algorithm_results( algorithm_results& results )
+{
+    std::lock_guard<std::mutex> lock (alg_results_mutex);
+    curr_alg_results = results;
+}
 
 int camera_main(char *video_file, videoproc_settings& settings);
 int image_main(char *img, int algorithm);
@@ -224,11 +285,24 @@ void run_under_remote_control (char *server_ip_address)
   videoproc_settings new_settings;
   init_videoproc_settings(new_settings);
 
-  while (!quit_networktables) { 
-    int i = rand() % 1000 + 1;
-    nt->PutNumber("target_distance_inches", i);
-    nt->PutNumber("target_angle_degrees", i+1);
-    nt->PutBoolean("target_detected", (i%2) ? true : false);
+  while (!quit_networktables) {     
+    
+    algorithm_stats alg_stats;
+    get_algorithm_stats(alg_stats);
+    algorithm_results alg_results;
+    get_algorithm_results(alg_results);
+    
+    nt->PutBoolean("algorithm_active", alg_stats.algorithm_active);
+    nt->PutNumber("last_algorithm_time_us", alg_stats.last_algorithm_time_us);
+    nt->PutNumber("last_read_time_us", alg_stats.last_read_time_us);
+    nt->PutNumber("last_write_time_us", alg_stats.last_write_time_us);
+
+    nt->PutNumber("target_distance_inches", alg_results.target_distance_inches);
+    nt->PutNumber("target_angle_degrees", alg_results.target_angle_degrees);
+    nt->PutBoolean("target_detected", alg_results.target_detected);
+    nt->PutNumber("snr", alg_results.snr);
+    nt->PutNumber("successive_detection_count", alg_results.successive_detection_count);
+    
     if ( nt->ContainsKey("enable_algorithm") ) {
        new_settings.enable_algorithm = nt->GetBoolean("enable_algorithm",false);
        //std::cout << "enable_algorithm:  " << new_settings.enable_algorithm << std::endl;
@@ -286,6 +360,9 @@ int main(int argc, char** argv)
 	}
 	
     init_videoproc_settings(curr_settings);
+    init_algorithm_stats(curr_alg_stats);
+    init_algorithm_results(curr_alg_results);
+    
 	char *ip_address = NULL;
 	std::istringstream convert(argv[1]);
 	if ( strlen(argv[1]) > 2 ) {
@@ -364,16 +441,18 @@ int image_main(char *img, int algorithm)
 	Mat inframe = imread(img, CV_LOAD_IMAGE_COLOR);
 	Mat frame;
 
+    algorithm_results alg_results;
+    init_algorithm_results(alg_results);
 	Size size(640,480);//the dst image size
 	resize(inframe,frame,size);//resize image
 	if ( algorithm == ALGORITHM_SHIELD_DIVIDER ) {
-		process_frame_shield_divider(frame, grayscale, grayscale_blur, cdst, edges);
+		process_frame_shield_divider(frame, grayscale, grayscale_blur, cdst, edges, alg_results);
 	} else if ( algorithm == ALGORITHM_TOWER_RETROREFLECTIVE_TAPE ) {
-		process_retroreflective_tape(frame, grayscale, grayscale_blur, cdst, edges);
+		process_retroreflective_tape(frame, grayscale, grayscale_blur, cdst, edges, alg_results);
 	} else if ( algorithm == ALGORITHM_TOWER_OPENING ) {
-		process_tower_openings(frame, grayscale, grayscale_blur, cdst, edges);
+		process_tower_openings(frame, grayscale, grayscale_blur, cdst, edges, alg_results);
 	}
-	//process_circles(frame, grayscale, cdst);	
+	//process_circles(frame, grayscale, cdst, alg_results);	
 	waitKey(0);
 
 	return -1;
@@ -424,24 +503,31 @@ int camera_main(char *video_file, videoproc_settings& settings)
         if ( settings.enable_file_out && find_next_output_video_file_name( output_filename ) ) {
             bool color = true;
             writer = new VideoWriter( output_filename, 0/*CV_FOURCC('M','J','P','G')*/, 29.997, size, color);
-            if ( settings.enable_stream_out && get_mjpg_streamer_dir( mjpg_streamer_dir, mjpg_streamer_dir_created ) ) {
-                std::cout << "mjpg streamer dir:  " << mjpg_streamer_dir << " Created:  " << mjpg_streamer_dir_created << std::endl;
-                mjpg_streamer_file = mjpg_streamer_dir;
-                mjpg_streamer_file += "/";
-                mjpg_streamer_file += output_mjpeg_streamer_filename;
-                mjpg_streamer_output = true;
-                std::cout << "Outputting to mjpg streamer file:  " << mjpg_streamer_file << std::endl;
-            } else {
-                std::cout << "Error retrieving mjpg streamer dir" << std::endl;
-            }
         } else {
             printf("Unable to find available video output file name.\n");
         }
+        if ( settings.enable_stream_out && get_mjpg_streamer_dir( mjpg_streamer_dir, mjpg_streamer_dir_created ) ) {
+            std::cout << "mjpg streamer dir:  " << mjpg_streamer_dir << " Created:  " << mjpg_streamer_dir_created << std::endl;
+            mjpg_streamer_file = mjpg_streamer_dir;
+            mjpg_streamer_file += "/";
+            mjpg_streamer_file += output_mjpeg_streamer_filename;
+            mjpg_streamer_output = true;
+            std::cout << "Outputting to mjpg streamer file:  " << mjpg_streamer_file << std::endl;
+        } else {
+            std::cout << "Error retrieving mjpg streamer dir" << std::endl;
+        }    
     }
     
     vector<int> compression_params; 
     compression_params.push_back(CV_IMWRITE_JPEG_QUALITY);
     compression_params.push_back(60);
+
+    algorithm_stats alg_stats;
+    init_algorithm_stats(alg_stats);
+    alg_stats.algorithm_active = true;
+
+    algorithm_results alg_results;
+    init_algorithm_results(alg_results);
 
     Mat edges;
     Mat grayscale;
@@ -458,32 +544,43 @@ int camera_main(char *video_file, videoproc_settings& settings)
         std::chrono::steady_clock::time_point begin = std::chrono::steady_clock::now();
         *cap >> frame;
         std::chrono::steady_clock::time_point end = std::chrono::steady_clock::now();
-        std::cout << "Camera Read (us):  " << std::chrono::duration_cast<std::chrono::microseconds>(end - begin).count() << std::endl;
+        alg_stats.last_read_time_us = std::chrono::duration_cast<std::chrono::microseconds>(end - begin).count();
+        std::cout << "Camera Read (us):  " << alg_stats.last_read_time_us << std::endl;
 
         std::chrono::steady_clock::time_point algo_begin = std::chrono::steady_clock::now();
 	    if ( settings.algorithm == ALGORITHM_SHIELD_DIVIDER ) {
-		    process_frame_shield_divider(frame, grayscale, grayscale_blur, cdst, edges);
+		    process_frame_shield_divider(frame, grayscale, grayscale_blur, cdst, edges, alg_results);
 	    } else if ( settings.algorithm == ALGORITHM_TOWER_RETROREFLECTIVE_TAPE ) {
-		   process_retroreflective_tape(frame, grayscale, grayscale_blur, cdst, edges);
+		   process_retroreflective_tape(frame, grayscale, grayscale_blur, cdst, edges, alg_results);
 	    } else if ( settings.algorithm == ALGORITHM_TOWER_OPENING ) {
-		    process_tower_openings(frame, grayscale, grayscale_blur, cdst, edges);
+		    process_tower_openings(frame, grayscale, grayscale_blur, cdst, edges, alg_results);
 	    }	    
+	    set_algorithm_results(alg_results);
         std::chrono::steady_clock::time_point algo_end = std::chrono::steady_clock::now();
-        std::cout << "Algorithm (us):  " << std::chrono::duration_cast<std::chrono::microseconds>(algo_end - algo_begin).count() << std::endl;
+        alg_stats.last_algorithm_time_us = std::chrono::duration_cast<std::chrono::microseconds>(algo_end - algo_begin).count();
+        std::cout << "Algorithm (us):  " << alg_stats.last_algorithm_time_us << std::endl;
         
-        if ( writer ) {
+        if ( writer || mjpg_streamer_output ) {
             std::chrono::steady_clock::time_point begin = std::chrono::steady_clock::now();
-            writer->write(frame);
+            if ( writer ) {
+                writer->write(frame);
+            }
             if ( mjpg_streamer_output ) {
                 if ( !file_exists( mjpg_streamer_file ) ) {
                     imwrite(mjpg_streamer_file,frame,compression_params);
                 }
             }
             std::chrono::steady_clock::time_point end = std::chrono::steady_clock::now();
-            std::cout << "Frame Write (us):  " << std::chrono::duration_cast<std::chrono::microseconds>(end - begin).count() << std::endl;
+            alg_stats.last_write_time_us = std::chrono::duration_cast<std::chrono::microseconds>(end - begin).count();
+            std::cout << "Frame Write (us):  " << alg_stats.last_write_time_us << std::endl;
          }
         std::chrono::steady_clock::time_point wait_begin = std::chrono::steady_clock::now();
+        set_algorithm_stats(alg_stats);
     }
+    init_algorithm_stats(alg_stats);
+    set_algorithm_stats(alg_stats);
+    init_algorithm_results(alg_results);
+    set_algorithm_results(alg_results);
     std::cout << "Cleaning up camera_main()" << settings_change << " " << quit_algorithm << std::endl;
     if ( writer ) {
         delete writer;
@@ -613,7 +710,7 @@ int rectangle_area(Point p1, Point p2, Point p3, Point p4)
 	return area_tri1 + area_tri2;
 }
 
-void process_tower_openings( Mat& frame, Mat& grayscale, Mat& grayscale_blur, Mat& cdst, Mat& edges )
+void process_tower_openings( Mat& frame, Mat& grayscale, Mat& grayscale_blur, Mat& cdst, Mat& edges, algorithm_results& results )
 {
 	cvtColor(frame, grayscale, COLOR_BGR2GRAY);
 
@@ -683,7 +780,7 @@ void process_tower_openings( Mat& frame, Mat& grayscale, Mat& grayscale_blur, Ma
 	imshow("edges", grayscale);
 }
 
-void process_retroreflective_tape( Mat& frame, Mat& grayscale, Mat& grayscale_blur, Mat& cdst, Mat& edges ) 
+void process_retroreflective_tape( Mat& frame, Mat& grayscale, Mat& grayscale_blur, Mat& cdst, Mat& edges, algorithm_results& results ) 
 {
 	Mat ch1, ch2, ch3;
 	Mat thresholded_image;
@@ -745,7 +842,7 @@ void process_retroreflective_tape( Mat& frame, Mat& grayscale, Mat& grayscale_bl
 /* Allowable range (deviation from vertical) for dividers */
 #define DIVIDER_EDGE_VERTICAL_DEV_DEGREES 15.0f
 
-void process_frame_shield_divider( Mat& frame, Mat& grayscale, Mat& grayscale_blur, Mat& cdst, Mat& edges ) 
+void process_frame_shield_divider( Mat& frame, Mat& grayscale, Mat& grayscale_blur, Mat& cdst, Mat& edges, algorithm_results& results ) 
 {
 	vector<Vec4i> lines;
 	cvtColor(frame, grayscale, COLOR_BGR2GRAY);
@@ -889,7 +986,7 @@ void process_frame_shield_divider( Mat& frame, Mat& grayscale, Mat& grayscale_bl
 	imshow("lines", cdst);
 }
 
-int process_circles(Mat& src, Mat& grayscale, Mat& cdst)
+int process_circles(Mat& src, Mat& grayscale, Mat& cdst, algorithm_results& results)
 {
   /// Convert it to gray
   cvtColor( src, grayscale, CV_BGR2GRAY );
