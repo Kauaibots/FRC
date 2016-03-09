@@ -1,6 +1,7 @@
 package org.usfirst.frc2465.StrongholdBot16.commands;
 
 import org.usfirst.frc2465.StrongholdBot16.Robot;
+import org.usfirst.frc2465.StrongholdBot16.RobotMap;
 
 import edu.wpi.first.wpilibj.command.CommandGroup;
 
@@ -13,8 +14,9 @@ public class LowBar extends CommandGroup {
 	public LowBar(){
 		requires(Robot.drive);
 		this.addParallel( new DriveDistance(55f, .5f, 0f));
-		this.addSequential( new AutoRotate(180));
+		//this.addSequential( new AutoRotate(180));
 		this.addSequential( new DriveDistance(-55f, .5f, 0f));
+		
 	}
 
     // Called just before this Command runs the first time
