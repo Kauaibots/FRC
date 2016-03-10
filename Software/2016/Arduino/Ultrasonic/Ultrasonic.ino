@@ -20,15 +20,15 @@ unsigned int cm[SONAR_NUM];         // Where the ping distances are stored.
 uint8_t currentSensor = 0;          // Keeps track of which sensor is active.
 
 NewPing sonar[SONAR_NUM] = {       // Sensor object array.
-  NewPing(10, 13, MAX_DISTANCE),   // (Trigger Pin, Echo Pin)
-  NewPing(9, 12, MAX_DISTANCE),
-  NewPing(6, 7, MAX_DISTANCE),
+  NewPing(11, 10, MAX_DISTANCE),   // (Trigger Pin, Echo Pin)
+  NewPing(9, 8, MAX_DISTANCE),
+  NewPing(7, 6, MAX_DISTANCE),
   NewPing(5, 4, MAX_DISTANCE),
   NewPing(3, 2, MAX_DISTANCE)
 };
 
 void setup() {
-  Serial.begin(115200);
+  Serial.begin(57600);
   pingTimer[0] = millis() + 75;           // First ping starts at 75ms, gives time for the Arduino to chill before starting.
   for (uint8_t i = 1; i < SONAR_NUM; i++) // Set the starting time for each sensor.
     pingTimer[i] = pingTimer[i - 1] + PING_INTERVAL;
@@ -54,12 +54,22 @@ void echoCheck() { // If ping received, set the sensor distance to array.
 }
 
 void oneSensorCycle() { // Sensor ping cycle complete, do something with the results.
-  // The following code would be replaced with your code that does something with the ping results.
-  for (uint8_t i = 0; i < SONAR_NUM; i++) {
-    //Serial.print(i);
-    //Serial.print("=");
-    Serial.print(cm[i]);
-    Serial.print(" ");
+  /* Create packet with distance from 5 sensors, checksum, and
+   *  a carriage-return and linefeed:
+   *  
+   *  Example:
+   *  
+   *  "000,111,222,333,444AF\r\n"
+   */
+  char buffer[24]; /* 23 characters plus a null string terminator */
+  sprintf(buffer,"%03d,%03d,%03d,%03d,%03d    ",
+            cm[0], cm[1], cm[2], cm[3], cm[4]);
+  uint8_t checksum = 0;
+  for (int i = 0; i < 19; i++) {
+    checksum += buffer[i];
   }
-  Serial.println();
+  sprintf(buffer+19,"%02X\r\n",checksum);
+  Serial.print(buffer);
 }
+
+
