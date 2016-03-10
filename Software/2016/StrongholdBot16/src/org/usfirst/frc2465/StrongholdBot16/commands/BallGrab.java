@@ -25,9 +25,15 @@ public class BallGrab extends CommandGroup {
     protected void execute() {
     	if(Robot.ballcontrol.isBallPresent() == true){
     		Robot.ballcontrol.exhale();
+    		if(Robot.ballcontrol.isBallPresent() == false){
+    			Robot.ballcontrol.hold();
+    		}
     	}
     	else if(Robot.ballcontrol.isBallPresent() == false){
     		Robot.ballcontrol.inhale();
+    		if(Robot.ballcontrol.isBallPresent() == true){
+    			Robot.ballcontrol.hold();
+    		}
     	}
     	else{
     		Robot.ballcontrol.hold();
