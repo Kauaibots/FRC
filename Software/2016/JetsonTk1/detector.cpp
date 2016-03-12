@@ -31,6 +31,7 @@ using namespace cv;
 typedef struct {
     bool enable_algorithm;
     bool enable_stream_out;
+    int stream_type;
     bool enable_file_out;
     int  algorithm;
     int  input_camera;
@@ -46,20 +47,34 @@ typedef struct {
 } algorithm_stats;
 
 typedef struct {
-    bool   target_detected;
-    double target_distance_inches;
-    double target_angle_degrees;
+    bool   detected;
+    double distance_inches;
+    double angle_degrees;
     double snr;
     int    successive_detection_count;
+} detection_results;
+
+void init_detection_results( detection_results& det_res ) {
+    det_res.detected = false;
+    det_res.distance_inches = 0;
+    det_res.angle_degrees = 0;
+    det_res.snr = 0;
+    det_res.successive_detection_count = 0;   
+}
+
+typedef struct {
+    detection_results target;
+    detection_results tower;
+    detection_results shield;
 } algorithm_results;
 
-void process_frame_shield_divider( Mat& frame, Mat& grayscale, Mat& grayscale_blur, Mat& cdst, Mat& edges, algorithm_results& results );
-void process_retroreflective_tape( Mat& frame, Mat& grayscale, Mat& grayscale_blur, Mat& cdst, Mat& edges, algorithm_results& results );
-void process_tower_openings( Mat& frame, Mat& grayscale, Mat& grayscale_blur, Mat& cdst, Mat& edges, algorithm_results& results );
-int process_circles(Mat& src, Mat& grayscale, Mat& cdst, algorithm_results& results);
-void process_tower_lights_red( Mat& frame, Mat& grayscale, Mat& grayscale_blur, Mat& cdst, Mat& edges, algorithm_results& results );
-void process_tower_lights_blue( Mat& frame, Mat& grayscale, Mat& grayscale_blur, Mat& cdst, Mat& edges, algorithm_results& results );
-void process_tower_lights( Mat& frame, Mat& grayscale, Mat& grayscale_blur, Mat& cdst, Mat& edges, algorithm_results& results, bool blue ); 
+void process_frame_shield_divider( Mat& frame, Mat& grayscale, Mat& grayscale_blur, Mat& cdst, Mat& edges, Mat& lines, algorithm_results& results );
+void process_retroreflective_tape( Mat& frame, Mat& grayscale, Mat& grayscale_blur, Mat& cdst, Mat& edges, Mat& lines, algorithm_results& results );
+void process_tower_openings( Mat& frame, Mat& grayscale, Mat& grayscale_blur, Mat& cdst, Mat& edges, Mat& line, algorithm_results& results );
+int process_circles(Mat& src, Mat& grayscale, Mat& cdst, Mat& edges, Mat& lines, algorithm_results& results);
+void process_tower_lights_red( Mat& frame, Mat& grayscale, Mat& grayscale_blur, Mat& cdst, Mat& edges, Mat& lines, algorithm_results& results );
+void process_tower_lights_blue( Mat& frame, Mat& grayscale, Mat& grayscale_blur, Mat& cdst, Mat& edges, Mat& lines, algorithm_results& results );
+void process_tower_lights( Mat& frame, Mat& grayscale, Mat& grayscale_blur, Mat& cdst, Mat& edges, Mat& lines, algorithm_results& results, bool blue ); 
 
 #define ALGORITHM_SHIELD_DIVIDER               1
 #define ALGORITHM_TOWER_RETROREFLECTIVE_TAPE   2
@@ -97,11 +112,9 @@ void set_algorithm_stats( algorithm_stats& stats )
 
 void init_algorithm_results( algorithm_results& results ) 
 {
-    results.target_detected = false;
-    results.target_distance_inches = 0;
-    results.target_angle_degrees = 0;
-    results.snr = 0;
-    results.successive_detection_count = 0;    
+    init_detection_results(results.target);
+    init_detection_results(results.tower);
+    init_detection_results(results.shield);                    
 }
 
 void get_algorithm_results( algorithm_results& results )
@@ -243,6 +256,7 @@ void sigproc(int sig)
 void init_videoproc_settings(videoproc_settings& settings) {
     settings.enable_algorithm = false;
     settings.enable_stream_out = false;
+    settings.stream_type = 0;
     settings.enable_file_out = false;
     settings.algorithm = 999;
     settings.input_camera = 999;
@@ -253,6 +267,7 @@ void init_videoproc_settings(videoproc_settings& settings) {
 bool compare_settings(videoproc_settings& settings1, videoproc_settings& settings2) {
     if ( ( settings1.enable_algorithm != settings2.enable_algorithm ) ||
          ( settings1.enable_stream_out != settings2.enable_stream_out ) ||
+         ( settings1.stream_type != settings2.stream_type ) ||
          ( settings1.enable_file_out != settings2.enable_file_out ) ||
          ( settings1.algorithm != settings2.algorithm ) ||
          ( settings1.input_camera != settings2.input_camera ) ||         
@@ -267,7 +282,9 @@ videoproc_settings curr_settings;
   
 void run_under_remote_control (char *server_ip_address) 
 {
+  std::cout << "***" << std::endl;
   std::cout << "Running under remote control.  ServerIP:  " << server_ip_address << std::endl;
+  std::cout << "***" << std::endl;
   auto nt = NetworkTable::GetTable("videoproc");
   
   nt->SetClientMode();
@@ -288,6 +305,31 @@ void run_under_remote_control (char *server_ip_address)
   videoproc_settings new_settings;
   init_videoproc_settings(new_settings);
 
+  if ( !nt->ContainsKey("enable_algorithm") ) {
+     nt->PutBoolean("enable_algorithm", false);
+  }
+  if ( !nt->ContainsKey("enable_stream_out") ) {
+     nt->PutBoolean("enable_stream_out",false);
+  }  
+  if ( !nt->ContainsKey("stream_type") ) {
+     nt->PutNumber("stream_type",0);
+  }  
+  if ( !nt->ContainsKey("enable_file_out") ) {
+     nt->PutBoolean("enable_file_out",false);
+  }  
+  if ( !nt->ContainsKey("algorithm") ) {
+     nt->PutNumber("algorithm",4);
+  }
+  if ( !nt->ContainsKey("input_camera") ) {
+     nt->PutNumber("input_camera",0);
+  } 
+  if ( !nt->ContainsKey("algorithm_param1") ) {
+     nt->PutNumber("algorithm_param1",999);
+  }    
+  if ( !nt->ContainsKey("algorithm_param2") ) {
+     nt->PutNumber("algorithm_param2",999);
+  }        
+
   while (!quit_networktables) {     
     
     algorithm_stats alg_stats;
@@ -300,11 +342,23 @@ void run_under_remote_control (char *server_ip_address)
     nt->PutNumber("last_read_time_us", alg_stats.last_read_time_us);
     nt->PutNumber("last_write_time_us", alg_stats.last_write_time_us);
 
-    nt->PutNumber("target_distance_inches", alg_results.target_distance_inches);
-    nt->PutNumber("target_angle_degrees", alg_results.target_angle_degrees);
-    nt->PutBoolean("target_detected", alg_results.target_detected);
-    nt->PutNumber("snr", alg_results.snr);
-    nt->PutNumber("successive_detection_count", alg_results.successive_detection_count);
+    nt->PutNumber("target_distance_inches", alg_results.target.distance_inches);
+    nt->PutNumber("target_angle_degrees", alg_results.target.angle_degrees);
+    nt->PutBoolean("target_detected", alg_results.target.detected);
+    nt->PutNumber("target_snr", alg_results.target.snr);
+    nt->PutNumber("target_successive_detection_count", alg_results.target.successive_detection_count);
+    
+    nt->PutNumber("tower_distance_inches", alg_results.tower.distance_inches);
+    nt->PutNumber("tower_angle_degrees", alg_results.tower.angle_degrees);
+    nt->PutBoolean("tower_detected", alg_results.tower.detected);
+    nt->PutNumber("tower_snr", alg_results.tower.snr);
+    nt->PutNumber("tower_successive_detection_count", alg_results.tower.successive_detection_count);
+    
+    nt->PutNumber("shield_distance_inches", alg_results.shield.distance_inches);
+    nt->PutNumber("shield_angle_degrees", alg_results.shield.angle_degrees);
+    nt->PutBoolean("shield_detected", alg_results.shield.detected);
+    nt->PutNumber("shield_snr", alg_results.shield.snr);
+    nt->PutNumber("shield_successive_detection_count", alg_results.shield.successive_detection_count);
     
     if ( nt->ContainsKey("enable_algorithm") ) {
        new_settings.enable_algorithm = nt->GetBoolean("enable_algorithm",false);
@@ -312,6 +366,10 @@ void run_under_remote_control (char *server_ip_address)
     }
     if ( nt->ContainsKey("enable_stream_out") ) {
        new_settings.enable_stream_out = nt->GetBoolean("enable_stream_out",false);
+       //std::cout << "enable_stream_out:  " << new_settings.enable_stream_out << std::endl;
+    }  
+    if ( nt->ContainsKey("stream_type") ) {
+       new_settings.stream_type = (int)nt->GetNumber("stream_type",0);
        //std::cout << "enable_stream_out:  " << new_settings.enable_stream_out << std::endl;
     }  
     if ( nt->ContainsKey("enable_file_out") ) {
@@ -406,6 +464,7 @@ int main(int argc, char** argv)
 	    curr_settings.enable_algorithm = true;
 	    curr_settings.enable_file_out = true;
 	    curr_settings.enable_stream_out = true;
+	    curr_settings.stream_type = 0;
         curr_settings.algorithm_param1 = 999.0;
         curr_settings.algorithm_param2 = 999.0;	    	    
         signal(SIGINT,sigproc);
@@ -435,6 +494,7 @@ int main(int argc, char** argv)
 int image_main(char *img, int algorithm) 
 {
 	Mat edges;
+	Mat lines;
 	Mat grayscale;
 	Mat grayscale_blur;
 	Mat cdst;
@@ -450,18 +510,18 @@ int image_main(char *img, int algorithm)
 	Size size(640,480);//the dst image size
 	resize(inframe,frame,size);//resize image
 	if ( algorithm == ALGORITHM_SHIELD_DIVIDER ) {
-		process_frame_shield_divider(frame, grayscale, grayscale_blur, cdst, edges, alg_results);
+		process_frame_shield_divider(frame, grayscale, grayscale_blur, cdst, edges, lines, alg_results);
 	} else if ( algorithm == ALGORITHM_TOWER_RETROREFLECTIVE_TAPE ) {
-		process_retroreflective_tape(frame, grayscale, grayscale_blur, cdst, edges, alg_results);
+		process_retroreflective_tape(frame, grayscale, grayscale_blur, cdst, edges, lines, alg_results);
 	} else if ( algorithm == ALGORITHM_TOWER_OPENING ) {
-		process_tower_openings(frame, grayscale, grayscale_blur, cdst, edges, alg_results);
+		process_tower_openings(frame, grayscale, grayscale_blur, cdst, edges, lines, alg_results);
 	} else if ( algorithm == ALGORITHM_TOWER_LIGHTS_RED ) {
-		process_tower_lights_red(frame, grayscale, grayscale_blur, cdst, edges, alg_results);
+		process_tower_lights_red(frame, grayscale, grayscale_blur, cdst, edges, lines, alg_results);
 	} else if ( algorithm == ALGORITHM_TOWER_LIGHTS_BLUE ) {
-		process_tower_lights_blue(frame, grayscale, grayscale_blur, cdst, edges, alg_results);
+		process_tower_lights_blue(frame, grayscale, grayscale_blur, cdst, edges, lines, alg_results);
 	}
 	 
-	//process_circles(frame, grayscale, cdst, alg_results);	
+	//process_circles(frame, grayscale, cdst, edges, lines, alg_results);	
 	waitKey(0);
 
 	return -1;
@@ -540,6 +600,7 @@ int camera_main(char *video_file, videoproc_settings& settings)
     init_algorithm_results(alg_results);
 
     Mat edges;
+    Mat lines;
     Mat grayscale;
     Mat grayscale_blur;
     Mat cdst;
@@ -570,15 +631,15 @@ int camera_main(char *video_file, videoproc_settings& settings)
 
         std::chrono::steady_clock::time_point algo_begin = std::chrono::steady_clock::now();
 	    if ( settings.algorithm == ALGORITHM_SHIELD_DIVIDER ) {
-		    process_frame_shield_divider(frame, grayscale, grayscale_blur, cdst, edges, alg_results);
+		    process_frame_shield_divider(frame, grayscale, grayscale_blur, cdst, edges, lines, alg_results);
 	    } else if ( settings.algorithm == ALGORITHM_TOWER_RETROREFLECTIVE_TAPE ) {
-		   process_retroreflective_tape(frame, grayscale, grayscale_blur, cdst, edges, alg_results);
+		   process_retroreflective_tape(frame, grayscale, grayscale_blur, cdst, edges, lines, alg_results);
 	    } else if ( settings.algorithm == ALGORITHM_TOWER_OPENING ) {
-		    process_tower_openings(frame, grayscale, grayscale_blur, cdst, edges, alg_results);
+		    process_tower_openings(frame, grayscale, grayscale_blur, cdst, edges, lines, alg_results);
 	    } else if ( settings.algorithm == ALGORITHM_TOWER_LIGHTS_RED ) {
-		    process_tower_lights_red(frame, grayscale, grayscale_blur, cdst, edges, alg_results);
+		    process_tower_lights_red(frame, grayscale, grayscale_blur, cdst, edges, lines, alg_results);
 	    } else if ( settings.algorithm == ALGORITHM_TOWER_LIGHTS_BLUE ) {
-		    process_tower_lights_blue(frame, grayscale, grayscale_blur, cdst, edges, alg_results);
+		    process_tower_lights_blue(frame, grayscale, grayscale_blur, cdst, edges, lines, alg_results);
 	    }	    
 	    set_algorithm_results(alg_results);
         std::chrono::steady_clock::time_point algo_end = std::chrono::steady_clock::now();
@@ -592,7 +653,13 @@ int camera_main(char *video_file, videoproc_settings& settings)
             }
             if ( mjpg_streamer_output ) {
                 if ( !file_exists( mjpg_streamer_file ) ) {
-                    imwrite(mjpg_streamer_file,frame,compression_params);
+                    Mat& stream_mat = frame;
+                    if ( settings.stream_type == 1 ) {
+                        stream_mat = edges;
+                    } else if ( settings.stream_type == 2 ) {
+                        stream_mat = lines;
+                    }
+                    imwrite(mjpg_streamer_file,stream_mat,compression_params);
                 }
             }
             std::chrono::steady_clock::time_point end = std::chrono::steady_clock::now();
@@ -828,7 +895,7 @@ int rectangle_area(Point p1, Point p2, Point p3, Point p4)
 	return area_tri1 + area_tri2;
 }
 
-void process_tower_openings( Mat& frame, Mat& grayscale, Mat& grayscale_blur, Mat& cdst, Mat& edges, algorithm_results& results )
+void process_tower_openings( Mat& frame, Mat& grayscale, Mat& grayscale_blur, Mat& cdst, Mat& edges, Mat& lines, algorithm_results& results )
 {
 	cvtColor(frame, grayscale, COLOR_BGR2GRAY);
 
@@ -850,7 +917,7 @@ void process_tower_openings( Mat& frame, Mat& grayscale, Mat& grayscale_blur, Ma
 
 	/// Screen out all but interesting contours
 	vector<vector<Point> > valid_contours;
-	Mat lines = Mat::zeros( thresholded_image.size(), CV_8UC3 );
+	lines = Mat::zeros( thresholded_image.size(), CV_8UC3 );
 	for( int i = 0; i< contours.size(); i++ )
 	{
 		vector<Point> vp = contours[i];
@@ -898,7 +965,7 @@ void process_tower_openings( Mat& frame, Mat& grayscale, Mat& grayscale_blur, Ma
 	imshow("edges", grayscale);
 }
 
-void process_retroreflective_tape( Mat& frame, Mat& grayscale, Mat& grayscale_blur, Mat& cdst, Mat& edges, algorithm_results& results ) 
+void process_retroreflective_tape( Mat& frame, Mat& grayscale, Mat& grayscale_blur, Mat& cdst, Mat& edges, Mat& lines, algorithm_results& results ) 
 {
 	Mat ch1, ch2, ch3;
 	Mat thresholded_image;
@@ -920,7 +987,7 @@ void process_retroreflective_tape( Mat& frame, Mat& grayscale, Mat& grayscale_bl
 
 	/// Screen out all but interesting contours
 	vector<vector<Point> > valid_contours;
-	Mat lines = Mat::zeros( thresholded_image.size(), CV_8UC3 );
+	lines = Mat::zeros( thresholded_image.size(), CV_8UC3 );
 	for( int i = 0; i< contours.size(); i++ )
 	{
 		vector<Point> vp = contours[i];
@@ -943,14 +1010,14 @@ void process_retroreflective_tape( Mat& frame, Mat& grayscale, Mat& grayscale_bl
 	imshow("lines", lines);
 }
 
-void process_tower_lights_red( Mat& frame, Mat& grayscale, Mat& grayscale_blur, Mat& cdst, Mat& edges, algorithm_results& results ) {
+void process_tower_lights_red( Mat& frame, Mat& grayscale, Mat& grayscale_blur, Mat& cdst, Mat& edges, Mat& lines, algorithm_results& results ) {
     bool blue = false;
-    process_tower_lights( frame, grayscale, grayscale_blur, cdst, edges, results, blue ); 
+    process_tower_lights( frame, grayscale, grayscale_blur, cdst, edges, lines, results, blue ); 
 } 
 
-void process_tower_lights_blue( Mat& frame, Mat& grayscale, Mat& grayscale_blur, Mat& cdst, Mat& edges, algorithm_results& results ) {
+void process_tower_lights_blue( Mat& frame, Mat& grayscale, Mat& grayscale_blur, Mat& cdst, Mat& edges, Mat& lines, algorithm_results& results ) {
     bool blue = true;
-    process_tower_lights( frame, grayscale, grayscale_blur, cdst, edges, results, blue );
+    process_tower_lights( frame, grayscale, grayscale_blur, cdst, edges, lines, results, blue );
 }
 
 typedef struct {
@@ -965,9 +1032,9 @@ typedef struct {
 
 #define MIN_COLLINEAR_POINTS 4
 
-void process_tower_lights( Mat& frame, Mat& grayscale, Mat& grayscale_blur, Mat& cdst, Mat& edges, algorithm_results& results, bool blue ) 
+void process_tower_lights( Mat& frame, Mat& grayscale, Mat& grayscale_blur, Mat& cdst, Mat& edges, Mat& lines, algorithm_results& results, bool blue ) 
 {
-	Mat thresholded_lights_image;
+	Mat& thresholded_lights_image = edges;
 	Mat thresholded_target_image;
 	vector<Mat> channels(3);
 	
@@ -1005,7 +1072,7 @@ void process_tower_lights( Mat& frame, Mat& grayscale, Mat& grayscale_blur, Mat&
     /// Detect Retroreflective Target
 	/// Screen out all but interesting contours
 	vector<vector<Point> > valid_target_contours;
-	Mat lines = Mat::zeros( thresholded_target_image.size(), CV_8UC3 );
+	lines = Mat::zeros( thresholded_target_image.size(), CV_8UC3 );
 
 	for( int i = 0; i< target_contours.size(); i++ )
 	{
@@ -1051,7 +1118,7 @@ void process_tower_lights( Mat& frame, Mat& grayscale, Mat& grayscale_blur, Mat&
 		/*
 		float aspect = (float)boundRect.width/(float)boundRect.height;
 		if(aspect < 1.0) {
-			continue;
+			continue; 
 		}
 		*/
 		Scalar color = Scalar( 255, 255, 255 );
@@ -1068,7 +1135,7 @@ void process_tower_lights( Mat& frame, Mat& grayscale, Mat& grayscale_blur, Mat&
 
     int max_vert_collinear_points = INT_MIN;
     int max_horz_collinear_points = INT_MIN;
-    std::cout << "New Frame" << std::endl;
+    //std::cout << "New Frame" << std::endl;
     vector<interesting_contour *> v_contours_by_angle[360];
     vector<interesting_contour *> h_contours_by_angle[360];
    
@@ -1166,7 +1233,7 @@ void process_tower_lights( Mat& frame, Mat& grayscale, Mat& grayscale_blur, Mat&
        nth_triangle_collinear_pts += i;
     }
 
-	std::cout << "NumPotentialLights:  " << potential_lights.size() << std::endl;
+	//std::cout << "NumPotentialLights:  " << potential_lights.size() << std::endl;
 	
     bool detected_tower_lights = false;	    
     /** Vertical (Tower) Detection */	
@@ -1233,7 +1300,7 @@ void process_tower_lights( Mat& frame, Mat& grayscale, Mat& grayscale_blur, Mat&
 	if ( ( max_vert_intersecting_contours > 0 ) &&
 	     ( max_vert_int_contours.size() >= MIN_COLLINEAR_POINTS ) ) {
 	    detected_tower_lights = true;
-	    std::cout << "NumVContours:  " << max_vert_int_contours.size() << std::endl;
+	    //std::cout << "NumVContours:  " << max_vert_int_contours.size() << std::endl;
 	    for ( int i = 0; i < max_vert_int_contours.size(); i++ ) {
 	        cv::circle( lines, (*(max_vert_int_contours[i])).pt, 5, Scalar(0,255,0), -1);	            	    
         }
@@ -1309,7 +1376,7 @@ void process_tower_lights( Mat& frame, Mat& grayscale, Mat& grayscale_blur, Mat&
 	if ( (!detected_tower_lights) &&
 	     ( max_horz_intersecting_contours > 0 ) &&
 	     ( max_horz_int_contours.size() >= MIN_COLLINEAR_POINTS ) ) {
-	    std::cout << "NumHContours:  " << max_horz_int_contours.size() << std::endl;
+	    //std::cout << "NumHContours:  " << max_horz_int_contours.size() << std::endl;
 	    for ( int i = 0; i < max_horz_int_contours.size(); i++ ) {
 	        cv::circle( lines, (*(max_horz_int_contours[i])).pt, 5, Scalar(255,0,0), -1);	            	    
         }
@@ -1340,7 +1407,7 @@ void process_tower_lights( Mat& frame, Mat& grayscale, Mat& grayscale_blur, Mat&
 /* Allowable range (deviation from vertical) for dividers */
 #define DIVIDER_EDGE_VERTICAL_DEV_DEGREES 15.0f
 
-void process_frame_shield_divider( Mat& frame, Mat& grayscale, Mat& grayscale_blur, Mat& cdst, Mat& edges, algorithm_results& results ) 
+void process_frame_shield_divider( Mat& frame, Mat& grayscale, Mat& grayscale_blur, Mat& unused, Mat& edges, Mat& cdst, algorithm_results& results ) 
 {
 	vector<Vec4i> lines;
 	cvtColor(frame, grayscale, COLOR_BGR2GRAY);
@@ -1484,7 +1551,7 @@ void process_frame_shield_divider( Mat& frame, Mat& grayscale, Mat& grayscale_bl
 	imshow("lines", cdst);
 }
 
-int process_circles(Mat& src, Mat& grayscale, Mat& cdst, algorithm_results& results)
+int process_circles(Mat& src, Mat& grayscale, Mat& cdst, Mat& edges, Mat& lines, algorithm_results& results)
 {
   /// Convert it to gray
   cvtColor( src, grayscale, CV_BGR2GRAY );
