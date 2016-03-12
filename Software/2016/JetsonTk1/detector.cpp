@@ -24,7 +24,7 @@
 #include <thread>
 #include "ntcore.h"
 #include "networktables/NetworkTable.h"
-
+#include <math.h>
 
 using namespace cv;
 
@@ -56,15 +56,18 @@ typedef struct {
 void process_frame_shield_divider( Mat& frame, Mat& grayscale, Mat& grayscale_blur, Mat& cdst, Mat& edges, algorithm_results& results );
 void process_retroreflective_tape( Mat& frame, Mat& grayscale, Mat& grayscale_blur, Mat& cdst, Mat& edges, algorithm_results& results );
 void process_tower_openings( Mat& frame, Mat& grayscale, Mat& grayscale_blur, Mat& cdst, Mat& edges, algorithm_results& results );
-
 int process_circles(Mat& src, Mat& grayscale, Mat& cdst, algorithm_results& results);
+void process_tower_lights_red( Mat& frame, Mat& grayscale, Mat& grayscale_blur, Mat& cdst, Mat& edges, algorithm_results& results );
+void process_tower_lights_blue( Mat& frame, Mat& grayscale, Mat& grayscale_blur, Mat& cdst, Mat& edges, algorithm_results& results );
+void process_tower_lights( Mat& frame, Mat& grayscale, Mat& grayscale_blur, Mat& cdst, Mat& edges, algorithm_results& results, bool blue ); 
 
 #define ALGORITHM_SHIELD_DIVIDER               1
 #define ALGORITHM_TOWER_RETROREFLECTIVE_TAPE   2
 #define ALGORITHM_TOWER_OPENING                3
-#define ALGORITHM_NONE                         4
+#define ALGORITHM_TOWER_LIGHTS_BLUE            4
+#define ALGORITHM_TOWER_LIGHTS_RED             5
 #define ALGORITHM_FIRST			               1
-#define ALGORITHM_LAST                         ALGORITHM_NONE			      
+#define ALGORITHM_LAST                         ALGORITHM_TOWER_LIGHTS_RED			      
 
 std::mutex alg_stats_mutex;
 algorithm_stats curr_alg_stats;
@@ -410,6 +413,7 @@ int main(int argc, char** argv)
 		    std::string arg(argv[2]);
 		    if( (arg.substr(arg.find_last_of(".") + 1) == "mp4") ||
 		        (arg.substr(arg.find_last_of(".") + 1) == "avi") ) {
+			    std::cout << "Running camera_main() with file " << arg << std::endl;
 			    camera_main(argv[2], curr_settings);
 			} else if ((arg == "0") ||
                        (arg == "1")) {
@@ -451,7 +455,12 @@ int image_main(char *img, int algorithm)
 		process_retroreflective_tape(frame, grayscale, grayscale_blur, cdst, edges, alg_results);
 	} else if ( algorithm == ALGORITHM_TOWER_OPENING ) {
 		process_tower_openings(frame, grayscale, grayscale_blur, cdst, edges, alg_results);
+	} else if ( algorithm == ALGORITHM_TOWER_LIGHTS_RED ) {
+		process_tower_lights_red(frame, grayscale, grayscale_blur, cdst, edges, alg_results);
+	} else if ( algorithm == ALGORITHM_TOWER_LIGHTS_BLUE ) {
+		process_tower_lights_blue(frame, grayscale, grayscale_blur, cdst, edges, alg_results);
 	}
+	 
 	//process_circles(frame, grayscale, cdst, alg_results);	
 	waitKey(0);
 
@@ -467,6 +476,7 @@ int camera_main(char *video_file, videoproc_settings& settings)
     VideoWriter *still_writer = NULL; /* Output MJPG File for reading by mjpg-streamer */
     if ( video_file != NULL ) {
         cap = new VideoCapture(video_file);
+        std::cout << "Opened VideoCapture on " << video_file << std::endl;
         live_camera_source = false;
     } else {
         if ( settings.input_camera == 0 ) {
@@ -536,13 +546,24 @@ int camera_main(char *video_file, videoproc_settings& settings)
     namedWindow("edges",1);
     namedWindow("lines",1);
     startWindowThread();
+    std::cout << "camera_main() initialization complete." << std::endl;
     while(!settings_change && !quit_algorithm)
     {
         Mat inframe;
 	    Mat frame;
-
+        printf("Starting processing loop.\n");
         std::chrono::steady_clock::time_point begin = std::chrono::steady_clock::now();
-        *cap >> frame;
+        printf("Acquiring frame...\n");
+        if ( video_file == NULL ) {
+            printf("Reading from camera\n");
+            *cap >> frame;
+        } else {
+            printf("Reading frame...");
+            *cap >> inframe;
+            printf("read from file complete....");
+            resize(inframe,frame,size);
+            printf("Resize complete.\n");
+        }
         std::chrono::steady_clock::time_point end = std::chrono::steady_clock::now();
         alg_stats.last_read_time_us = std::chrono::duration_cast<std::chrono::microseconds>(end - begin).count();
         std::cout << "Camera Read (us):  " << alg_stats.last_read_time_us << std::endl;
@@ -554,6 +575,10 @@ int camera_main(char *video_file, videoproc_settings& settings)
 		   process_retroreflective_tape(frame, grayscale, grayscale_blur, cdst, edges, alg_results);
 	    } else if ( settings.algorithm == ALGORITHM_TOWER_OPENING ) {
 		    process_tower_openings(frame, grayscale, grayscale_blur, cdst, edges, alg_results);
+	    } else if ( settings.algorithm == ALGORITHM_TOWER_LIGHTS_RED ) {
+		    process_tower_lights_red(frame, grayscale, grayscale_blur, cdst, edges, alg_results);
+	    } else if ( settings.algorithm == ALGORITHM_TOWER_LIGHTS_BLUE ) {
+		    process_tower_lights_blue(frame, grayscale, grayscale_blur, cdst, edges, alg_results);
 	    }	    
 	    set_algorithm_results(alg_results);
         std::chrono::steady_clock::time_point algo_end = std::chrono::steady_clock::now();
@@ -604,6 +629,17 @@ float angle_between(const Point &v1, const Point &v2)
 	return (float)Angle;
 }
 
+void new_point_at_angle(const Point &v1, float angle, int length, Point& out)
+{
+    angle += 90;
+    if (angle >= 360) {
+        angle -= 360;
+    }
+    double angle_radians = angle * CV_PI / 180.0;
+    out.x = (int)round(v1.x + length * cos(angle_radians));
+    out.y = (int)round(v1.y + length * sin(angle_radians));
+}
+
 void project_line(const Point &v1, const Point &v2, Point &out_begin, Point& out_end)
 {
 	float slope =
@@ -615,12 +651,17 @@ void project_line(const Point &v1, const Point &v2, Point &out_begin, Point& out
 		v2.x, v2.y);
 
 	if (isinf(slope)) {
+	    printf("Inf slope.\n");
 		if ( v1.x == v2.x ) {
-			out_begin.x = 0;
-			out_end.x = FRAME_HEIGHT_PIXELS - 1;
-		} else if ( v1.y == v2.y ) {
+		    out_begin.x = v1.x;
 			out_begin.y = 0;
-			out_end.y = FRAME_WIDTH_PIXELS - 1;
+			out_end.x = v2.x;
+			out_end.y = FRAME_HEIGHT_PIXELS - 1;
+		} else if ( v1.y == v2.y ) {
+			out_begin.x = 0;
+			out_begin.y = v1.y;
+			out_end.x = FRAME_WIDTH_PIXELS - 1;
+			out_end.y = v2.y;
 		}
 		return;
 	}
@@ -646,6 +687,87 @@ void project_line(const Point &v1, const Point &v2, Point &out_begin, Point& out
 		out_end.x = v2.x + (((FRAME_HEIGHT_PIXELS-1) - v2.y) / slope); /* Positive slope */
 		out_end.y = FRAME_HEIGHT_PIXELS - 1;
 	}
+	printf("out1:  %i,%i, out2:  %i,%i\n",
+		out_begin.x, out_begin.y,
+		out_end.x, out_end.y);	
+}
+
+void project_line_at_angle(const Point &v1, float angle, Point &out1, Point &out2)
+{
+    Point v2;
+    new_point_at_angle(v1, angle, FRAME_WIDTH_PIXELS, v2);
+    project_line(v1, v2, out1, out2);
+}
+
+bool point_in_polygon( const Point& pt, Point* points, int num_points)
+{
+    int i, j, nvert = num_points;
+    bool c = false;
+    for (i = 0, j = nvert - 1; i < nvert; j = i++) {
+        if( ( (points[i].y >= pt.y) != (points[j].y >= pt.y) ) &&
+            (pt.x <= (points[j].x - points[i].x) * 
+                (pt.y - points[i].y) / (points[j].y - points[i].y) + points[i].x))
+            c = !c;
+    } 
+}
+
+typedef struct {
+    Point box[4];
+    Point centerline_begin;
+    Point centerline_end;
+} enclosing_polygon;
+
+bool project_pt_and_angle_to_square(const Point &v1, float angle, int rect_width_degrees, enclosing_polygon& out) 
+{
+    /* 1) Determine line along angle which passes through point and extends across frame. */
+    project_line_at_angle(v1, angle, out.centerline_begin, out.centerline_end);
+    Point2f start(out.centerline_begin.x, out.centerline_begin.y);
+    Point2f end(out.centerline_end.x, out.centerline_end.y);
+    Point2f midpoint = (start + end)*.5;
+    Point midpoint_i( (int)midpoint.x, (int)midpoint.y);
+    printf("Initial Point:  %d, %d\n", v1.x, v1.y);
+    printf("Angle:  %f, Start:  %d, %d  End:  %d, %d  Midpoint:  %d, %d\n",angle, out.centerline_begin.x, out.centerline_begin.y, out.centerline_end.x, out.centerline_end.y, midpoint_i.x, midpoint_i.y);
+    /* 2) Determine line along angle-width, angle+width which passes through point */
+    Point v2;
+    Point lesser_angle_line_begin;
+    Point lesser_angle_line_end;
+    float lesser_angle = angle - rect_width_degrees;
+    if ( lesser_angle < 0 ) {
+        lesser_angle += 360;
+    }
+    new_point_at_angle(midpoint_i, lesser_angle, FRAME_WIDTH_PIXELS, v2);
+    project_line(midpoint_i, v2, lesser_angle_line_begin, lesser_angle_line_end);   
+    /* 3) Determine line along angle+width, angle-width which passes through point */
+    Point greater_angle_line_begin;
+    Point greater_angle_line_end;
+    float greater_angle = angle + rect_width_degrees;
+    if ( greater_angle >= 360 ) {
+        greater_angle -= 360;
+    }
+    new_point_at_angle(midpoint_i, greater_angle, FRAME_WIDTH_PIXELS, v2);
+    project_line(midpoint_i, v2, greater_angle_line_begin, greater_angle_line_end);
+    /* 3) Create rect which fully encompasses 2) */
+    out.box[0].x = lesser_angle_line_begin.x;
+    out.box[0].y = lesser_angle_line_begin.y;
+    out.box[1].x = greater_angle_line_begin.x;
+    out.box[1].y = greater_angle_line_begin.y;
+    out.box[2].x = lesser_angle_line_end.x;
+    out.box[2].y = lesser_angle_line_end.y;
+    out.box[3].x = greater_angle_line_end.x;
+    out.box[3].y = greater_angle_line_end.y;
+    printf("Rect Points:  %d, %d, %d, %d, %d, %d, %d, %d\n", out.box[0].x, 
+                                                             out.box[0].y,    
+                                                             out.box[1].x,    
+                                                             out.box[1].y,
+                                                             out.box[2].x,    
+                                                             out.box[2].y,    
+                                                             out.box[3].x,    
+                                                             out.box[3].y);
+
+    bool pt_in_polygon = point_in_polygon(v1,out.box,sizeof(out.box)/sizeof(out.box[0]));
+    printf("Point in Polygon:  %s\n",  pt_in_polygon ? "true" : "false");
+
+    return true;
 }
 
 // Finds the intersection of two lines, or returns false.
@@ -825,6 +947,287 @@ void process_retroreflective_tape( Mat& frame, Mat& grayscale, Mat& grayscale_bl
 	imshow("lines", lines);
 }
 
+void process_tower_lights_red( Mat& frame, Mat& grayscale, Mat& grayscale_blur, Mat& cdst, Mat& edges, algorithm_results& results ) {
+    bool blue = false;
+    process_tower_lights( frame, grayscale, grayscale_blur, cdst, edges, results, blue ); 
+} 
+
+void process_tower_lights_blue( Mat& frame, Mat& grayscale, Mat& grayscale_blur, Mat& cdst, Mat& edges, algorithm_results& results ) {
+    bool blue = true;
+    process_tower_lights( frame, grayscale, grayscale_blur, cdst, edges, results, blue );
+}
+
+typedef struct {
+    Point pt;
+    Rect bounding_rect;
+} interesting_contour;
+
+#define VERTICAL_LIGHTS_ANGLE_RANGE 30
+#define HORIZONTAL_LIGHTS_ANGLE_RANGE 30
+
+#define COLLINEAR_ANGLE_RANGE   1
+
+#define MIN_COLLINEAR_POINTS 4
+
+void process_tower_lights( Mat& frame, Mat& grayscale, Mat& grayscale_blur, Mat& cdst, Mat& edges, algorithm_results& results, bool blue ) 
+{
+	Mat ch1, ch2, ch3;
+	Mat thresholded_image;
+
+	// "channels" is a vector of 3 Mat arrays:
+	vector<Mat> channels(3);
+	// split img:
+	split(frame, channels);
+	// Extract the green (if blue) or red channel
+	
+	int low_threshold = 248;
+	int channel = 1; /* Use Green Channel for Blue Lights */
+	if ( blue == false ) {
+	     low_threshold = 249;
+	     channel = 2; /* Use Red Channel for Red Lights */
+	}
+    
+    //GaussianBlur(channels[channel], thresholded_image, Size(3,3), 0.5, 0.5);
+	threshold(channels[channel], thresholded_image, low_threshold, 255, THRESH_BINARY);	
+	imshow("edges", thresholded_image);
+
+	vector<vector<Point> > contours;
+	vector<Vec4i> hierarchy;
+
+	/// Find contours
+	findContours( thresholded_image, contours, hierarchy, CV_RETR_EXTERNAL /* CV_RETR_TREE */, /*CV_CHAIN_APPROX_SIMPLE*/CV_CHAIN_APPROX_TC89_KCOS, Point(0, 0) );
+
+	/// Screen out all but interesting contours
+	vector<interesting_contour> potential_lights; 	
+	Mat lines = Mat::zeros( thresholded_image.size(), CV_8UC3 );
+	for( int i = 0; i< contours.size(); i++ )
+	{
+		vector<Point> vp = contours[i];
+		Rect boundRect = boundingRect(vp);		
+		if(boundRect.height < 3 || boundRect.width < 3){
+			continue;
+		}
+		/*
+		float aspect = (float)boundRect.width/(float)boundRect.height;
+		if(aspect < 1.0) {
+			continue;
+		}
+		*/
+		Scalar color = Scalar( 255, 255, 255 );
+		drawContours( lines, contours, i, color, 1, 8, hierarchy, 0, Point() );
+		
+        interesting_contour ic;
+	    Moments mu = moments(contours[i],false);
+	    ic.pt.x = (int) (mu.m10 / mu.m00);
+	    ic.pt.y = (int) (mu.m01 / mu.m00);
+	    ic.bounding_rect = boundRect;		
+	    cv::circle( lines, ic.pt, 3, Scalar(0,0,255), -1);
+        potential_lights.push_back(ic);		
+	}
+
+    int max_vert_collinear_points = INT_MIN;
+    int max_horz_collinear_points = INT_MIN;
+    std::cout << "New Frame" << std::endl;
+    vector<interesting_contour *> v_contours_by_angle[360];
+    vector<interesting_contour *> h_contours_by_angle[360];    
+    for ( int i = 0; i < potential_lights.size(); i++ ) {
+        for ( int j = 0; j < potential_lights.size(); j++ ) {
+            if ( i != j ) {
+                float angle = angle_between( potential_lights[i].pt, potential_lights[j].pt );
+                if ( ( ( angle > (360.0 - VERTICAL_LIGHTS_ANGLE_RANGE) ) &&
+                       ( angle < (0.0 + VERTICAL_LIGHTS_ANGLE_RANGE) ) ) ||
+                     ( ( angle > (180.0 - VERTICAL_LIGHTS_ANGLE_RANGE) ) &&
+                       ( angle < (180.0 + VERTICAL_LIGHTS_ANGLE_RANGE) ) ) ) {
+                    /* Possibly a vertical collinear point */
+                    /* Normalize angle so it runs from top of image to botton */
+                    if ( potential_lights[i].pt.y > potential_lights[j].pt.y ) {
+                        angle = angle_between( potential_lights[j].pt, potential_lights[i].pt);
+                    }
+                    if ( angle == 360 ) { 
+                        angle = 0;
+                    }
+                    v_contours_by_angle[(int)angle].push_back(&potential_lights[i]);
+                    v_contours_by_angle[(int)angle].push_back(&potential_lights[j]);
+                }
+                if ( ( ( angle > (90.0 - HORIZONTAL_LIGHTS_ANGLE_RANGE) ) &&
+                       ( angle < (90.0 + HORIZONTAL_LIGHTS_ANGLE_RANGE) ) ) ||
+                     ( ( angle > (270.0 - HORIZONTAL_LIGHTS_ANGLE_RANGE) ) &&
+                       ( angle < (270.0 + HORIZONTAL_LIGHTS_ANGLE_RANGE) ) ) ) {
+                    /* Normalize angle so it runs from left of image to right */
+                    if ( potential_lights[i].pt.x > potential_lights[j].pt.x ) {
+                        angle = angle_between( potential_lights[j].pt, potential_lights[i].pt);
+                    }
+                    if ( angle == 360 ) { 
+                        angle = 0;
+                    }                    
+                    h_contours_by_angle[(int)angle].push_back(&potential_lights[i]);
+                    h_contours_by_angle[(int)angle].push_back(&potential_lights[j]);
+                }                
+            }
+        }
+    }
+
+    /* Determine which vertical and horizontal angles represent the "dominant" angle */
+    /* (the angle with the greatest number of point intersections).                  */
+
+    int vert_per_angle_max_contour_count = -1;
+    int horz_per_angle_max_contour_count = -1;
+    int dominant_vert_angle = -1;
+    int dominant_horz_angle = -1;
+    for ( int angle = 0; angle < 360; angle++ ) {
+        int intersect_count = 0;
+        for ( int a = angle - COLLINEAR_ANGLE_RANGE; a < angle + COLLINEAR_ANGLE_RANGE; a++ ) {
+            int index = (a < 0) ? 360 + a : a;
+            intersect_count += v_contours_by_angle[index].size();
+        }
+        if ( intersect_count > vert_per_angle_max_contour_count ) {
+            vert_per_angle_max_contour_count = intersect_count;
+            dominant_vert_angle = angle;
+        }
+    }
+    
+    for ( int angle = 0; angle < 360; angle++ ) {
+        int intersect_count = 0;
+        for ( int a = angle - COLLINEAR_ANGLE_RANGE; a < angle + COLLINEAR_ANGLE_RANGE; a++ ) {
+            int index = (a < 0) ? 360 + a : a;
+            intersect_count += h_contours_by_angle[index].size();
+        }
+        if ( intersect_count > horz_per_angle_max_contour_count ) {
+            horz_per_angle_max_contour_count = intersect_count;
+            dominant_horz_angle = angle;
+        }
+    }
+    
+    /* Multiple lines may exist which intersect points along the "dominant" angle   */
+    /* Select the line having the greatest number of points which fall within the   */
+    /* (possibly rotated) rectangle formed by the angle, each interesting point,    */
+    /* and the COLLINEAR_ANGLE_RANGE                                                */ 
+    
+    /* If the "dominant" angles have sufficient points, draw the points along */
+    /* the dominant vertical and horizontal angles.                           */
+
+    int nth_triangle_collinear_pts = MIN_COLLINEAR_POINTS;
+    for ( int i = nth_triangle_collinear_pts - 1; i > 0; i-- ) {
+       nth_triangle_collinear_pts += i;
+    }
+
+	std::cout << "NumPotentialLights:  " << potential_lights.size() << std::endl;
+
+	
+    vector<interesting_contour *>h_contours_in_dom_angle_range;
+    if ( horz_per_angle_max_contour_count > nth_triangle_collinear_pts ) {
+        for ( int a = dominant_horz_angle - COLLINEAR_ANGLE_RANGE; a < dominant_horz_angle + COLLINEAR_ANGLE_RANGE; a++ ) {
+            int index = (a < 0) ? 360 + a : a;    	
+            for ( int i = 0; i < h_contours_by_angle[index].size(); i++ ) {
+                h_contours_in_dom_angle_range.push_back( h_contours_by_angle[index][i] );
+	        }
+	    }
+	}
+	    
+    int max_horz_intersecting_contours = -1;
+    enclosing_polygon max_horz_intersection_enc_poly;
+    vector<interesting_contour *>max_horz_int_contours;
+	    
+    for ( int i = 0; i < h_contours_in_dom_angle_range.size(); i++ ) {
+        enclosing_polygon enclosing_poly;
+        project_pt_and_angle_to_square(
+            (*(h_contours_in_dom_angle_range[i])).pt,
+            dominant_horz_angle,
+            COLLINEAR_ANGLE_RANGE,
+            enclosing_poly);
+        int intersecting_contour_count = 0;
+        vector<interesting_contour *>intersecting_horz_contours;
+        for ( int j = 0; j < h_contours_in_dom_angle_range.size(); j++ ) {
+            if ( i != j ) {
+                if ( point_in_polygon( (*(h_contours_in_dom_angle_range[j])).pt,
+                                       enclosing_poly.box,
+                                       sizeof(enclosing_poly.box)/
+                                           sizeof(enclosing_poly.box[0]))) {
+                    intersecting_contour_count++;
+                    intersecting_horz_contours.push_back(h_contours_in_dom_angle_range[j]);
+                } 
+            }                       
+        }
+        if ( intersecting_contour_count > max_horz_intersecting_contours ) {
+            max_horz_intersecting_contours = intersecting_contour_count;
+            max_horz_intersection_enc_poly = enclosing_poly;
+            max_horz_int_contours = intersecting_horz_contours;
+        }
+    }
+	
+	if ( ( max_horz_intersecting_contours > 0 ) &&
+	     ( max_horz_int_contours.size() >= MIN_COLLINEAR_POINTS ) ) {
+	    std::cout << "NumHContours:  " << max_horz_int_contours.size() << std::endl;
+	    for ( int i = 0; i < max_horz_int_contours.size(); i++ ) {
+	        cv::circle( lines, (*(max_horz_int_contours[i])).pt, 5, Scalar(255,0,0), -1);	            	    
+        }
+        for ( int i = 0; i < 4; i++ ) {
+            line( lines, max_horz_intersection_enc_poly.box[i], max_horz_intersection_enc_poly.box[(i+1)%4], Scalar(255,0,0));
+        }
+        line( lines, max_horz_intersection_enc_poly.centerline_begin, 
+                     max_horz_intersection_enc_poly.centerline_end,
+                     Scalar(0,255,255));
+	}
+
+    /** Vertical (Tower) Detection */	
+	
+    vector<interesting_contour *>v_contours_in_dom_angle_range;
+    if ( vert_per_angle_max_contour_count > nth_triangle_collinear_pts ) {
+        for ( int a = dominant_vert_angle - COLLINEAR_ANGLE_RANGE; a < dominant_vert_angle + COLLINEAR_ANGLE_RANGE; a++ ) {
+            int index = (a < 0) ? 360 + a : a;    	
+            for ( int i = 0; i < v_contours_by_angle[index].size(); i++ ) {
+                v_contours_in_dom_angle_range.push_back( v_contours_by_angle[index][i] );
+	        }
+	    }
+	}
+	    
+    int max_vert_intersecting_contours = -1;
+    enclosing_polygon max_vert_intersection_enc_poly;
+    vector<interesting_contour *>max_vert_int_contours;
+	    
+    for ( int i = 0; i < v_contours_in_dom_angle_range.size(); i++ ) {
+        enclosing_polygon enclosing_poly;
+        project_pt_and_angle_to_square(
+            (*(v_contours_in_dom_angle_range[i])).pt,
+            dominant_vert_angle,
+            COLLINEAR_ANGLE_RANGE,
+            enclosing_poly);
+        int intersecting_contour_count = 0;
+        vector<interesting_contour *>intersecting_vert_contours;
+        for ( int j = 0; j < v_contours_in_dom_angle_range.size(); j++ ) {
+            if ( i != j ) {
+                if ( point_in_polygon( (*(v_contours_in_dom_angle_range[j])).pt,
+                                       enclosing_poly.box,
+                                       sizeof(enclosing_poly.box)/
+                                           sizeof(enclosing_poly.box[0]))) {
+                    intersecting_contour_count++;
+                    intersecting_vert_contours.push_back(v_contours_in_dom_angle_range[j]);
+                } 
+            }                       
+        }
+        if ( intersecting_contour_count > max_vert_intersecting_contours ) {
+            max_vert_intersecting_contours = intersecting_contour_count;
+            max_vert_intersection_enc_poly = enclosing_poly;
+            max_vert_int_contours = intersecting_vert_contours;
+        }
+    }
+	
+	if ( ( max_vert_intersecting_contours > 0 ) &&
+	     ( max_vert_int_contours.size() >= MIN_COLLINEAR_POINTS ) ) {
+	    std::cout << "NumVContours:  " << max_vert_int_contours.size() << std::endl;
+	    for ( int i = 0; i < max_vert_int_contours.size(); i++ ) {
+	        cv::circle( lines, (*(max_vert_int_contours[i])).pt, 5, Scalar(0,255,0), -1);	            	    
+        }
+        for ( int i = 0; i < 4; i++ ) {
+            line( lines, max_vert_intersection_enc_poly.box[i], max_vert_intersection_enc_poly.box[(i+1)%4], Scalar(0,255,0));
+        }
+        line( lines, max_vert_intersection_enc_poly.centerline_begin, 
+                     max_vert_intersection_enc_poly.centerline_end,
+                     Scalar(255,255,0));
+	}
+	
+	imshow("lines", lines);
+}
 
 #define HORIZONTAL_LINE_ANGLE_DEGREES  90.0f
 #define VERTICAL_LINE_ANGLE_DEGREES     0.0f
