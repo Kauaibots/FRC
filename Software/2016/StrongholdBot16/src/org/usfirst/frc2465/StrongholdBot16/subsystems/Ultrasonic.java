@@ -142,8 +142,8 @@ public class Ultrasonic extends Subsystem {
 					 packet[15] ==(byte)','){
 					frontRight = Integer.valueOf(packet_string.substring(0,3));
 					frontLeft = Integer.valueOf(packet_string.substring(4,7));
-					backRight = Integer.valueOf(packet_string.substring(8,11));
-					backLeft = Integer.valueOf(packet_string.substring(12,15));
+					backLeft = Integer.valueOf(packet_string.substring(8,11));
+					backRight = Integer.valueOf(packet_string.substring(12,15));
 					frontCenter = Integer.valueOf(packet_string.substring(16,19));
 					return true;
 				}
