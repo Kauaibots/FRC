@@ -19,6 +19,7 @@ unsigned long pingTimer[SONAR_NUM]; // Holds the times when the next ping should
 unsigned int cm[SONAR_NUM];         // Where the ping distances are stored.
 uint8_t currentSensor = 0;          // Keeps track of which sensor is active.
 
+/* Note:  This table was modified, loaded to practice bot on 3/10/2016. */
 NewPing sonar[SONAR_NUM] = {       // Sensors (Trigger Pin, Echo Pin)
   NewPing(2, 3, MAX_DISTANCE),     // Front Left
   NewPing(4, 5, MAX_DISTANCE),     // Front Right
@@ -55,7 +56,7 @@ void echoCheck() { // If ping received, set the sensor distance to array.
 
 void oneSensorCycle() { // Sensor ping cycle complete, do something with the results.
   /* Create packet with distance from 5 sensors, checksum, and
-   *  a carriage-return and linefeed:
+   *  a carriage-return and linefeed: 
    *  
    *  Example:
    *  
