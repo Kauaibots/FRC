@@ -4,12 +4,15 @@ import org.usfirst.frc2465.StrongholdBot16.Robot;
 import org.usfirst.frc2465.StrongholdBot16.RobotMap;
 
 import edu.wpi.first.wpilibj.command.CommandGroup;
+import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 
 /**
  *
  */
 // :D
 public class BallGrab extends CommandGroup {
+	boolean isDone = false;
+	boolean inhaling = false;
 	
 	public BallGrab(){
 		requires(Robot.ballcontrol);
@@ -19,30 +22,38 @@ public class BallGrab extends CommandGroup {
 
     // Called just before this Command runs the first time
     protected void initialize() {
+    	if(Robot.ballcontrol.isBallPresent() == false){
+    		inhaling = true;
+    		Robot.ballcontrol.inhale();
+    	}
+    	else{
+    		inhaling = false;
+    		Robot.ballcontrol.exhale();
+    		Robot.ballcontrol.ballMotorExtend(5);
+    	}
+    	isDone = false;    	
     }
 
     // Called repeatedly when this Command is scheduled to run
     protected void execute() {
-    	if(Robot.ballcontrol.isBallPresent() == true){
-    		Robot.ballcontrol.exhale();
-    		if(Robot.ballcontrol.isBallPresent() == false){
-    			Robot.ballcontrol.hold();
-    		}
-    	}
-    	else if(Robot.ballcontrol.isBallPresent() == false){
-    		Robot.ballcontrol.inhale();
+    	
+    	if(inhaling == true){
     		if(Robot.ballcontrol.isBallPresent() == true){
-    			Robot.ballcontrol.hold();
+    			Robot.ballcontrol.ballMotorExtend(.125);
+    			inhaling = false;
     		}
     	}
     	else{
-    		Robot.ballcontrol.hold();
+    		isDone = Robot.ballcontrol.checkTime();
     	}
+    	
+    	SmartDashboard.putBoolean("BallPresent", Robot.ballcontrol.isBallPresent());
+    	SmartDashboard.putBoolean("Inhale", inhaling);
     }
 
     // Make this return true when this Command no longer needs to run execute()
     protected boolean isFinished() {
-		return false;
+		return isDone;
     }
 
     // Called once after isFinished returns true

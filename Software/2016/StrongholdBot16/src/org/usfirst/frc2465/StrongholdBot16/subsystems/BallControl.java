@@ -25,6 +25,8 @@ import edu.wpi.first.wpilibj.command.Subsystem;
  *
  */
 public class BallControl extends Subsystem {
+	double start_time = 0;
+	double timePeriod = 0;
 	VictorSP motorController = RobotMap.ballGrabSpeedController;
 	ProximitySensor ballDistance = RobotMap.infraredBallGrabberSensor;
 	public BallControl(){
@@ -36,28 +38,33 @@ public class BallControl extends Subsystem {
 	public boolean isBallPresent(){
 		double inches = ballDistance.getDistanceInches();
 		boolean present = false;
-		if(inches >= 6.0 && inches <= 16.0){
+		if((inches >= 6.0) && (inches <= 16.0)){
 		present = true;
 		}
 		return(present);
 	}
-	
-	public void ballMotorExtend(double time){ //gives the ball grabber extra motor time
-		double start_time = 0;
-		start_time = Timer.getFPGATimestamp();
-		if(start_time!=0){
-			if((Timer.getFPGATimestamp() - start_time) > time){
+	public boolean checkTime(){
+		if(start_time!= 0){
+			if((Timer.getFPGATimestamp() - start_time) > timePeriod){
 				hold();
+				start_time = 0;
+				return true;
 			}
 		}
+		return false;
+	}
+	
+	public void ballMotorExtend(double time){ //gives the ball grabber extra motor time
+		timePeriod = time;
+		start_time = Timer.getFPGATimestamp();
 	}
 	public void exhale(){
 			motorController.set(-1);
-			ballMotorExtend(.5);
+			ballMotorExtend(0.5);
 		}
 	public void inhale(){
 			motorController.set(1);
-			ballMotorExtend(.125);
+			ballMotorExtend(0.125);
 		}
 	public void hold(){
 			motorController.set(0);
