@@ -563,7 +563,7 @@ int camera_main(char *video_file, videoproc_settings& settings)
     printf("Frame Height:  %i\n", (int)cap->get(CV_CAP_PROP_FRAME_HEIGHT));
     printf("FPS:  %i\n", (int)cap->get(CV_CAP_PROP_FPS));
 
-    Size size(640,480);//the dst image size
+    Size size((int)cap->get(CV_CAP_PROP_FRAME_WIDTH),(int)cap->get(CV_CAP_PROP_FRAME_HEIGHT));//the dst image size
     std::string mjpg_streamer_dir;
     bool mjpg_streamer_dir_created;
     std::string mjpg_streamer_file;
@@ -572,7 +572,7 @@ int camera_main(char *video_file, videoproc_settings& settings)
         string output_filename;
         if ( settings.enable_file_out && find_next_output_video_file_name( output_filename ) ) {
             bool color = true;
-            writer = new VideoWriter( output_filename, 0/*CV_FOURCC('M','J','P','G')*/, 29.997, size, color);
+            writer = new VideoWriter( output_filename, /*CV_FOURCC('P','I','M','1')*/, 29.97, size, color);
         } else {
             printf("Unable to find available video output file name.\n");
         }
