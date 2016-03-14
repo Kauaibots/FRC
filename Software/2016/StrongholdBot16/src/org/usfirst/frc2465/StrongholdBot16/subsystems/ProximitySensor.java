@@ -91,7 +91,7 @@ public class ProximitySensor extends SensorBase implements PIDSource, LiveWindow
         return distance_mm;
     }
     
-    final static double mm_to_inches = 1/254;
+    final static double mm_to_inches = 1.0/25.4;
     
     public double getDistanceInches() {
         return getDistanceMM() * mm_to_inches;
@@ -103,7 +103,7 @@ public class ProximitySensor extends SensorBase implements PIDSource, LiveWindow
 
     public void updateTable() {
         if (table != null) {
-            table.putNumber("Value", getDistanceMM());
+            table.putNumber("Value", getDistanceInches());
         }
     }
 

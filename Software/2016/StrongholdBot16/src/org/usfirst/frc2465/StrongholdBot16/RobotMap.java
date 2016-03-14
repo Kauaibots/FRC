@@ -180,7 +180,7 @@ public class RobotMap {
         LiveWindow.addSensor("Infrared", "BackSensor", infraredBackSensor);
         
         infraredBallGrabberSensor = new ProximitySensor(infraredBallGrabber, ProximitySensor.kMediumRange);
-        LiveWindow.addSensor("Infrared", "BallGrabber", infraredBallGrabber);
+        LiveWindow.addSensor("Infrared", "BallGrabber", infraredBallGrabberSensor);
         
         visionRingLightRelay = new Relay(1);
         LiveWindow.addActuator("Vision", "RingLightRelay", visionRingLightRelay);
