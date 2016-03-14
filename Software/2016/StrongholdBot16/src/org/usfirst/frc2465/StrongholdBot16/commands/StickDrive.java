@@ -96,8 +96,8 @@ public class  StickDrive extends Command {
     // Called repeatedly when this Command is scheduled to run
     protected void execute() {
         
-        JoystickResponseCurveSet current = linear;
-        JoystickResponseCurveSet temp = conservative;
+        JoystickResponseCurveSet current = conservative;
+        JoystickResponseCurveSet temp = aggressive;
         
         Joystick driver = Robot.oi.driver;
         Joystick op = Robot.oi.opJoystick;
@@ -105,10 +105,6 @@ public class  StickDrive extends Command {
         double vY = driver.getX();
         double vRot = driver.getRawAxis(3);
                          
-        vX = current.transformStrafe(vX);
-        vY = current.transformForward(vY);
-        vRot = current.transformRotate(vRot);
-        
         if ( driver.getRawButton(4) )
         {
         	if ( RobotMap.imu != null ) {
@@ -120,8 +116,13 @@ public class  StickDrive extends Command {
         	 vX = temp.transformStrafe(vX);
              vY = temp.transformForward(vY);
              vRot = temp.transformRotate(vRot);
+        } 
+        else 
+        {
+            vX = current.transformStrafe(vX);
+            vY = current.transformForward(vY);
+            vRot = current.transformRotate(vRot);        	
         }
-        
         if ( driver.getRawButton(5))
         {
             Robot.drive.setFODEnabled(true);
