@@ -44,6 +44,7 @@ typedef struct {
     int    last_algorithm_time_us;
     int    last_read_time_us;
     int    last_write_time_us;
+    int    fps;
 } algorithm_stats;
 
 typedef struct {
@@ -68,13 +69,13 @@ typedef struct {
     detection_results shield;
 } algorithm_results;
 
-void process_frame_shield_divider( Mat& frame, Mat& grayscale, Mat& grayscale_blur, Mat& cdst, Mat& edges, Mat& lines, bool headless, algorithm_results& results );
-void process_retroreflective_tape( Mat& frame, Mat& grayscale, Mat& grayscale_blur, Mat& cdst, Mat& edges, Mat& lines, bool headless, algorithm_results& results );
-void process_tower_openings( Mat& frame, Mat& grayscale, Mat& grayscale_blur, Mat& cdst, Mat& edges, Mat& line, bool headless, algorithm_results& results );
-int process_circles(Mat& src, Mat& grayscale, Mat& cdst, Mat& edges, Mat& lines, bool headless, algorithm_results& results);
-void process_tower_lights_red( Mat& frame, Mat& grayscale, Mat& grayscale_blur, Mat& cdst, Mat& edges, Mat& lines, bool headless, algorithm_results& results );
-void process_tower_lights_blue( Mat& frame, Mat& grayscale, Mat& grayscale_blur, Mat& cdst, Mat& edges, Mat& lines, bool headless, algorithm_results& results );
-void process_tower_lights( Mat& frame, Mat& grayscale, Mat& grayscale_blur, Mat& cdst, Mat& edges, Mat& lines, bool headless, algorithm_results& results, bool blue ); 
+void process_frame_shield_divider( Mat& frame, Mat& grayscale, Mat& grayscale_blur, Mat& cdst, Mat& edges, Mat& lines, bool headless, int camera, algorithm_results& results );
+void process_retroreflective_tape( Mat& frame, Mat& grayscale, Mat& grayscale_blur, Mat& cdst, Mat& edges, Mat& lines, bool headless, int camera, algorithm_results& results );
+void process_tower_openings( Mat& frame, Mat& grayscale, Mat& grayscale_blur, Mat& cdst, Mat& edges, Mat& line, bool headless, int camera, algorithm_results& results );
+int process_circles(Mat& src, Mat& grayscale, Mat& cdst, Mat& edges, Mat& lines, bool headless, int camera, algorithm_results& results);
+void process_tower_lights_red( Mat& frame, Mat& grayscale, Mat& grayscale_blur, Mat& cdst, Mat& edges, Mat& lines, bool headless, int camera, algorithm_results& results );
+void process_tower_lights_blue( Mat& frame, Mat& grayscale, Mat& grayscale_blur, Mat& cdst, Mat& edges, Mat& lines, bool headless, int camera, algorithm_results& results );
+void process_tower_lights( Mat& frame, Mat& grayscale, Mat& grayscale_blur, Mat& cdst, Mat& edges, Mat& lines, bool headless, int camera, algorithm_results& results, bool blue ); 
 
 #define ALGORITHM_SHIELD_DIVIDER               1
 #define ALGORITHM_TOWER_RETROREFLECTIVE_TAPE   2
@@ -82,7 +83,86 @@ void process_tower_lights( Mat& frame, Mat& grayscale, Mat& grayscale_blur, Mat&
 #define ALGORITHM_TOWER_LIGHTS_BLUE            4
 #define ALGORITHM_TOWER_LIGHTS_RED             5
 #define ALGORITHM_FIRST			               1
-#define ALGORITHM_LAST                         ALGORITHM_TOWER_LIGHTS_RED			      
+#define ALGORITHM_LAST                         ALGORITHM_TOWER_LIGHTS_RED
+
+#define DEFAULT_CAMERA 0
+
+/* Camera image dimensions */
+
+#define BORDER_WIDTH_PIXELS 0
+#define FRAME_HEIGHT_PIXELS 480
+#define FRAME_WIDTH_PIXELS  640
+
+/* Camera 0:  Logitech C930e.   Diagonal Field of View (DFOV):  90 degrees */
+/* Camera 1:  MS Lifecam HD 3000. DFOV:  68.5                              */
+
+const double cam_0_dfov_degrees = 90.0;
+const double cam_1_dfov_degrees = 68.5;
+
+/* Camera 0 angular dimensions */
+
+const double cam_0_diagonal_pixels = sqrt((FRAME_WIDTH_PIXELS * FRAME_WIDTH_PIXELS) +
+                                          (FRAME_HEIGHT_PIXELS * FRAME_HEIGHT_PIXELS));
+const double cam_0_vfov_degrees = (cam_0_dfov_degrees * FRAME_HEIGHT_PIXELS) / 
+                                  cam_0_diagonal_pixels;
+const double cam_0_hfov_degrees = (cam_0_dfov_degrees * FRAME_WIDTH_PIXELS) / 
+                                  cam_0_diagonal_pixels;
+
+/* Camera 1 angular dimensions */
+
+const double cam_1_diagonal_pixels = sqrt((FRAME_WIDTH_PIXELS * FRAME_WIDTH_PIXELS) +
+                                          (FRAME_HEIGHT_PIXELS * FRAME_HEIGHT_PIXELS));
+const double cam_1_vfov_degrees = (cam_1_dfov_degrees * FRAME_HEIGHT_PIXELS) / 
+                                  cam_1_diagonal_pixels;
+const double cam_1_hfov_degrees = (cam_1_dfov_degrees * FRAME_WIDTH_PIXELS) / 
+                                  cam_1_diagonal_pixels;
+const double cam_hfovs[2] = {
+    cam_0_hfov_degrees,
+    cam_1_hfov_degrees
+};
+
+const double cam_vfovs[2] = {
+    cam_0_vfov_degrees,
+    cam_1_vfov_degrees
+};
+
+/* Camera 0 Mounting */
+
+const double cam_0_height_inches = 14.0;
+const double cam_0_angle_from_horizontal = 0.0;
+
+/* Camera 1 spatial dimensions */
+
+const double cam_1_height_inches = 14.0;
+const double cam_1_angle_from_horizontal = 0.0;
+
+const double cam_heights[2] = {
+    cam_0_height_inches,
+    cam_1_height_inches
+};
+
+const double cam_angles_from_horizontal[2] = {
+    cam_0_angle_from_horizontal,
+    cam_1_angle_from_horizontal
+};
+
+/* Stronghold Game Retroreflective Target Dimensions */
+
+const double height_to_retro_target_inches = 97;
+
+double angle_from_x( int x, int cam ) {
+    if ( ( cam < 0 ) || ( cam > 1 ) ) { return 0.0; } 
+    double x_from_center = x - (FRAME_WIDTH_PIXELS / 2);
+    double angle = (x_from_center / (FRAME_WIDTH_PIXELS / 2)) * (cam_hfovs[cam] / 2);
+    return angle;
+}
+
+double distance_from_y( int y, int y_height, int cam ) {
+    if ( ( cam < 0 ) || ( cam > 1 ) ) { return 0.0; } 
+    double distance = (double)y_height - cam_heights[cam];
+    distance /= tan( (y * (cam_vfovs[cam] / 2) + cam_angles_from_horizontal[cam]) * M_PI / 180.0);
+    return distance;
+}
 
 std::mutex alg_stats_mutex;
 algorithm_stats curr_alg_stats;
@@ -95,7 +175,8 @@ void init_algorithm_stats( algorithm_stats& stats )
     stats.algorithm_active = false;
     stats.last_algorithm_time_us = 0;
     stats.last_read_time_us = 0;
-    stats.last_write_time_us = 0;    
+    stats.last_write_time_us = 0;   
+    stats.fps = 0; 
 }
 
 void get_algorithm_stats( algorithm_stats& stats )
@@ -244,7 +325,7 @@ void init_videoproc_settings(videoproc_settings& settings) {
     settings.stream_type = 0;
     settings.enable_file_out = false;
     settings.algorithm = 999;
-    settings.input_camera = 999;
+    settings.input_camera = DEFAULT_CAMERA;
     settings.algorithm_param1 = 999.0;
     settings.algorithm_param2 = 999.0;
 }
@@ -274,7 +355,7 @@ typedef struct
 SafeQueue<MatPair> write_queue;
 bool stop_writer = false;
 
-void writer_thread(Size size, bool headless) {
+void writer_thread(Size size, bool headless, algorithm_stats* alg_stats) {
     VideoWriter *writer = NULL;
     VideoWriter *still_writer = NULL;
     std::string mjpg_streamer_dir;
@@ -331,6 +412,7 @@ void writer_thread(Size size, bool headless) {
             }
             std::chrono::steady_clock::time_point end = std::chrono::steady_clock::now();
             long last_write_time_us = std::chrono::duration_cast<std::chrono::microseconds>(end - begin).count();
+            alg_stats->last_write_time_us = last_write_time_us;
             if ( !headless ) {
                 std::cout << "Frame Write (us):  " << last_write_time_us << std::endl;
             }
@@ -382,7 +464,7 @@ void run_under_remote_control (char *server_ip_address)
      nt->PutNumber("algorithm",4);
   }
   if ( !nt->ContainsKey("input_camera") ) {
-     nt->PutNumber("input_camera",0);
+     nt->PutNumber("input_camera",DEFAULT_CAMERA);
   } 
   if ( !nt->ContainsKey("algorithm_param1") ) {
      nt->PutNumber("algorithm_param1",999);
@@ -402,6 +484,7 @@ void run_under_remote_control (char *server_ip_address)
     nt->PutNumber("last_algorithm_time_us", alg_stats.last_algorithm_time_us);
     nt->PutNumber("last_read_time_us", alg_stats.last_read_time_us);
     nt->PutNumber("last_write_time_us", alg_stats.last_write_time_us);
+    nt->PutNumber("fps", alg_stats.fps);
 
     nt->PutNumber("target_distance_inches", alg_results.target.distance_inches);
     nt->PutNumber("target_angle_degrees", alg_results.target.angle_degrees);
@@ -442,7 +525,10 @@ void run_under_remote_control (char *server_ip_address)
        //std::cout << "algorithm:  " << new_settings.algorithm << std::endl;
     }
     if ( nt->ContainsKey("input_camera") ) {
-       new_settings.input_camera = (int)nt->GetNumber("input_camera",999);
+       new_settings.input_camera = (int)nt->GetNumber("input_camera",DEFAULT_CAMERA);
+       if ( ( new_settings.input_camera != 0 ) && ( new_settings.input_camera != 1 ) ) {
+           new_settings.input_camera = DEFAULT_CAMERA;
+       }
        //std::cout << "input_camera:  " << new_settings.input_camera << std::endl;
     } 
     if ( nt->ContainsKey("algorithm_param1") ) {
@@ -579,24 +665,27 @@ int image_main(char *img, int algorithm)
 	Mat inframe = imread(img, CV_LOAD_IMAGE_COLOR);
 	Mat frame;
 
+    /* Not using a camera, so use the default for geometrical calculations. */
+    int camera = DEFAULT_CAMERA; 
+
     bool headless = false;
     algorithm_results alg_results;
     init_algorithm_results(alg_results);
 	Size size(640,480);//the dst image size
 	resize(inframe,frame,size);//resize image
 	if ( algorithm == ALGORITHM_SHIELD_DIVIDER ) {
-		process_frame_shield_divider(frame, grayscale, grayscale_blur, cdst, edges, lines, headless, alg_results);
+		process_frame_shield_divider(frame, grayscale, grayscale_blur, cdst, edges, lines, headless, camera, alg_results);
 	} else if ( algorithm == ALGORITHM_TOWER_RETROREFLECTIVE_TAPE ) {
-		process_retroreflective_tape(frame, grayscale, grayscale_blur, cdst, edges, lines, headless, alg_results);
+		process_retroreflective_tape(frame, grayscale, grayscale_blur, cdst, edges, lines, headless, camera, alg_results);
 	} else if ( algorithm == ALGORITHM_TOWER_OPENING ) {
-		process_tower_openings(frame, grayscale, grayscale_blur, cdst, edges, lines, headless, alg_results);
+		process_tower_openings(frame, grayscale, grayscale_blur, cdst, edges, lines, headless, camera, alg_results);
 	} else if ( algorithm == ALGORITHM_TOWER_LIGHTS_RED ) {
-		process_tower_lights_red(frame, grayscale, grayscale_blur, cdst, edges, lines, headless, alg_results);
+		process_tower_lights_red(frame, grayscale, grayscale_blur, cdst, edges, lines, headless, camera, alg_results);
 	} else if ( algorithm == ALGORITHM_TOWER_LIGHTS_BLUE ) {
-		process_tower_lights_blue(frame, grayscale, grayscale_blur, cdst, edges, lines, headless, alg_results);
+		process_tower_lights_blue(frame, grayscale, grayscale_blur, cdst, edges, lines, headless, camera, alg_results);
 	}
 	 
-	//process_circles(frame, grayscale, cdst, edges, lines, headless, alg_results);	
+	//process_circles(frame, grayscale, cdst, edges, lines, headless, camera, alg_results);	
 	waitKey(0);
 
 	return -1;
@@ -605,7 +694,9 @@ int image_main(char *img, int algorithm)
 int camera_main(char *video_file, videoproc_settings& settings, bool headless)
 {
     int ret = 0;
+    int fps = 0;;
     bool live_camera_source = true;
+    int camera = DEFAULT_CAMERA;
     printf("camera_main()\n");
     VideoCapture *cap;
     if ( video_file != NULL ) {
@@ -618,6 +709,7 @@ int camera_main(char *video_file, videoproc_settings& settings, bool headless)
                 std::cout << "Opening camera " << settings.input_camera << std::endl;
                 cam0 = new VideoCapture(0);
                 printf("Opened camera.\n");
+                camera = 0;
                 }
             cap = cam0;
         } else /* (settings.input_camera == 1 )*/ {
@@ -625,6 +717,7 @@ int camera_main(char *video_file, videoproc_settings& settings, bool headless)
                 std::cout << "Opening camera " << settings.input_camera << std::endl;            
                 cam1 = new VideoCapture(1);
                 printf("Opened camera.\n");
+                camera = 1;
             }
             cap = cam1;
         } 
@@ -662,9 +755,10 @@ int camera_main(char *video_file, videoproc_settings& settings, bool headless)
     }
 
 	stop_writer = false;
-	std::thread t1(writer_thread, size, headless);
+	std::thread t1(writer_thread, size, headless, &alg_stats);
 
     std::cout << "camera_main() initialization complete." << std::endl;
+    std::chrono::steady_clock::time_point fps_start = std::chrono::steady_clock::now();
     while(!settings_change && !quit_algorithm)
     {
         Mat inframe;
@@ -704,15 +798,15 @@ int camera_main(char *video_file, videoproc_settings& settings, bool headless)
         std::chrono::steady_clock::time_point algo_begin = std::chrono::steady_clock::now();
         try {
 	        if ( settings.algorithm == ALGORITHM_SHIELD_DIVIDER ) {
-		        process_frame_shield_divider(frame, grayscale, grayscale_blur, cdst, edges, lines, headless, alg_results);
+		        process_frame_shield_divider(frame, grayscale, grayscale_blur, cdst, edges, lines, headless, camera, alg_results);
 	        } else if ( settings.algorithm == ALGORITHM_TOWER_RETROREFLECTIVE_TAPE ) {
-		       process_retroreflective_tape(frame, grayscale, grayscale_blur, cdst, edges, lines, headless, alg_results);
+		       process_retroreflective_tape(frame, grayscale, grayscale_blur, cdst, edges, lines, headless, camera, alg_results);
 	        } else if ( settings.algorithm == ALGORITHM_TOWER_OPENING ) {
-		        process_tower_openings(frame, grayscale, grayscale_blur, cdst, edges, lines, headless, alg_results);
+		        process_tower_openings(frame, grayscale, grayscale_blur, cdst, edges, lines, headless, camera, alg_results);
 	        } else if ( settings.algorithm == ALGORITHM_TOWER_LIGHTS_RED ) {
-		        process_tower_lights_red(frame, grayscale, grayscale_blur, cdst, edges, lines, headless, alg_results);
+		        process_tower_lights_red(frame, grayscale, grayscale_blur, cdst, edges, lines, headless, camera, alg_results);
 	        } else if ( settings.algorithm == ALGORITHM_TOWER_LIGHTS_BLUE ) {
-		        process_tower_lights_blue(frame, grayscale, grayscale_blur, cdst, edges, lines, headless, alg_results);
+		        process_tower_lights_blue(frame, grayscale, grayscale_blur, cdst, edges, lines, headless, camera, alg_results);
 	        }
 	    }
         catch(const std::exception& e ) {
@@ -749,6 +843,16 @@ int camera_main(char *video_file, videoproc_settings& settings, bool headless)
         stream_mat.copyTo(mat_pair.stream);
         write_queue.push(mat_pair);
         
+        std::chrono::steady_clock::time_point fps_now = std::chrono::steady_clock::now();
+        long delta = std::chrono::duration_cast<std::chrono::milliseconds>(fps_now - fps_start).count();
+        if ( delta > 1000 ) {
+            alg_stats.fps = fps;
+            fps = 0;
+            fps_start = fps_now;        
+        } else {
+            fps++;
+        }
+        
         /* Update algorithm statistics */
         set_algorithm_stats(alg_stats);
     }
@@ -762,10 +866,6 @@ int camera_main(char *video_file, videoproc_settings& settings, bool headless)
     t1.join();
     return ret;
 }
-
-#define BORDER_WIDTH_PIXELS 0
-#define FRAME_HEIGHT_PIXELS 480
-#define FRAME_WIDTH_PIXELS  640
 
 float angle_between(const Point &v1, const Point &v2)
 {
@@ -978,7 +1078,7 @@ int rectangle_area(Point p1, Point p2, Point p3, Point p4)
 	return area_tri1 + area_tri2;
 }
 
-void process_tower_openings( Mat& frame, Mat& grayscale, Mat& grayscale_blur, Mat& cdst, Mat& edges, Mat& lines, bool headless, algorithm_results& results )
+void process_tower_openings( Mat& frame, Mat& grayscale, Mat& grayscale_blur, Mat& cdst, Mat& edges, Mat& lines, bool headless, int camera, algorithm_results& results )
 {
 	cvtColor(frame, grayscale, COLOR_BGR2GRAY);
 
@@ -1054,7 +1154,7 @@ void process_tower_openings( Mat& frame, Mat& grayscale, Mat& grayscale_blur, Ma
 	}
 }
 
-void process_retroreflective_tape( Mat& frame, Mat& grayscale, Mat& grayscale_blur, Mat& cdst, Mat& edges, Mat& lines, bool headless, algorithm_results& results ) 
+void process_retroreflective_tape( Mat& frame, Mat& grayscale, Mat& grayscale_blur, Mat& cdst, Mat& edges, Mat& lines, bool headless, int camera, algorithm_results& results ) 
 {
 	Mat ch1, ch2, ch3;
 	Mat thresholded_image;
@@ -1103,14 +1203,14 @@ void process_retroreflective_tape( Mat& frame, Mat& grayscale, Mat& grayscale_bl
 	}
 }
 
-void process_tower_lights_red( Mat& frame, Mat& grayscale, Mat& grayscale_blur, Mat& cdst, Mat& edges, Mat& lines, bool headless, algorithm_results& results ) {
+void process_tower_lights_red( Mat& frame, Mat& grayscale, Mat& grayscale_blur, Mat& cdst, Mat& edges, Mat& lines, bool headless, int camera, algorithm_results& results ) {
     bool blue = false;
-    process_tower_lights( frame, grayscale, grayscale_blur, cdst, edges, lines, headless, results, blue ); 
+    process_tower_lights( frame, grayscale, grayscale_blur, cdst, edges, lines, headless, camera, results, blue ); 
 } 
 
-void process_tower_lights_blue( Mat& frame, Mat& grayscale, Mat& grayscale_blur, Mat& cdst, Mat& edges, Mat& lines, bool headless, algorithm_results& results ) {
+void process_tower_lights_blue( Mat& frame, Mat& grayscale, Mat& grayscale_blur, Mat& cdst, Mat& edges, Mat& lines, bool headless, int camera, algorithm_results& results ) {
     bool blue = true;
-    process_tower_lights( frame, grayscale, grayscale_blur, cdst, edges, lines, headless, results, blue );
+    process_tower_lights( frame, grayscale, grayscale_blur, cdst, edges, lines, headless, camera, results, blue );
 }
 
 typedef struct {
@@ -1125,11 +1225,14 @@ typedef struct {
 
 #define MIN_COLLINEAR_POINTS 4
 
-void process_tower_lights( Mat& frame, Mat& grayscale, Mat& grayscale_blur, Mat& cdst, Mat& edges, Mat& lines, bool headless, algorithm_results& results, bool blue ) 
+void process_tower_lights( Mat& frame, Mat& grayscale, Mat& grayscale_blur, Mat& cdst, Mat& edges, Mat& lines, bool headless, int camera, algorithm_results& results, bool blue ) 
 {
 	Mat& thresholded_lights_image = edges;
 	Mat thresholded_target_image;
 	vector<Mat> channels(3);
+	
+	algorithm_results local_results;
+	init_algorithm_results(local_results);
 	
 	// Split the RGB image into separate color channel
 	split(frame, channels);
@@ -1197,6 +1300,19 @@ void process_tower_lights( Mat& frame, Mat& grayscale, Mat& grayscale_blur, Mat&
 		Scalar color = Scalar( 0, 0, 255 );
 		/* Todo:  If multiple, draw the largest contour */
 		drawContours( lines, valid_target_contours, largest_contour_area_index, color, 2, 8, hierarchy, 0, Point() );
+		local_results.target.detected = true;
+
+        // Calculate angle to center of mass of the target.
+        Point target_center;		
+	    Moments mu = moments(valid_target_contours[largest_contour_area_index],false);
+	    target_center.x = (int) (mu.m10 / mu.m00);
+	    target_center.y = (int) (mu.m01 / mu.m00);
+		local_results.target.angle_degrees = angle_from_x(camera, target_center.x);
+		
+		// Calculate distance to target.
+		local_results.target.distance_inches = distance_from_y(target_center.y, 
+		                                                       height_to_retro_target_inches,
+		                                                       camera);
 	}
 
     /// Detect Tower Lights and Shield Edge Lights
@@ -1405,6 +1521,16 @@ void process_tower_lights( Mat& frame, Mat& grayscale, Mat& grayscale_blur, Mat&
         line( lines, max_vert_intersection_enc_poly.centerline_begin, 
                      max_vert_intersection_enc_poly.centerline_end,
                      Scalar(255,255,0));
+        local_results.tower.detected = true;
+        /* Calculate angle as the angle to the center of the vertical line which */
+        /* runs through all of the points.                                       */
+        Point2f start(max_vert_intersection_enc_poly.centerline_begin.x, 
+                    max_vert_intersection_enc_poly.centerline_begin.y);
+        Point2f end(max_vert_intersection_enc_poly.centerline_end.x, 
+                    max_vert_intersection_enc_poly.centerline_end.y);
+        Point2f midpoint = (start + end)*.5;
+        double angle = angle_from_x(camera,(int)midpoint.x);
+        local_results.tower.angle_degrees = angle;
 	}
 	
 	/* Horizontal (Shield Edge) Detection */
@@ -1481,11 +1607,14 @@ void process_tower_lights( Mat& frame, Mat& grayscale, Mat& grayscale_blur, Mat&
         line( lines, max_horz_intersection_enc_poly.centerline_begin, 
                      max_horz_intersection_enc_poly.centerline_end,
                      Scalar(0,255,255));
+        local_results.shield.detected = true;
+        // TODO:  local_results.shield.angle_degrees = 
 	}
 
     if ( !headless ) {
 	    imshow("lines", lines);
     }
+    results = local_results;
 }
 
 #define HORIZONTAL_LINE_ANGLE_DEGREES  90.0f
@@ -1504,7 +1633,7 @@ void process_tower_lights( Mat& frame, Mat& grayscale, Mat& grayscale_blur, Mat&
 /* Allowable range (deviation from vertical) for dividers */
 #define DIVIDER_EDGE_VERTICAL_DEV_DEGREES 15.0f
 
-void process_frame_shield_divider( Mat& frame, Mat& grayscale, Mat& grayscale_blur, Mat& unused, Mat& edges, Mat& cdst, bool headless, algorithm_results& results ) 
+void process_frame_shield_divider( Mat& frame, Mat& grayscale, Mat& grayscale_blur, Mat& unused, Mat& edges, Mat& cdst, bool headless, int camera, algorithm_results& results ) 
 {
 	vector<Vec4i> lines;
 	cvtColor(frame, grayscale, COLOR_BGR2GRAY);
@@ -1650,7 +1779,7 @@ void process_frame_shield_divider( Mat& frame, Mat& grayscale, Mat& grayscale_bl
     }
 }
 
-int process_circles(Mat& src, Mat& grayscale, Mat& cdst, Mat& edges, Mat& lines, bool headless, algorithm_results& results)
+int process_circles(Mat& src, Mat& grayscale, Mat& cdst, Mat& edges, Mat& lines, bool headless, int camera, algorithm_results& results)
 {
   /// Convert it to gray
   cvtColor( src, grayscale, CV_BGR2GRAY );
