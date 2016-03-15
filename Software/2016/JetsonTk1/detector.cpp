@@ -7,6 +7,7 @@
 #include <string>
 #include <climits>
 #include <errno.h>
+#include <unistd.h>
 #include <sys/stat.h>
 #include <sys/types.h>
 #include <sys/param.h>
@@ -150,18 +151,22 @@ const double cam_angles_from_horizontal[2] = {
 
 const double height_to_retro_target_inches = 97;
 
-double angle_from_x( int x, int cam ) {
+double angle_from_x( int cam, int x ) {
     if ( ( cam < 0 ) || ( cam > 1 ) ) { return 0.0; } 
     double x_from_center = x - (FRAME_WIDTH_PIXELS / 2);
     double angle = (x_from_center / (FRAME_WIDTH_PIXELS / 2)) * (cam_hfovs[cam] / 2);
     return angle;
 }
 
-double distance_from_y( int y, int y_height, int cam ) {
+double distance_from_y( int cam, int y, int y_obj_height ) {
     if ( ( cam < 0 ) || ( cam > 1 ) ) { return 0.0; } 
-    double distance = (double)y_height - cam_heights[cam];
-    distance /= tan( (y * (cam_vfovs[cam] / 2) + cam_angles_from_horizontal[cam]) * M_PI / 180.0);
-    return distance;
+    double distance = (double)y_obj_height - cam_heights[cam];
+    std::cout << "obj_height:  " << distance << std::endl;
+    double angle_to_radians = M_PI / 180.0;
+    double d_y = y;
+    d_y = (2 *(d_y / FRAME_HEIGHT_PIXELS)) - 1;
+    distance /= tan( (d_y * (cam_vfovs[cam] / 2) + cam_angles_from_horizontal[cam]) * angle_to_radians);
+    return -distance;
 }
 
 std::mutex alg_stats_mutex;
@@ -422,6 +427,28 @@ void writer_thread(Size size, bool headless, algorithm_stats* alg_stats) {
         delete writer;
     }    
 }
+
+void get_primary_ip_address( char *ip_address ) {
+    FILE * fp = popen("ifconfig", "r");
+    if (fp) { 
+        char *p = NULL, *e;
+        size_t n;
+        while ((getline(&p, &n, fp) > 0) && p) {
+            std::cout << "P:  " << std::endl;
+            if (p = strstr(p, "inet addr:")) {
+                p += 10;
+                std::cout << p << std::endl;
+                if (e = strchr(p, ' ')) {
+                    *e = '\0';
+                    strcpy(ip_address,p);
+                    std::cout << p << std::endl;
+                    break;
+                }
+            }
+        }
+    }
+    pclose(fp);
+}
   
 void run_under_remote_control (char *server_ip_address) 
 {
@@ -472,6 +499,18 @@ void run_under_remote_control (char *server_ip_address)
   if ( !nt->ContainsKey("algorithm_param2") ) {
      nt->PutNumber("algorithm_param2",999);
   }        
+
+  char hostname[512];
+  hostname[0] = 0;
+  gethostname(hostname,sizeof(hostname)-1);
+
+  nt->PutString("hostname",hostname);
+  std::cout << "Hostname:  " << hostname << std::endl;
+
+  char ip[512];
+  get_primary_ip_address(ip);
+  std::cout << "Primary IP Address:  " << ip << std::endl;
+  nt->PutString("ip",ip);
 
   while (!quit_networktables) {     
     
@@ -1307,12 +1346,22 @@ void process_tower_lights( Mat& frame, Mat& grayscale, Mat& grayscale_blur, Mat&
 	    Moments mu = moments(valid_target_contours[largest_contour_area_index],false);
 	    target_center.x = (int) (mu.m10 / mu.m00);
 	    target_center.y = (int) (mu.m01 / mu.m00);
+	    
+	    cv::circle( lines, target_center, 7, Scalar(0,255,0), -1);	    
+	    
 		local_results.target.angle_degrees = angle_from_x(camera, target_center.x);
 		
 		// Calculate distance to target.
-		local_results.target.distance_inches = distance_from_y(target_center.y, 
-		                                                       height_to_retro_target_inches,
-		                                                       camera);
+		local_results.target.distance_inches = distance_from_y(camera,
+		                                                       target_center.y, 
+		                                                       height_to_retro_target_inches);
+		char text[512];
+		sprintf(text,"Tgt Angle:  %0.2f", local_results.target.angle_degrees);
+		Point tgtAnglePoint(10, 320);
+		cv::putText( lines, text, tgtAnglePoint, FONT_HERSHEY_PLAIN, 2, Scalar(255,255,255));
+		sprintf(text,"Tgt Dist.:  %0.2f", local_results.target.distance_inches);
+		Point tgtDistPoint(10,360);
+		cv::putText( lines, text, tgtDistPoint, FONT_HERSHEY_PLAIN, 2, Scalar(255,255,255));
 	}
 
     /// Detect Tower Lights and Shield Edge Lights
@@ -1531,6 +1580,10 @@ void process_tower_lights( Mat& frame, Mat& grayscale, Mat& grayscale_blur, Mat&
         Point2f midpoint = (start + end)*.5;
         double angle = angle_from_x(camera,(int)midpoint.x);
         local_results.tower.angle_degrees = angle;
+		char text[512];
+		sprintf(text,"Twr Angle:  0.2%f", local_results.tower.angle_degrees);
+		Point tgtAnglePoint(10, 400);
+		cv::putText( lines, text, tgtAnglePoint, FONT_HERSHEY_PLAIN, 2, Scalar(255,255,255));        
 	}
 	
 	/* Horizontal (Shield Edge) Detection */
@@ -1614,6 +1667,24 @@ void process_tower_lights( Mat& frame, Mat& grayscale, Mat& grayscale_blur, Mat&
     if ( !headless ) {
 	    imshow("lines", lines);
     }
+    
+    /* Update successive detection counts */
+    if ( local_results.target.detected ) {
+        local_results.target.successive_detection_count = results.target.successive_detection_count +1;        
+    } else {
+        local_results.target.successive_detection_count = 0;
+    }
+    if ( local_results.tower.detected ) {
+        local_results.tower.successive_detection_count = results.tower.successive_detection_count +1;        
+    } else {
+        local_results.tower.successive_detection_count = 0;
+    }
+    if ( local_results.shield.detected ) {
+        local_results.shield.successive_detection_count = results.shield.successive_detection_count +1;        
+    } else {
+        local_results.shield.successive_detection_count = 0;
+    }
+    
     results = local_results;
 }
 
