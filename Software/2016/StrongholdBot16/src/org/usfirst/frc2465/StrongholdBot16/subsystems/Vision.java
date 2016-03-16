@@ -188,6 +188,13 @@ public class Vision extends Subsystem {
     	public double angle_degrees;
     	public double snr;
     	public int successive_detection_count;
+    	public DetectionInfo(){
+    		detected = false;
+    		distance_inches = 0.0;
+    		angle_degrees = 0.0;
+    		snr = 0.0;
+    		successive_detection_count = 0;
+    	}
     }
     
     public CameraSelector getCurrentCamera() {
@@ -220,6 +227,16 @@ public class Vision extends Subsystem {
     	shield.angle_degrees = table.getNumber("shield_angle_degrees",0.0);
     	shield.snr = table.getNumber("shield_snr",0.0);
     	shield.successive_detection_count = (int)table.getNumber("shield_successive_detection_count",0.0);
+    }
+    
+    public String getHostname() {
+    	String hostname = table.getString("hostname","Unknown");
+    	return hostname;
+    }
+    
+    public String getIpAddress() {
+    	String ip = table.getString("ip","Unknown");
+    	return ip;
     }
 }
 
