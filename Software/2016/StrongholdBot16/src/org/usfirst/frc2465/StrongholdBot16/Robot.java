@@ -227,6 +227,9 @@ public class Robot extends IterativeRobot {
     static final int LIGHT_FLAT = 0x0001;
     static final int LIGHT_ON_RAMP = 0x0002;
     static final int LIGHT_SKEWED = 0x0004;
+    static final int TOWER_DETECT = 0x0008;
+    static final int TARGET_DETECT = 0x0010;
+    static final int SHIELD_DETECT = 0x0020;
     
     public void updateLights() {
         RobotPosition pos = getRobotPosition();  
@@ -235,6 +238,21 @@ public class Robot extends IterativeRobot {
         	on_position_light_number = LIGHT_ON_RAMP;
         } else if ( pos == RobotPosition.kSkewed) {
         	on_position_light_number = LIGHT_SKEWED;
+        }
+        Vision.DetectionInfo target = Robot.vision.new DetectionInfo();
+        Vision.DetectionInfo tower = Robot.vision.new DetectionInfo();
+        Vision.DetectionInfo shield = Robot.vision.new DetectionInfo();
+        Robot.vision.getTargetDetectionInfo(target);
+        Robot.vision.getTargetDetectionInfo(tower);
+        Robot.vision.getTargetDetectionInfo(shield);
+        if ( target.detected ) { 
+        	on_position_light_number |= TARGET_DETECT;
+        }
+        if ( tower.detected ) {
+        	on_position_light_number |= TOWER_DETECT;
+        }
+        if ( shield.detected ) {
+        	on_position_light_number |= SHIELD_DETECT;
         }
     	oi.getLights().setOutput(on_position_light_number, true);            	
     }
