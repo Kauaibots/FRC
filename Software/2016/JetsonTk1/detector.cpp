@@ -158,10 +158,17 @@ double angle_from_x( int cam, int x ) {
     return angle;
 }
 
+double angle_from_y( int cam, int y ) {
+    if ( ( cam < 0 ) || ( cam > 1 ) ) { return 0.0; } 
+    double y_from_center = y - (FRAME_HEIGHT_PIXELS / 2);
+    double angle = (y_from_center / (FRAME_HEIGHT_PIXELS / 2)) * (cam_vfovs[cam] / 2);
+    return angle;
+}
+
 double distance_from_y( int cam, int y, int y_obj_height ) {
     if ( ( cam < 0 ) || ( cam > 1 ) ) { return 0.0; } 
     double distance = (double)y_obj_height - cam_heights[cam];
-    std::cout << "obj_height:  " << distance << std::endl;
+    //std::cout << "obj_height:  " << distance << std::endl;
     double angle_to_radians = M_PI / 180.0;
     double d_y = y;
     d_y = (2 *(d_y / FRAME_HEIGHT_PIXELS)) - 1;
@@ -325,7 +332,7 @@ void sigproc(int sig)
 }
 
 void init_videoproc_settings(videoproc_settings& settings) {
-    settings.enable_algorithm = false;
+    settings.enable_algorithm = true;
     settings.enable_stream_out = false;
     settings.stream_type = 0;
     settings.enable_file_out = false;
@@ -390,6 +397,8 @@ void writer_thread(Size size, bool headless, algorithm_stats* alg_stats) {
         std::cout << "Error retrieving mjpg streamer dir" << std::endl;
     }
     
+    int write_count = 0;
+    
     while (!stop_writer) {
         MatPair mat_pair;
         /* Wait 100ms for data in write queue */
@@ -398,6 +407,7 @@ void writer_thread(Size size, bool headless, algorithm_stats* alg_stats) {
             if ( writer ) {
                 try {
                     writer->write(mat_pair.file);
+                    write_count++;
                 }
                 catch(const std::exception& e ) {
                     std::cout << "Exception writing frame to disk.  " << e.what() << std::endl;
@@ -421,6 +431,15 @@ void writer_thread(Size size, bool headless, algorithm_stats* alg_stats) {
             if ( !headless ) {
                 std::cout << "Frame Write (us):  " << last_write_time_us << std::endl;
             }
+        }
+        if ( write_count > (15 * 60) ) {
+            bool color = true;
+            write_count = 0;
+            delete writer;
+            writer = NULL;
+            system("sync");
+            find_next_output_video_file_name( output_filename );
+            writer = new VideoWriter( output_filename, CV_FOURCC('M','J','P','G'), 15, size, color);
         }
     }
     if ( writer ) {
@@ -458,12 +477,22 @@ void run_under_remote_control (char *server_ip_address)
   auto nt = NetworkTable::GetTable("videoproc");
   
   nt->SetClientMode();
-  hostent * record = gethostbyname(server_ip_address);
-  if ( record == NULL ) {
-      std::cout << "Unable to retrieve ip address for: " << server_ip_address << std::endl;
-      quit_networktables = true;
-      return;
+  
+  
+  hostent * record;
+  for ( int i = 0; i < 36; i++ ) {
+      record = gethostbyname(server_ip_address);
+      if ( record == NULL ) {
+          std::cout << "Unable to retrieve ip address for: " << server_ip_address << std::endl;
+          if ( i > 34 ) {
+               quit_networktables = true;
+              return;
+          } else {
+               std::this_thread::sleep_for(std::chrono::seconds(5));
+          }
+     }
   }
+  
   in_addr *address = (in_addr *)record->h_addr;
   std::string ip_addr = inet_ntoa(*address);
   ip_addr += "\n"; /* ??? */
@@ -580,7 +609,7 @@ void run_under_remote_control (char *server_ip_address)
     }        
     if ( nt->ContainsKey("ping") ) {
        double ping_value = nt->GetNumber("ping",-1.0);
-       //std::cout << "ping:  " << ping_value << std::endl;
+       std::cout << "Received ping:  " << ping_value << std::endl;
        nt->PutNumber("ping_response",ping_value);
     }    
     
@@ -661,7 +690,7 @@ int main(int argc, char** argv)
 	    }
 	    curr_settings.algorithm = algorithm;
 	    curr_settings.enable_algorithm = true;
-	    curr_settings.enable_file_out = true;
+	    curr_settings.enable_file_out = false;
 	    curr_settings.enable_stream_out = true;
 	    curr_settings.stream_type = 0;
         curr_settings.algorithm_param1 = 999.0;
@@ -869,7 +898,7 @@ int camera_main(char *video_file, videoproc_settings& settings, bool headless)
         if ( !headless ) {
             std::cout << "Algorithm (us):  " << alg_stats.last_algorithm_time_us << std::endl;
         }
-        
+        //waitKey(1000);
         /* Transfer frames to be written to disk/streamed into the write queue */
         MatPair mat_pair;
         frame.copyTo(mat_pair.file);
@@ -990,6 +1019,16 @@ void project_line_at_angle(const Point &v1, float angle, Point &out1, Point &out
 
 bool point_in_polygon( const Point& pt, Point* points, int num_points)
 {
+    Point2f ptf(pt.x,pt.y);
+    vector<Point2f> vert(num_points+1);
+    for ( int i = 0; i < num_points; i++ ) {
+        vert[i] = points[i];
+    }
+    if ( num_points > 0 ) {
+        vert[num_points] = points[0];
+    }
+    return (pointPolygonTest( vert, ptf, false ) >= 0);
+    /*
     int i, j, nvert = num_points;
     bool c = false;
     for (i = 0, j = nvert - 1; i < nvert; j = i++) {
@@ -997,7 +1036,8 @@ bool point_in_polygon( const Point& pt, Point* points, int num_points)
             (pt.x <= (points[j].x - points[i].x) * 
                 (pt.y - points[i].y) / (points[j].y - points[i].y) + points[i].x))
             c = !c;
-    } 
+    }
+    */ 
 }
 
 typedef struct {
@@ -1006,7 +1046,7 @@ typedef struct {
     Point centerline_end;
 } enclosing_polygon;
 
-bool project_pt_and_angle_to_square(const Point &v1, float angle, int rect_width_degrees, enclosing_polygon& out) 
+bool project_pt_and_angle_to_square(const Point &v1, float angle, double rect_width_degrees, enclosing_polygon& out) 
 {
     /* 1) Determine line along angle which passes through point and extends across frame. */
     project_line_at_angle(v1, angle, out.centerline_begin, out.centerline_end);
@@ -1218,6 +1258,7 @@ void process_retroreflective_tape( Mat& frame, Mat& grayscale, Mat& grayscale_bl
 	/// Screen out all but interesting contours
 	vector<vector<Point> > valid_contours;
 	lines = Mat::zeros( thresholded_image.size(), CV_8UC3 );
+	float aspect = 0.0f;
 	for( int i = 0; i< contours.size(); i++ )
 	{
 		vector<Point> vp = contours[i];
@@ -1225,7 +1266,7 @@ void process_retroreflective_tape( Mat& frame, Mat& grayscale, Mat& grayscale_bl
 		if(boundRect.height < 25 || boundRect.width < 25){
 			continue;
 		}
-		float aspect = (float)boundRect.width/(float)boundRect.height;
+		aspect = (float)boundRect.width/(float)boundRect.height;
 		if(aspect < 1.0) {
 			continue;
 		}
@@ -1236,10 +1277,90 @@ void process_retroreflective_tape( Mat& frame, Mat& grayscale, Mat& grayscale_bl
 	if ( valid_contours.size() == 1 ) {
 		Scalar color = Scalar( 0, 0, 255 );
 		drawContours( lines, valid_contours, 0, color, 2, 8, hierarchy, 0, Point() );
+		std::cout << "Aspect ratio:  " << aspect << std::endl;
 	}
 	if ( !headless ) {
 	    imshow("lines", lines);
 	}
+}
+
+
+typedef struct {
+    Point pt;
+    Rect bounding_rect;
+} interesting_contour;
+
+#define LIGHT_DIST_RATIO 0.8f /* Scale-invariant ratio between lights */
+/* Note:  Actual lights are 4 inches apart. */
+
+#define MIN_LIGHT_DIST_PIXELS 6 /* Nearest valid pixel-distance between lights */
+
+/* Given a set of vertically-aligned points, determine whether at least a minimum amount */
+/* of these points share a distance ratio (and are separated at least by a min distance */
+
+bool verify_evenly_spaced_vertical_points( vector<interesting_contour *>& points, int min_lights, int& num_evenly_spaced_lights, int& distance) {
+    int pixel_dist_count[FRAME_HEIGHT_PIXELS];
+    int sums[FRAME_HEIGHT_PIXELS]; /* Including in-range near neighbors */
+    for ( int i = 0; i < FRAME_HEIGHT_PIXELS; i++ ) {
+        pixel_dist_count[i] = 0;
+        sums[i] = 0;
+    }
+    int num_points = points.size();
+    std::cout << "Verifying " << num_points << " points."  << std::endl;
+    vector<bool> checked_pairs( num_points * num_points );
+    for ( int i = 0; i < (num_points * num_points); i++ ) {
+        checked_pairs[i] = false;
+    }
+    /* Get counts of unique distances between all points */
+    for ( int i = 0; i < points.size(); i++ ) {
+        for ( int j = 0; j < points.size(); j++ ) {
+            if ( i != j ) {
+                if ( !checked_pairs[(i * num_points) + j] ) {
+                    int distance = (int)cv::norm((*(points[i])).pt - (*(points[j])).pt);
+                    pixel_dist_count[distance]++;
+                }
+            }
+            checked_pairs[(i * num_points) + j] = true;
+            checked_pairs[(j * num_points) + i] = true;
+        }
+    }
+    
+    /* Group distance counts by those occurring within the min distance and distance ratio */
+    for ( int i = 1 + MIN_LIGHT_DIST_PIXELS; i < (FRAME_HEIGHT_PIXELS / min_lights); i++ ) {
+        int low = (int)(LIGHT_DIST_RATIO * i);
+        int high = (int)((1.0/LIGHT_DIST_RATIO) * i);
+        if ( low < 0 ) {
+            low = 0;
+        }
+        if ( high >= FRAME_HEIGHT_PIXELS ) { 
+            high = FRAME_HEIGHT_PIXELS - 1;
+        }
+        int sum = 0;
+        for ( int x = low; x <= high; x++ ) {
+            sum += pixel_dist_count[x];
+        }
+        sums[i] = sum;
+        //std::cout << "Low:  " << low << " High:  " << high << " Count:  " << sums[i] << std::endl;
+    }
+    int max_sum = -1;
+    int max_sum_index = -1;
+    for ( int i = 0; i < FRAME_HEIGHT_PIXELS; i++ ) {
+        if ( sums[i] > max_sum ) {
+            max_sum = sums[i];
+            max_sum_index = i;
+            //std::cout << "Max Sum:  " << max_sum << " at index " << max_sum_index << std::endl;
+        }
+    }
+    
+    if ( max_sum > -1 ) {
+        num_evenly_spaced_lights = max_sum;
+        distance = max_sum_index;
+    }
+
+    if ( max_sum >= min_lights ) {
+        return true;
+    }
+    return false;
 }
 
 void process_tower_lights_red( Mat& frame, Mat& grayscale, Mat& grayscale_blur, Mat& cdst, Mat& edges, Mat& lines, bool headless, int camera, algorithm_results& results ) {
@@ -1251,11 +1372,6 @@ void process_tower_lights_blue( Mat& frame, Mat& grayscale, Mat& grayscale_blur,
     bool blue = true;
     process_tower_lights( frame, grayscale, grayscale_blur, cdst, edges, lines, headless, camera, results, blue );
 }
-
-typedef struct {
-    Point pt;
-    Rect bounding_rect;
-} interesting_contour;
 
 #define VERTICAL_LIGHTS_ANGLE_RANGE 10
 #define HORIZONTAL_LIGHTS_ANGLE_RANGE 30
@@ -1315,27 +1431,45 @@ void process_tower_lights( Mat& frame, Mat& grayscale, Mat& grayscale_blur, Mat&
 	{
 		vector<Point> vp = target_contours[i];
 		Rect boundRect = boundingRect(vp);
+		
+		/* Must be at least 30 x 22 in pixel dimensions */
+		
 		if(boundRect.height < 22 || boundRect.width < 30){
 			continue;
 		}
 		float aspect = (float)boundRect.width/(float)boundRect.height;
-		if(aspect < 1.0) {
+		
+		/* Aspect Ratio should be between 1.1 and 1.4 */
+		
+		if((aspect < 1.1) || (aspect > 1.4)) {
 			continue;
 		}
+		
+		/* Bounding rect of target should be in upper half of image. */
+		
+		if (boundRect.br().y > (FRAME_HEIGHT_PIXELS / 2)) {
+		    continue;
+		}
+		
 		Scalar color = Scalar( 255, 255, 255 );
 		drawContours( lines, target_contours, i, color, 2, 8, hierarchy, 0, Point() );
 		valid_target_contours.push_back(vp);
 	}
 	if ( valid_target_contours.size() > 0 ) {
+		float target_aspect;
+
 		int largest_contour_area = -1;
 		int largest_contour_area_index = -1;
 		for ( int i = 0; i < valid_target_contours.size(); i++ ) {
 		    Rect boundRect = boundingRect(valid_target_contours[i]);
+		    
 		    if ( (int)boundRect.area() > largest_contour_area ) {
 		        largest_contour_area = (int)boundRect.area();
 		        largest_contour_area_index = i;
+		        target_aspect = (float)boundRect.width/(float)boundRect.height;
 		    }		    
 		}
+		std::cout << "Target Aspect Ratio:  " << target_aspect << std::endl;
 		Scalar color = Scalar( 0, 0, 255 );
 		/* Todo:  If multiple, draw the largest contour */
 		drawContours( lines, valid_target_contours, largest_contour_area_index, color, 2, 8, hierarchy, 0, Point() );
@@ -1529,7 +1663,7 @@ void process_tower_lights( Mat& frame, Mat& grayscale, Mat& grayscale_blur, Mat&
         project_pt_and_angle_to_square(
             (*(v_contours_in_dom_angle_range[i])).pt,
             dominant_vert_angle,
-            COLLINEAR_ANGLE_RANGE,
+            (double)COLLINEAR_ANGLE_RANGE,
             enclosing_poly);
         int intersecting_contour_count = 0;
         vector<interesting_contour *>intersecting_vert_contours;
@@ -1560,30 +1694,36 @@ void process_tower_lights( Mat& frame, Mat& grayscale, Mat& grayscale_blur, Mat&
 	if ( ( max_vert_intersecting_contours > 0 ) &&
 	     ( max_vert_int_contours.size() >= MIN_COLLINEAR_POINTS ) ) {
 	    detected_tower_lights = true;
-	    //std::cout << "NumVContours:  " << max_vert_int_contours.size() << std::endl;
-	    for ( int i = 0; i < max_vert_int_contours.size(); i++ ) {
-	        cv::circle( lines, (*(max_vert_int_contours[i])).pt, 5, Scalar(0,255,0), -1);	            	    
-        }
-        for ( int i = 0; i < 4; i++ ) {
-            line( lines, max_vert_intersection_enc_poly.box[i], max_vert_intersection_enc_poly.box[(i+1)%4], Scalar(0,255,0));
-        }
-        line( lines, max_vert_intersection_enc_poly.centerline_begin, 
-                     max_vert_intersection_enc_poly.centerline_end,
-                     Scalar(255,255,0));
-        local_results.tower.detected = true;
-        /* Calculate angle as the angle to the center of the vertical line which */
-        /* runs through all of the points.                                       */
-        Point2f start(max_vert_intersection_enc_poly.centerline_begin.x, 
-                    max_vert_intersection_enc_poly.centerline_begin.y);
-        Point2f end(max_vert_intersection_enc_poly.centerline_end.x, 
-                    max_vert_intersection_enc_poly.centerline_end.y);
-        Point2f midpoint = (start + end)*.5;
-        double angle = angle_from_x(camera,(int)midpoint.x);
-        local_results.tower.angle_degrees = angle;
-		char text[512];
-		sprintf(text,"Twr Angle:  0.2%f", local_results.tower.angle_degrees);
-		Point tgtAnglePoint(10, 400);
-		cv::putText( lines, text, tgtAnglePoint, FONT_HERSHEY_PLAIN, 2, Scalar(255,255,255));        
+	    std::cout << "NumVContours:  " << max_vert_int_contours.size() << std::endl;
+        int num_evenly_spaced_points;
+        int avg_point_separation;
+        bool min_evenly_spaced = verify_evenly_spaced_vertical_points(max_vert_int_contours, MIN_COLLINEAR_POINTS, num_evenly_spaced_points, avg_point_separation);	
+        std::cout << "Num Evenly Spaced Points:  " << num_evenly_spaced_points << " at distance " << avg_point_separation << std::endl;
+        if ( num_evenly_spaced_points >= (MIN_COLLINEAR_POINTS-1) ) {    
+	        for ( int i = 0; i < max_vert_int_contours.size(); i++ ) {
+	            cv::circle( lines, (*(max_vert_int_contours[i])).pt, 5, Scalar(0,255,0), -1);	            	    
+            }
+            for ( int i = 0; i < 4; i++ ) {
+                line( lines, max_vert_intersection_enc_poly.box[i], max_vert_intersection_enc_poly.box[(i+1)%4], Scalar(0,255,0));
+            }
+            line( lines, max_vert_intersection_enc_poly.centerline_begin, 
+                         max_vert_intersection_enc_poly.centerline_end,
+                         Scalar(255,255,0));
+            local_results.tower.detected = true;
+            /* Calculate angle as the angle to the center of the vertical line which */
+            /* runs through all of the points.                                       */
+            Point2f start(max_vert_intersection_enc_poly.centerline_begin.x, 
+                        max_vert_intersection_enc_poly.centerline_begin.y);
+            Point2f end(max_vert_intersection_enc_poly.centerline_end.x, 
+                        max_vert_intersection_enc_poly.centerline_end.y);
+            Point2f midpoint = (start + end)*.5;
+            double angle = angle_from_x(camera,(int)midpoint.x);
+            local_results.tower.angle_degrees = angle;
+		    char text[512];
+		    sprintf(text,"Twr Angle:  %0.2f", local_results.tower.angle_degrees);
+		    Point tgtAnglePoint(10, 400);
+		    cv::putText( lines, text, tgtAnglePoint, FONT_HERSHEY_PLAIN, 2, Scalar(255,255,255));        
+		}
 	}
 	
 	/* Horizontal (Shield Edge) Detection */
@@ -1619,7 +1759,7 @@ void process_tower_lights( Mat& frame, Mat& grayscale, Mat& grayscale_blur, Mat&
         project_pt_and_angle_to_square(
             (*(h_contours_in_dom_angle_range[i])).pt,
             dominant_horz_angle,
-            COLLINEAR_ANGLE_RANGE,
+            (double)COLLINEAR_ANGLE_RANGE,
             enclosing_poly);
         int intersecting_contour_count = 0;
         vector<interesting_contour *>intersecting_horz_contours;
@@ -1651,17 +1791,31 @@ void process_tower_lights( Mat& frame, Mat& grayscale, Mat& grayscale_blur, Mat&
 	     ( max_horz_intersecting_contours > 0 ) &&
 	     ( max_horz_int_contours.size() >= MIN_COLLINEAR_POINTS ) ) {
 	    //std::cout << "NumHContours:  " << max_horz_int_contours.size() << std::endl;
-	    for ( int i = 0; i < max_horz_int_contours.size(); i++ ) {
-	        cv::circle( lines, (*(max_horz_int_contours[i])).pt, 5, Scalar(255,0,0), -1);	            	    
+        int num_evenly_spaced_points;
+        int avg_point_separation;
+        bool min_evenly_spaced = verify_evenly_spaced_vertical_points(max_horz_int_contours, MIN_COLLINEAR_POINTS, num_evenly_spaced_points, avg_point_separation);	
+        std::cout << "Num Evenly Spaced H Points:  " << num_evenly_spaced_points << " at distance " << avg_point_separation << std::endl;
+        if ( num_evenly_spaced_points >= (MIN_COLLINEAR_POINTS-1) ) {    
+	        for ( int i = 0; i < max_horz_int_contours.size(); i++ ) {
+	            cv::circle( lines, (*(max_horz_int_contours[i])).pt, 5, Scalar(255,0,0), -1);	            	    
+            }
+            for ( int i = 0; i < 4; i++ ) {
+                line( lines, max_horz_intersection_enc_poly.box[i], max_horz_intersection_enc_poly.box[(i+1)%4], Scalar(255,0,0));
+            }
+            line( lines, max_horz_intersection_enc_poly.centerline_begin, 
+                         max_horz_intersection_enc_poly.centerline_end,
+                         Scalar(0,255,255));
+            local_results.shield.detected = true;
+            float angle = angle_between(max_horz_intersection_enc_poly.centerline_begin,
+                                             max_horz_intersection_enc_poly.centerline_end);
+            angle -= 90;
+            local_results.shield.angle_degrees = angle;
+		    char text[512];
+		    sprintf(text,"Shd Angle:  %0.2f", local_results.shield.angle_degrees);
+		    Point tgtAnglePoint(10, 440);
+		    cv::putText( lines, text, tgtAnglePoint, FONT_HERSHEY_PLAIN, 2, Scalar(255,255,255));        
+            
         }
-        for ( int i = 0; i < 4; i++ ) {
-            line( lines, max_horz_intersection_enc_poly.box[i], max_horz_intersection_enc_poly.box[(i+1)%4], Scalar(255,0,0));
-        }
-        line( lines, max_horz_intersection_enc_poly.centerline_begin, 
-                     max_horz_intersection_enc_poly.centerline_end,
-                     Scalar(0,255,255));
-        local_results.shield.detected = true;
-        // TODO:  local_results.shield.angle_degrees = 
 	}
 
     if ( !headless ) {
