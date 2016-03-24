@@ -145,9 +145,8 @@ ALL_LDFLAGS += $(addprefix -Xlinker ,$(LDFLAGS))
 ALL_LDFLAGS += $(addprefix -Xlinker ,$(EXTRA_LDFLAGS))
 
 # Common includes and paths for CUDA
-INCLUDES  := -I../../common/inc
-LIBRARIES := -lopencv_core -lopencv_imgproc -lopencv_objdetect -lopencv_highgui
-
+INCLUDES  := -I../../common/inc -I./network_tables/include
+LIBRARIES := -lopencv_core -lopencv_imgproc -lopencv_objdetect -lopencv_highgui -L ./network_tables/Linux/arm/ -lntcore -lpthread
 ################################################################################
 
 SAMPLE_ENABLED := 1

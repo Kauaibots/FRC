@@ -54,6 +54,8 @@ typedef struct {
     double angle_degrees;
     double snr;
     int    successive_detection_count;
+    bool   last_detected;
+    double last_angle_degrees;
 } detection_results;
 
 void init_detection_results( detection_results& det_res ) {
@@ -62,6 +64,8 @@ void init_detection_results( detection_results& det_res ) {
     det_res.angle_degrees = 0;
     det_res.snr = 0;
     det_res.successive_detection_count = 0;   
+    det_res.last_detected = false;
+    det_res.last_angle_degrees = 0;
 }
 
 typedef struct {
@@ -1290,15 +1294,16 @@ typedef struct {
     Rect bounding_rect;
 } interesting_contour;
 
-#define LIGHT_DIST_RATIO 0.8f /* Scale-invariant ratio between lights */
+#define LIGHT_DIST_RATIO 0.85f /* Scale-invariant ratio between lights */
 /* Note:  Actual lights are 4 inches apart. */
 
-#define MIN_LIGHT_DIST_PIXELS 6 /* Nearest valid pixel-distance between lights */
+#define MIN_HORZ_LIGHT_DIST_PIXELS  8 /* Nearest valid pixel-distance between horizontal lights */
+#define MIN_VERT_LIGHT_DIST_PIXELS 12 /* Nearest valid pixel-distance between vertical lights */
 
 /* Given a set of vertically-aligned points, determine whether at least a minimum amount */
 /* of these points share a distance ratio (and are separated at least by a min distance */
 
-bool verify_evenly_spaced_vertical_points( vector<interesting_contour *>& points, int min_lights, int& num_evenly_spaced_lights, int& distance) {
+bool verify_evenly_spaced_vertical_points( vector<interesting_contour *>& points, int min_lights, int& num_evenly_spaced_lights, int min_light_dist_pixels, int& distance) {
     int pixel_dist_count[FRAME_HEIGHT_PIXELS];
     int sums[FRAME_HEIGHT_PIXELS]; /* Including in-range near neighbors */
     for ( int i = 0; i < FRAME_HEIGHT_PIXELS; i++ ) {
@@ -1315,8 +1320,9 @@ bool verify_evenly_spaced_vertical_points( vector<interesting_contour *>& points
     for ( int i = 0; i < points.size(); i++ ) {
         for ( int j = 0; j < points.size(); j++ ) {
             if ( i != j ) {
-                if ( !checked_pairs[(i * num_points) + j] ) {
-                    int distance = (int)cv::norm((*(points[i])).pt - (*(points[j])).pt);
+                if ( ( !checked_pairs[(i * num_points) + j] ) &&
+                     ( !checked_pairs[(j * num_points) + i] ) ) {
+                    int distance = abs((int)cv::norm((*(points[i])).pt - (*(points[j])).pt));
                     pixel_dist_count[distance]++;
                 }
             }
@@ -1326,9 +1332,9 @@ bool verify_evenly_spaced_vertical_points( vector<interesting_contour *>& points
     }
     
     /* Group distance counts by those occurring within the min distance and distance ratio */
-    for ( int i = 1 + MIN_LIGHT_DIST_PIXELS; i < (FRAME_HEIGHT_PIXELS / min_lights); i++ ) {
-        int low = (int)(LIGHT_DIST_RATIO * i);
-        int high = (int)((1.0/LIGHT_DIST_RATIO) * i);
+    for ( int i = 1 + min_light_dist_pixels; i < (FRAME_HEIGHT_PIXELS / min_lights); i++ ) {
+        int low = (int)(LIGHT_DIST_RATIO * (double)i);
+        int high = (int)((1.0/LIGHT_DIST_RATIO) * (double)i);
         if ( low < 0 ) {
             low = 0;
         }
@@ -1374,7 +1380,7 @@ void process_tower_lights_blue( Mat& frame, Mat& grayscale, Mat& grayscale_blur,
 }
 
 #define VERTICAL_LIGHTS_ANGLE_RANGE 10
-#define HORIZONTAL_LIGHTS_ANGLE_RANGE 30
+#define HORIZONTAL_LIGHTS_ANGLE_RANGE 45
 
 #define COLLINEAR_ANGLE_RANGE   1
 
@@ -1385,7 +1391,14 @@ void process_tower_lights( Mat& frame, Mat& grayscale, Mat& grayscale_blur, Mat&
 	Mat& thresholded_lights_image = edges;
 	Mat thresholded_target_image;
 	vector<Mat> channels(3);
-	
+
+    bool detected_tower_lights = false;	    
+    bool detected_target = false;
+    bool detected_shield = false;
+    
+    double detected_tower_angle = 0.0;
+    double detected_shield_angle = 0.0;
+
 	algorithm_results local_results;
 	init_algorithm_results(local_results);
 	
@@ -1402,7 +1415,7 @@ void process_tower_lights( Mat& frame, Mat& grayscale, Mat& grayscale_blur, Mat&
 	     lights_channel = 2; /* Use Red Channel for Red Lights */
 	}
     
-    GaussianBlur(channels[lights_channel], thresholded_lights_image, Size(7,7), 0.5, 0.5);
+    GaussianBlur(channels[lights_channel], thresholded_lights_image, Size(11,11), 0.5, 0.5);
 	threshold(channels[lights_channel], thresholded_lights_image, lights_low_threshold, 255, THRESH_BINARY);	
     threshold(channels[target_channel], thresholded_target_image, target_low_threshold,
         255, THRESH_BINARY);
@@ -1469,33 +1482,36 @@ void process_tower_lights( Mat& frame, Mat& grayscale, Mat& grayscale_blur, Mat&
 		        target_aspect = (float)boundRect.width/(float)boundRect.height;
 		    }		    
 		}
-		std::cout << "Target Aspect Ratio:  " << target_aspect << std::endl;
-		Scalar color = Scalar( 0, 0, 255 );
-		/* Todo:  If multiple, draw the largest contour */
-		drawContours( lines, valid_target_contours, largest_contour_area_index, color, 2, 8, hierarchy, 0, Point() );
-		local_results.target.detected = true;
+		detected_target = true;
+		if ( results.target.last_detected ) {
+		    //std::cout << "Target Aspect Ratio:  " << target_aspect << std::endl;
+		    Scalar color = Scalar( 0, 0, 255 );
+		    /* Todo:  If multiple, draw the largest contour */
+		    drawContours( lines, valid_target_contours, largest_contour_area_index, color, 2, 8, hierarchy, 0, Point() );
+		    local_results.target.detected = true;
 
-        // Calculate angle to center of mass of the target.
-        Point target_center;		
-	    Moments mu = moments(valid_target_contours[largest_contour_area_index],false);
-	    target_center.x = (int) (mu.m10 / mu.m00);
-	    target_center.y = (int) (mu.m01 / mu.m00);
+            // Calculate angle to center of mass of the target.
+            Point target_center;		
+	        Moments mu = moments(valid_target_contours[largest_contour_area_index],false);
+	        target_center.x = (int) (mu.m10 / mu.m00);
+	        target_center.y = (int) (mu.m01 / mu.m00);
 	    
-	    cv::circle( lines, target_center, 7, Scalar(0,255,0), -1);	    
+	        cv::circle( lines, target_center, 7, Scalar(0,255,0), -1);	    
 	    
-		local_results.target.angle_degrees = angle_from_x(camera, target_center.x);
+		    local_results.target.angle_degrees = angle_from_x(camera, target_center.x);
 		
-		// Calculate distance to target.
-		local_results.target.distance_inches = distance_from_y(camera,
-		                                                       target_center.y, 
-		                                                       height_to_retro_target_inches);
-		char text[512];
-		sprintf(text,"Tgt Angle:  %0.2f", local_results.target.angle_degrees);
-		Point tgtAnglePoint(10, 320);
-		cv::putText( lines, text, tgtAnglePoint, FONT_HERSHEY_PLAIN, 2, Scalar(255,255,255));
-		sprintf(text,"Tgt Dist.:  %0.2f", local_results.target.distance_inches);
-		Point tgtDistPoint(10,360);
-		cv::putText( lines, text, tgtDistPoint, FONT_HERSHEY_PLAIN, 2, Scalar(255,255,255));
+		    // Calculate distance to target.
+		    local_results.target.distance_inches = distance_from_y(camera,
+		                                                           target_center.y, 
+		                                                           height_to_retro_target_inches);
+		    char text[512];
+		    sprintf(text,"Tgt Angle:  %0.2f", local_results.target.angle_degrees);
+		    Point tgtAnglePoint(10, 320);
+		    cv::putText( lines, text, tgtAnglePoint, FONT_HERSHEY_PLAIN, 2, Scalar(255,255,255));
+		    sprintf(text,"Tgt Dist.:  %0.2f", local_results.target.distance_inches);
+		    Point tgtDistPoint(10,360);
+		    cv::putText( lines, text, tgtDistPoint, FONT_HERSHEY_PLAIN, 2, Scalar(255,255,255));
+		}
 	}
 
     /// Detect Tower Lights and Shield Edge Lights
@@ -1629,7 +1645,6 @@ void process_tower_lights( Mat& frame, Mat& grayscale, Mat& grayscale_blur, Mat&
 
 	//std::cout << "NumPotentialLights:  " << potential_lights.size() << std::endl;
 	
-    bool detected_tower_lights = false;	    
     /** Vertical (Tower) Detection */	
 	
     vector<interesting_contour *>v_contours_in_dom_angle_range;
@@ -1693,23 +1708,13 @@ void process_tower_lights( Mat& frame, Mat& grayscale, Mat& grayscale_blur, Mat&
 	
 	if ( ( max_vert_intersecting_contours > 0 ) &&
 	     ( max_vert_int_contours.size() >= MIN_COLLINEAR_POINTS ) ) {
-	    detected_tower_lights = true;
-	    std::cout << "NumVContours:  " << max_vert_int_contours.size() << std::endl;
+	    //std::cout << "NumVContours:  " << max_vert_int_contours.size() << std::endl;
         int num_evenly_spaced_points;
         int avg_point_separation;
-        bool min_evenly_spaced = verify_evenly_spaced_vertical_points(max_vert_int_contours, MIN_COLLINEAR_POINTS, num_evenly_spaced_points, avg_point_separation);	
+        bool min_evenly_spaced = verify_evenly_spaced_vertical_points(max_vert_int_contours, MIN_COLLINEAR_POINTS, num_evenly_spaced_points, MIN_VERT_LIGHT_DIST_PIXELS, avg_point_separation);	
         std::cout << "Num Evenly Spaced Points:  " << num_evenly_spaced_points << " at distance " << avg_point_separation << std::endl;
         if ( num_evenly_spaced_points >= (MIN_COLLINEAR_POINTS-1) ) {    
-	        for ( int i = 0; i < max_vert_int_contours.size(); i++ ) {
-	            cv::circle( lines, (*(max_vert_int_contours[i])).pt, 5, Scalar(0,255,0), -1);	            	    
-            }
-            for ( int i = 0; i < 4; i++ ) {
-                line( lines, max_vert_intersection_enc_poly.box[i], max_vert_intersection_enc_poly.box[(i+1)%4], Scalar(0,255,0));
-            }
-            line( lines, max_vert_intersection_enc_poly.centerline_begin, 
-                         max_vert_intersection_enc_poly.centerline_end,
-                         Scalar(255,255,0));
-            local_results.tower.detected = true;
+        	detected_tower_lights = true;
             /* Calculate angle as the angle to the center of the vertical line which */
             /* runs through all of the points.                                       */
             Point2f start(max_vert_intersection_enc_poly.centerline_begin.x, 
@@ -1718,11 +1723,25 @@ void process_tower_lights( Mat& frame, Mat& grayscale, Mat& grayscale_blur, Mat&
                         max_vert_intersection_enc_poly.centerline_end.y);
             Point2f midpoint = (start + end)*.5;
             double angle = angle_from_x(camera,(int)midpoint.x);
-            local_results.tower.angle_degrees = angle;
-		    char text[512];
-		    sprintf(text,"Twr Angle:  %0.2f", local_results.tower.angle_degrees);
-		    Point tgtAnglePoint(10, 400);
-		    cv::putText( lines, text, tgtAnglePoint, FONT_HERSHEY_PLAIN, 2, Scalar(255,255,255));        
+            detected_tower_angle = angle;
+            if ( results.tower.last_detected &&
+                 (fabs(results.tower.last_angle_degrees - detected_tower_angle) < 3 ) ) {
+	            for ( int i = 0; i < max_vert_int_contours.size(); i++ ) {
+	                cv::circle( lines, (*(max_vert_int_contours[i])).pt, 5, Scalar(0,255,0), -1);	            	    
+                }
+                for ( int i = 0; i < 4; i++ ) {
+                    line( lines, max_vert_intersection_enc_poly.box[i], max_vert_intersection_enc_poly.box[(i+1)%4], Scalar(0,255,0));
+                }
+                line( lines, max_vert_intersection_enc_poly.centerline_begin, 
+                             max_vert_intersection_enc_poly.centerline_end,
+                             Scalar(255,255,0));
+                local_results.tower.detected = true;
+                local_results.tower.angle_degrees = angle;
+		        char text[512];
+		        sprintf(text,"Twr Angle:  %0.2f", local_results.tower.angle_degrees);
+		        Point tgtAnglePoint(10, 400);
+		        cv::putText( lines, text, tgtAnglePoint, FONT_HERSHEY_PLAIN, 2, Scalar(255,255,255));        
+		    }
 		}
 	}
 	
@@ -1793,28 +1812,33 @@ void process_tower_lights( Mat& frame, Mat& grayscale, Mat& grayscale_blur, Mat&
 	    //std::cout << "NumHContours:  " << max_horz_int_contours.size() << std::endl;
         int num_evenly_spaced_points;
         int avg_point_separation;
-        bool min_evenly_spaced = verify_evenly_spaced_vertical_points(max_horz_int_contours, MIN_COLLINEAR_POINTS, num_evenly_spaced_points, avg_point_separation);	
+        bool min_evenly_spaced = verify_evenly_spaced_vertical_points(max_horz_int_contours, MIN_COLLINEAR_POINTS, num_evenly_spaced_points, MIN_HORZ_LIGHT_DIST_PIXELS, avg_point_separation);	
         std::cout << "Num Evenly Spaced H Points:  " << num_evenly_spaced_points << " at distance " << avg_point_separation << std::endl;
-        if ( num_evenly_spaced_points >= (MIN_COLLINEAR_POINTS-1) ) {    
-	        for ( int i = 0; i < max_horz_int_contours.size(); i++ ) {
-	            cv::circle( lines, (*(max_horz_int_contours[i])).pt, 5, Scalar(255,0,0), -1);	            	    
-            }
-            for ( int i = 0; i < 4; i++ ) {
-                line( lines, max_horz_intersection_enc_poly.box[i], max_horz_intersection_enc_poly.box[(i+1)%4], Scalar(255,0,0));
-            }
-            line( lines, max_horz_intersection_enc_poly.centerline_begin, 
-                         max_horz_intersection_enc_poly.centerline_end,
-                         Scalar(0,255,255));
-            local_results.shield.detected = true;
+        if ( num_evenly_spaced_points >= (MIN_COLLINEAR_POINTS-1) ) { 
+            detected_shield = true;
             float angle = angle_between(max_horz_intersection_enc_poly.centerline_begin,
                                              max_horz_intersection_enc_poly.centerline_end);
             angle -= 90;
-            local_results.shield.angle_degrees = angle;
-		    char text[512];
-		    sprintf(text,"Shd Angle:  %0.2f", local_results.shield.angle_degrees);
-		    Point tgtAnglePoint(10, 440);
-		    cv::putText( lines, text, tgtAnglePoint, FONT_HERSHEY_PLAIN, 2, Scalar(255,255,255));        
-            
+            detected_shield_angle = angle;
+            if ( results.shield.last_detected &&
+                 (fabs(results.shield.last_angle_degrees - detected_shield_angle) < 3)) {
+                                            
+	            for ( int i = 0; i < max_horz_int_contours.size(); i++ ) {
+	                cv::circle( lines, (*(max_horz_int_contours[i])).pt, 5, Scalar(255,0,0), -1);	            	    
+                }
+                for ( int i = 0; i < 4; i++ ) {
+                    line( lines, max_horz_intersection_enc_poly.box[i], max_horz_intersection_enc_poly.box[(i+1)%4], Scalar(255,0,0));
+                }
+                line( lines, max_horz_intersection_enc_poly.centerline_begin, 
+                             max_horz_intersection_enc_poly.centerline_end,
+                             Scalar(0,255,255));
+                local_results.shield.detected = true;
+                local_results.shield.angle_degrees = angle;
+		        char text[512];
+		        sprintf(text,"Shd Angle:  %0.2f", local_results.shield.angle_degrees);
+		        Point tgtAnglePoint(10, 440);
+		        cv::putText( lines, text, tgtAnglePoint, FONT_HERSHEY_PLAIN, 2, Scalar(255,255,255));        
+            }
         }
 	}
 
@@ -1823,20 +1847,32 @@ void process_tower_lights( Mat& frame, Mat& grayscale, Mat& grayscale_blur, Mat&
     }
     
     /* Update successive detection counts */
-    if ( local_results.target.detected ) {
+    if ( detected_target ) {
         local_results.target.successive_detection_count = results.target.successive_detection_count +1;        
+        local_results.target.last_detected = true;
+        local_results.target.last_angle_degrees = results.target.angle_degrees;
     } else {
         local_results.target.successive_detection_count = 0;
+        local_results.target.last_detected = false;
+        local_results.target.last_angle_degrees = 0;
     }
-    if ( local_results.tower.detected ) {
+    if ( detected_tower_lights ) {
         local_results.tower.successive_detection_count = results.tower.successive_detection_count +1;        
+        local_results.tower.last_detected = true;
+        local_results.tower.last_angle_degrees = detected_tower_angle;
     } else {
         local_results.tower.successive_detection_count = 0;
+        local_results.tower.last_detected = false;
+        local_results.tower.last_angle_degrees = 0;
     }
-    if ( local_results.shield.detected ) {
+    if ( detected_shield ) {
         local_results.shield.successive_detection_count = results.shield.successive_detection_count +1;        
+        local_results.shield.last_detected = true;
+        local_results.shield.last_angle_degrees = detected_shield_angle;
     } else {
         local_results.shield.successive_detection_count = 0;
+        local_results.shield.last_detected = false;
+        local_results.shield.last_angle_degrees = 0;
     }
     
     results = local_results;

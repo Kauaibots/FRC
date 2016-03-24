@@ -13,7 +13,7 @@
 
 # Redirect stderr/stdout to log
 
-exec 2> /tmp/rc.local.log
+exec 2> /home/ubuntu/rc.local.log
 exec 1>&2
 set -x
 
@@ -29,6 +29,12 @@ exec_dir=/home/ubuntu/Kauaibots_FRC/Software/2016/JetsonTk1
 $exec_dir/start_mjpg_streamer.sh
 #$exec_dir/start_detector.sh
 start detector
+
+sleep 5
+ping -c 3 roboRIO-2465-FRC.local
+ping -c 3 roboRIO-2465-FRC.lan
+ping -c 3 roboRIO-2465-FRC
+ping -c 3 roboRIO-2465-FRC.frc-field.local
 
 exit 0
 
