@@ -103,7 +103,7 @@ public class Drive extends PIDSubsystem {
             
             maxTicksPer100MS = (int)((motorRPMs/transRatio)*ticksPerRev)/num100msPerSec; /* ~20 Feet/Sec */
             
-            setMode( CANTalon.TalonControlMode.PercentVbus);
+            setMode( CANTalon.TalonControlMode.Speed);
         } catch (Exception ex) {
             ex.printStackTrace();
         }
@@ -129,7 +129,7 @@ public class Drive extends PIDSubsystem {
                 motor.setFeedbackDevice(FeedbackDevice.QuadEncoder); //motor.setSpeedMode(CANTalon.kQuadEncoder, 256, .4, .01, 0);
             	//We don't tell the motor controller the number of ticks per encoder revolution
                 //The Talon needs to be told the number of encoder ticks per 10 ms to rotate
-                motor.setPID(.2, 0, 0);
+                motor.setPID(.1, 0, 0);
                 motor.changeControlMode(CANTalon.TalonControlMode.Speed);
                 //motor.setCloseLoopRampRate(0);
             }
@@ -146,7 +146,11 @@ public class Drive extends PIDSubsystem {
         }
     }    
     
-    void setMode( CANTalon.ControlMode controlMode ) {
+    public CANTalon.ControlMode getMode() {
+    	return currControlMode;
+    }
+    
+    public void setMode( CANTalon.ControlMode controlMode ) {
         
         currControlMode = controlMode;
 
