@@ -173,7 +173,9 @@ public class Robot extends IterativeRobot {
         } else {
         	teleop_countdown = false;
         }
-        Robot.drive.setFODEnabled(true); /* TODO:  This is a hack.  Remove it? */
+        /* TODO:  This is a hack to deal with autonomous programs that incorrectly
+         * leave drive system in FOD disabled mode.  Remove it? */
+        Robot.drive.setFODEnabled(true); 
     }
 
     /**
