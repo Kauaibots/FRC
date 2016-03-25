@@ -41,8 +41,14 @@ public class Drive extends PIDSubsystem {
 
     static final double cWidth          = 25.0;                 // Distance between left/right wheels
     static final double cLength         = 17.5;                 // Distance btwn front/back wheels
-    static final double wheelDiameter   = 8.0;                  // Per AndyMark Specs
+    static final double wheelDiameter   = 10.0;                  // Per AndyMark Specs
+    static final int ticksPerRev 		= 4*256;
+    static final int num100msPerSec 	= 10;
+    static final double motorRPMs 		= 2650.0f;
+    static final double transRatio 		= 8.45f;
     static final double wheelRadius     = wheelDiameter / 2;
+    static final double disPerRev 		= wheelDiameter * Math.PI;
+    static final double pulsePerInch	= ticksPerRev / disPerRev;
 
     public static final int ROTATE_DIRECTION  = -1;
     
@@ -70,10 +76,9 @@ public class Drive extends PIDSubsystem {
     int maxOutputSpeed;
     int maxTicksPer100MS;    
     double tolerance_degrees;
-    final int ticksPerRev = 4*256;
-    final int num100msPerSec = 10;
-    final float motorRPMs = 2650.0f;
-    final float transRatio = 4.41f;
+    boolean fod_enable = true;
+    double next_autorotate_value = 0.0;
+    boolean auto_stop = false;
     
     public Drive() {
         super(  "Drive",
@@ -124,10 +129,11 @@ public class Drive extends PIDSubsystem {
                 motor.setFeedbackDevice(FeedbackDevice.QuadEncoder); //motor.setSpeedMode(CANTalon.kQuadEncoder, 256, .4, .01, 0);
             	//We don't tell the motor controller the number of ticks per encoder revolution
                 //The Talon needs to be told the number of encoder ticks per 10 ms to rotate
-                motor.setPID(.025, 0, 0);
+                motor.setPID(.1, 0, 0);
                 motor.changeControlMode(CANTalon.TalonControlMode.Speed);
-                motor.setCloseLoopRampRate(0);
+                //motor.setCloseLoopRampRate(0);
             }
+            //hello
             else
             {
             	motor.changeControlMode(CANTalon.TalonControlMode.PercentVbus);
@@ -140,7 +146,11 @@ public class Drive extends PIDSubsystem {
         }
     }    
     
-    void setMode( CANTalon.ControlMode controlMode ) {
+    public CANTalon.ControlMode getMode() {
+    	return currControlMode;
+    }
+    
+    public void setMode( CANTalon.ControlMode controlMode ) {
         
         currControlMode = controlMode;
 
@@ -202,8 +212,6 @@ public class Drive extends PIDSubsystem {
         }
     }    
 
-    boolean fod_enable = true;
-    double next_autorotate_value = 0.0;
     
     public void doMecanum( double vX, double vY, double vRot) {
         
@@ -255,10 +263,10 @@ public class Drive extends PIDSubsystem {
             
             byte syncGroup = (byte)0x80;
             
-            checkForRestartedMotor( leftFrontSC, "Front Left" );
+            /*checkForRestartedMotor( leftFrontSC, "Front Left" );
             checkForRestartedMotor( rightFrontSC, "Front Right" );
             checkForRestartedMotor( leftRearSC, "Rear Left" );
-            checkForRestartedMotor( rightRearSC, "Rear Right" );
+            checkForRestartedMotor( rightRearSC, "Rear Right" );*/
             
             leftFrontSC.set(maxOutputSpeed * wheelSpeeds[0] * -1, syncGroup );
             rightFrontSC.set(maxOutputSpeed * wheelSpeeds[1], syncGroup);
@@ -276,6 +284,11 @@ public class Drive extends PIDSubsystem {
             SmartDashboard.putNumber( "Speed_RearLeft", leftRearSC.getEncVelocity());
             SmartDashboard.putNumber( "Speed_FrontRight", rightFrontSC.getEncVelocity());
             SmartDashboard.putNumber( "Speed_RearRight", rightRearSC.getEncVelocity());
+            
+            SmartDashboard.putNumber("Position_FrontLeft", leftFrontSC.getPosition());
+            SmartDashboard.putNumber("Position_RearLeft", leftRearSC.getPosition());
+            SmartDashboard.putNumber("Position_FrontRight", rightFrontSC.getPosition());
+            SmartDashboard.putNumber("Position_RearRight", rightRearSC.getPosition());
             
         } catch (Exception ex) {
             ex.printStackTrace();
@@ -316,6 +329,55 @@ public class Drive extends PIDSubsystem {
     
     public boolean getFODEnabled() {
         return fod_enable;
+    }
+    
+    public void configureAutoStop(CANTalon sc, double distance_pulse) {
+    	sc.setPosition(0);
+    	sc.enableLimitSwitch(true, true);
+    	sc.setForwardSoftLimit(distance_pulse);
+    	sc.ConfigFwdLimitSwitchNormallyOpen(true);
+    	sc.enableForwardSoftLimit(true);
+    	sc.setReverseSoftLimit(-distance_pulse);
+    	sc.ConfigRevLimitSwitchNormallyOpen(true);
+    	sc.enableReverseSoftLimit(true);
+    	sc.reverseSensor(true);
+        sc.enableBrakeMode(true);
+    }
+    
+    
+    public void enableAutoStop(float distance_inches) {
+    	if(!auto_stop) {
+    		auto_stop = true;
+    		double distance_pulse = pulsePerInch * distance_inches;
+    		configureAutoStop(leftFrontSC, distance_pulse);
+    		configureAutoStop(leftRearSC, distance_pulse);
+    		configureAutoStop(rightFrontSC, distance_pulse);
+    		configureAutoStop(rightRearSC, distance_pulse);
+    	}
+    }
+    
+    public boolean isStopped() {
+    	boolean leftFrontStopped = (leftFrontSC.getFaultForSoftLim() != 0) || (leftFrontSC.getFaultRevSoftLim() != 0);
+    	boolean leftRearStopped = (leftRearSC.getFaultForSoftLim() != 0) || (leftRearSC.getFaultRevSoftLim() != 0);
+    	boolean rightFrontStopped = (rightFrontSC.getFaultForSoftLim() != 0) || (rightFrontSC.getFaultRevSoftLim() != 0);
+    	boolean rightRearStopped = (rightRearSC.getFaultForSoftLim() != 0) || (rightRearSC.getFaultRevSoftLim() != 0);
+    	boolean stopped = leftFrontStopped && leftRearStopped && rightFrontStopped && rightRearStopped;
+    	return stopped;
+    }
+    
+    public void undoAutoStop(CANTalon sc) {
+    	sc.enableForwardSoftLimit(false);
+    	sc.enableReverseSoftLimit(false);
+    }
+    
+    public void disableAutoStop() {
+    	if(auto_stop) {
+    		auto_stop = false;
+    		undoAutoStop(leftFrontSC);
+    		undoAutoStop(leftRearSC);
+    		undoAutoStop(rightFrontSC);
+    		undoAutoStop(rightRearSC);
+    	}
     }
 }
 

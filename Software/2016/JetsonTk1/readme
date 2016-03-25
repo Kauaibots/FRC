@@ -1,0 +1,9 @@
+1) To convert a .avi file created by detector to mp4 (so it can be read by detector),
+use the mencoder program to perform the conversion
+
+mencoder <in>.avi -o <out>.mp4 -oac copy -ovc lavc
+
+2) To play the .avi file created by detector:
+
+mplayer <in>.avi
+
