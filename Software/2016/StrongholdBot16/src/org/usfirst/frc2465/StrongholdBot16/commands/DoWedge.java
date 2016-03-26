@@ -70,6 +70,8 @@ public class DoWedge extends CommandGroup {
     // Called when another command which requires one or more of the same
     // subsystems is scheduled to run
     protected void interrupted() {
+    	Robot.wedge.setMotor(0);
+		Robot.wedge.setPosition(!goDown);
     	end();
     }
 }

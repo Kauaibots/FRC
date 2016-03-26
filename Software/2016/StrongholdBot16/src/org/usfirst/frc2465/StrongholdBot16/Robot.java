@@ -208,7 +208,7 @@ public class Robot extends IterativeRobot {
     	SmartDashboard.putNumber("FrontCenterDistanceCM", Robot.ultrasonic.getFrontCenterDistanceCM());
     	
     	SmartDashboard.putNumber("BallIRSensor", RobotMap.infraredBallGrabberSensor.getDistanceInches());
-    	SmartDashboard.putNumber("FrontIRSensor", RobotMap.infraredFrontSensor.getDistanceInches());
+    	//SmartDashboard.putNumber("FrontIRSensor", RobotMap.infraredFrontSensor.getDistanceInches());
     	
     	//SmartDashboard.putBoolean("IsAgressive", value);
         
