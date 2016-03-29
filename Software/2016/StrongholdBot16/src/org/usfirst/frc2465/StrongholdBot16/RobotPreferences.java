@@ -16,14 +16,15 @@ public class RobotPreferences {
     
     // PID Controller Settings
 	// the good kine :D P:0.0022 I:0.000010 D:0.00001
+	// the other good kine P:0.00038 I:0.00001 D:0.001
     
     static public double getAutoRotateP() {
         //return Preferences.getInstance().getDouble("AutoRotateP", 0.0002);
-    	return 0.0025;
+    	return 0.0022;
     }
     static public double getAutoRotateI() {
         //return Preferences.getInstance().getDouble("AutoRotateI", 0.00005);
-    	return 0.00004;
+    	return 0.00001;
     }
     static public double getAutoRotateD() {
         //return Preferences.getInstance().getDouble("AutoRotateD", 0.00);

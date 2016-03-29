@@ -16,16 +16,16 @@ public class LowBar extends CommandGroup {
 
 	public LowBar(){
 		requires(Robot.drive);
-		//this.addParallel( new DriveDistance(-60f, .2f, 0f));
+		//this.addParallel( new DriveDistance(60f, .2f, 0f));
 		//this.addSequential( new AutoRotate(180));
-		//this.addSequential( new DriveDistance(60f, .2f, 0f));
+		//this.addSequential( new DriveDistance(-60f, .2f, 0f));
 		
 	}
 
     // Called just before this Command runs the first time
     protected void initialize() {
     	Robot.drive.setFODEnabled(false);
-    	Robot.drive.doMecanum(0, -.15, 0);
+    	Robot.drive.doMecanum(0, -.1, 0);
 		start_time = Timer.getFPGATimestamp();
     }
 
@@ -42,8 +42,9 @@ public class LowBar extends CommandGroup {
 				return true;
 			}
 		}
-
-		return Robot.drive.isStopped();
+        
+		//return Robot.drive.isStopped();
+    	return false;
     }
 
     // Called once after isFinished returns true

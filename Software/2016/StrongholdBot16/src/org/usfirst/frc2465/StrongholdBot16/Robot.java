@@ -108,6 +108,11 @@ public class Robot extends IterativeRobot {
         autoChooser = new SendableChooser();
         autoChooser.addDefault("Frozen", new AutonomousCommand());
         autoChooser.addObject("LowBar", new LowBar());
+        autoChooser.addObject("Moat", new Moat());
+        autoChooser.addObject("Ramparts", new Ramparts());
+        autoChooser.addObject("Porta", new Porta());
+        autoChooser.addObject("RockyTerrain", new RoughTerrain());
+        autoChooser.addObject("LowBarAndBall", new LowBarAndBall());
         SmartDashboard.putData("Autonomous Chooser", autoChooser);
         
 

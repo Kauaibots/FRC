@@ -28,7 +28,7 @@ public class BallControl extends Subsystem {
 	double start_time = 0;
 	double timePeriod = 0;
 	
-	double exhaleSpeed = 0.25;
+	double exhaleSpeed = 1.0;
 	double inhaleSpeed = exhaleSpeed * -1;
 	double holdBreath = 0;
 	

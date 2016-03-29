@@ -129,17 +129,19 @@ public class Drive extends PIDSubsystem {
                 motor.setFeedbackDevice(FeedbackDevice.QuadEncoder); //motor.setSpeedMode(CANTalon.kQuadEncoder, 256, .4, .01, 0);
             	//We don't tell the motor controller the number of ticks per encoder revolution
                 //The Talon needs to be told the number of encoder ticks per 10 ms to rotate
-                motor.setPID(.1, 0, 0);
+                //motor.setPID(.6, .00, 0);
+                //motor.setF(.4);
+                motor.setPID(.1, .00, 0);
                 motor.changeControlMode(CANTalon.TalonControlMode.Speed);
-                //motor.setCloseLoopRampRate(0);
+                motor.setCloseLoopRampRate(0);
+                motor.reverseSensor(true);
             }
-            //hello
             else
             {
             	motor.changeControlMode(CANTalon.TalonControlMode.PercentVbus);
             }
             motor.enableBrakeMode(true);
-            motor.setVoltageRampRate(0);
+            //motor.setVoltageRampRate(0);
             motor.enableControl();
         } catch (Exception ex) {
             ex.printStackTrace();
@@ -280,7 +282,7 @@ public class Drive extends PIDSubsystem {
             SmartDashboard.putNumber( "SpeedOut_FrontRight", maxOutputSpeed * wheelSpeeds[1]);
             SmartDashboard.putNumber( "SpeedOut_RearRight", maxOutputSpeed * wheelSpeeds[3]);
             
-            SmartDashboard.putNumber( "Speed_FrontLeft", leftFrontSC.getEncVelocity());
+            SmartDashboard.putNumber( "Speed_Front nbLeft", leftFrontSC.getEncVelocity());
             SmartDashboard.putNumber( "Speed_RearLeft", leftRearSC.getEncVelocity());
             SmartDashboard.putNumber( "Speed_FrontRight", rightFrontSC.getEncVelocity());
             SmartDashboard.putNumber( "Speed_RearRight", rightRearSC.getEncVelocity());
