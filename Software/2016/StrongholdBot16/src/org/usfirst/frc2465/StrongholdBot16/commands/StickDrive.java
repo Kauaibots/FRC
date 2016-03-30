@@ -79,7 +79,7 @@ public class  StickDrive extends Command {
     JoystickResponseCurveSet conservative = new JoystickResponseCurveSet(
             new JoystickResponseCurve( .40, 3, .50, DEADZONE ),
             new JoystickResponseCurve( .40, 3, .50, DEADZONE ),
-            new JoystickResponseCurve( .40, 3, .35, DEADZONE ) );
+            new JoystickResponseCurve( .40, 3, .25, DEADZONE ) );
 
     JoystickResponseCurveSet aggressive = new JoystickResponseCurveSet(
             new JoystickResponseCurve( .40, 3, 1.0, DEADZONE ),
@@ -111,7 +111,7 @@ public class  StickDrive extends Command {
         double vY = driver.getX();
         double vRot = driver.getRawAxis(3);
                          
-        if ( driver.getRawButton(4) )
+        if ( driver.getRawButton(7) )
         {
         	if ( RobotMap.imu != null ) {
 	            RobotMap.imu.zeroYaw();
@@ -155,7 +155,8 @@ public class  StickDrive extends Command {
         {
             Robot.drive.setFODEnabled(false);
         }
-
+        
+        
         
         /*if (driver.getRawButton(6))
         {
@@ -203,6 +204,16 @@ public class  StickDrive extends Command {
         	Robot.drive.setAutoRotation(true);
         	Robot.drive.setSetpoint(0.0);	
         }
+        else if (driver.getRawButton(2))
+        {
+        	Robot.drive.setAutoRotation(true);
+        	Robot.drive.setSetpoint(-135.0);
+        }
+        else if (driver.getRawButton(3))
+        {
+        	Robot.drive.setAutoRotation(true);
+        	Robot.drive.setSetpoint(135.0);
+        }    
         else
         {
         	Robot.drive.setAutoRotation(false);

@@ -37,7 +37,7 @@ public class LowBar extends CommandGroup {
     // Make this return true when this Command no longer needs to run execute()
     protected boolean isFinished() {
 		if(start_time!= 0){
-			if((Timer.getFPGATimestamp() - start_time) > 4.0){
+			if((Timer.getFPGATimestamp() - start_time) > 5.2){
 				start_time = 0;
 				return true;
 			}

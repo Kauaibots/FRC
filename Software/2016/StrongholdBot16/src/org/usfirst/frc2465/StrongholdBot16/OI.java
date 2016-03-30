@@ -81,7 +81,7 @@ public class OI {
         
         //lowbarButton = new JoystickButton(driver, 11);
         //lowbarButton.whenPressed(new LowBar());
-        ballGrabButton = new JoystickButton(driver, 2);
+        ballGrabButton = new JoystickButton(driver, 4);
         ballGrabButton.whenPressed(new BallGrab());
 	    scoreWedgeButton = new JoystickButton(driver,5);
 	    scoreWedgeButton.whileHeld(new DoWedge(true));
