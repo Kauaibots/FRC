@@ -112,6 +112,7 @@ public class Robot extends IterativeRobot {
         autoChooser.addObject("Ramparts", new Ramparts());
         autoChooser.addObject("Porta", new Porta());
         autoChooser.addObject("RoughTerrain", new RoughTerrain());
+        autoChooser.addDefault("ChivalDeFries", new ChivalDeFries());
         autoChooser.addObject("LowBarAndBall", new LowBarAndBall());
         autoChooser.addObject("LowBarSlide 1", new LowBarSlide(1));
         autoChooser.addObject("LowBarSlide 2", new LowBarSlide(2));
