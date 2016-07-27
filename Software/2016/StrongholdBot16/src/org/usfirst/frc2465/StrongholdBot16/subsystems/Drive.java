@@ -379,5 +379,118 @@ public class Drive extends PIDSubsystem {
     		undoAutoStop(rightRearSC);
     	}
     }
+    
+    public enum SpeedPIDTuneDirection { Forward, Strafe, Rotate }    
+    
+    boolean speed_pid_test_active;
+    boolean last_speed_pid_test_success;
+    double last_speed_pid_test_time_to_sucess;
+    double last_speed_pid_test_start_time;
+    double speed_pid_test_timeout_seconds;
+    double last_speed_pid_test_duration;
+    double last_speed_pid_test_velocity;
+    public boolean startSpeedPIDTuneRun( SpeedPIDTuneDirection dir, double vel_ratio, 
+    								  double p, double i, double d, double timeout_seconds ) {
+    	
+    	/* Verify wheel encoder velocities are zero. */
+    	if (speed_pid_test_active || !isAvgWheelVelocityAtStopped()) {
+    		return false;
+    	}
+    	
+    	speed_pid_test_active = true;
+        last_speed_pid_test_success = false;
+        last_speed_pid_test_time_to_sucess = 0.0;
+        last_speed_pid_test_start_time = Timer.getFPGATimestamp();
+        last_speed_pid_test_duration = 0;
+        
+        speed_pid_test_timeout_seconds = timeout_seconds;
+
+    	/* reprogram PID values */
+        prepMotorForSpeedPIDTuning(leftFrontSC,p,i,d);
+        prepMotorForSpeedPIDTuning(rightFrontSC,p,i,d);
+        prepMotorForSpeedPIDTuning(rightRearSC,p,i,d);
+        prepMotorForSpeedPIDTuning(leftRearSC,p,i,d);    
+		
+        /* start the motors */
+        last_speed_pid_test_velocity = vel_ratio;
+        		
+        double wheelSpeeds[] = new double[4];
+        double velocities[] = new double[3];
+        velocities[0] = (dir == SpeedPIDTuneDirection.Strafe) ? vel_ratio : 0;
+        velocities[1] = (dir == SpeedPIDTuneDirection.Forward) ? vel_ratio : 0;
+        velocities[2] = (dir == SpeedPIDTuneDirection.Rotate) ? vel_ratio : 0;
+        
+        mecanumDriveInvKinematics( velocities, wheelSpeeds );
+        
+        leftFrontSC.set(maxOutputSpeed * wheelSpeeds[0] * -1 );
+        rightFrontSC.set(maxOutputSpeed * wheelSpeeds[1]);
+        leftRearSC.set(maxOutputSpeed * wheelSpeeds[2]);
+        rightRearSC.set(maxOutputSpeed * wheelSpeeds[3]);
+        
+        return true;
+    }
+    
+    public void prepMotorForSpeedPIDTuning( CANTalon motor, double p, double i, double d) {
+        motor.setFeedbackDevice(FeedbackDevice.QuadEncoder); //motor.setSpeedMode(CANTalon.kQuadEncoder, 256, .4, .01, 0);
+    	//We don't tell the motor controller the number of ticks per encoder revolution
+        //The Talon needs to be told the number of encoder ticks per 10 ms to rotate
+        motor.setPID(p,i,d);
+        motor.changeControlMode(CANTalon.TalonControlMode.Speed);    	
+    }
+    
+    final int TERM_VELOCITY_THRESHOLD = 5;
+    
+    public boolean isAvgWheelVelocityAtTarget() {
+        int lfe = leftFrontSC.getClosedLoopError();
+        int rfe = rightFrontSC.getClosedLoopError();
+        int rre = rightRearSC.getClosedLoopError();
+        int lre = leftRearSC.getClosedLoopError();
+
+        int avg = (lfe + rfe + rre + lre) / 4;
+ 
+        return (avg <= TERM_VELOCITY_THRESHOLD);
+    }
+    
+    final int STOPPED_VELOCITY_THRESHOLD = 3;
+    
+    public boolean isAvgWheelVelocityAtStopped() {
+        int lfv = leftFrontSC.getEncVelocity();
+        int rfv = rightFrontSC.getEncVelocity();
+        int rrv = rightRearSC.getEncVelocity();
+        int lrv = leftRearSC.getEncVelocity();
+
+        int avg = (lfv + rfv + rrv + lrv) / 4;
+ 
+        return (avg <= STOPPED_VELOCITY_THRESHOLD);
+    }
+    
+    public boolean isSpeedPIDTuneActive() {
+    	if ( speed_pid_test_active ) {
+    		/* check and see if either error is 0, or timeout has occurred. */
+    		double test_duration = Timer.getFPGATimestamp() - last_speed_pid_test_start_time;
+    		if ( test_duration > speed_pid_test_timeout_seconds ) {
+    			/* Timeout */
+    			speed_pid_test_active = false;
+    			last_speed_pid_test_duration = speed_pid_test_timeout_seconds;
+    		} else {
+    			if ( isAvgWheelVelocityAtTarget() ) {
+    				speed_pid_test_active = false;
+    				last_speed_pid_test_duration = test_duration;
+    			}
+    		}
+    		/* stop the motors */
+    		leftFrontSC.set(0.0);
+    		rightFrontSC.set(0.0);
+    		rightRearSC.set(0.0);
+    		leftRearSC.set(0.0);
+    	}
+    	return speed_pid_test_active;
+    }
+        
+    public boolean getLastSpeedPIDTuneStats( double time_to_success_seconds ) {    
+    	
+    	return last_speed_pid_test_success;
+    }
+
 }
 
