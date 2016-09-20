@@ -15,6 +15,7 @@ import org.usfirst.frc2465.StrongholdBot16.RobotMap;
 
 import edu.wpi.first.wpilibj.*;
 import edu.wpi.first.wpilibj.CANTalon.FeedbackDevice;
+import edu.wpi.first.wpilibj.CANTalon.StatusFrameRate;
 import edu.wpi.first.wpilibj.command.PIDSubsystem;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 
@@ -42,7 +43,8 @@ public class Drive extends PIDSubsystem {
     static final double cWidth          = 25.0;                 // Distance between left/right wheels
     static final double cLength         = 17.5;                 // Distance btwn front/back wheels
     static final double wheelDiameter   = 10.0;                  // Per AndyMark Specs
-    static final int ticksPerRev 		= 4*256;
+    static final int codesPerRev		= 256;
+    static final int ticksPerRev 		= 4*codesPerRev;
     static final int num100msPerSec 	= 10;
     static final double motorRPMs 		= 2650.0f;
     static final double transRatio 		= 8.45f;
@@ -50,8 +52,6 @@ public class Drive extends PIDSubsystem {
     static final double disPerRev 		= wheelDiameter * Math.PI;
     static final double pulsePerInch	= ticksPerRev / disPerRev;
 
-    public static final int ROTATE_DIRECTION  = -1;
-    
 /////////////////////////////////////////////////////////////////////////////////////
 // Mecanum Constants
 /////////////////////////////////////////////////////////////////////////////////////
@@ -66,25 +66,52 @@ public class Drive extends PIDSubsystem {
     static final double cRotK = ((cWidth + cLength)/2) / wheelRadius;               // Rotational Coefficient
 
     static double invMatrix[][] = new double[][] {
-        {  -1, 1,  cRotK },
-        {   1, 1, -cRotK },
+        {  -1, 1, -cRotK },
         {   1, 1,  cRotK },
-        {  -1, 1, -cRotK },        
+        {  -1, 1,  cRotK },
+        {   1, 1, -cRotK },        
     };
        
-    CANTalon.ControlMode currControlMode;
+    CANTalon.TalonControlMode currControlMode;
     int maxOutputSpeed;
-    int maxTicksPer100MS;    
+    int maxTicksPer100MS;
+    int maxRPMsAtWheel;
     double tolerance_degrees;
     boolean fod_enable = true;
     double next_autorotate_value = 0.0;
     boolean auto_stop = false;
     
+    /* AutoSpeedPID Tune variables. */
+    final int TERM_VELOCITY_THRESHOLD = 5;
+    int lfe;
+    int rfe;
+    int rre;
+    int lre;
+    
+    public enum SpeedPIDTuneDirection { Forward, Strafe, Rotate }    
+    
+    boolean speed_pid_test_active;
+    boolean last_speed_pid_test_success;
+    double last_speed_pid_test_time_to_sucess;
+    double last_speed_pid_test_start_time;
+    double speed_pid_test_timeout_seconds;
+    double last_speed_pid_test_duration;
+    double last_speed_pid_test_velocity;
+    boolean non_zero_error_seen_once;
+    double start_moving_time;
+    static final double moving_time = 2.0;
+    double prev_speed_pid_p;
+    double prev_speed_pid_i;
+    double prev_speed_pid_d;
+    double prev_speed_pid_ff;
+    
     public Drive() {
         super(  "Drive",
                 RobotPreferences.getAutoRotateP(),
                 RobotPreferences.getAutoRotateI(),
-                RobotPreferences.getAutoRotateD());
+                RobotPreferences.getAutoRotateD(),
+                0,
+                0.02);
         try {
             getPIDController().setContinuous( true );
             getPIDController().setInputRange(-180,180);
@@ -96,12 +123,8 @@ public class Drive extends PIDSubsystem {
             
             robotDrive.setSafetyEnabled(false);
             
-            /*leftFrontSC.getPowerCycled();
-            rightFrontSC.getPowerCycled();
-            leftRearSC.getPowerCycled();
-            rightRearSC.getPowerCycled();*/
-            
             maxTicksPer100MS = (int)((motorRPMs/transRatio)*ticksPerRev)/num100msPerSec; /* ~20 Feet/Sec */
+            maxRPMsAtWheel = (int)(motorRPMs/transRatio);
             
             setMode( CANTalon.TalonControlMode.Speed);
         } catch (Exception ex) {
@@ -120,6 +143,11 @@ public class Drive extends PIDSubsystem {
         // Set the default command for a subsystem here.
         setDefaultCommand(new StickDrive());
     }
+    
+    public void setAutoRotateCoefficients(double p, double i, double d, double ff)
+    {
+    	getPIDController().setPID(p, i, d, ff);
+    }
 
     void initMotor( CANTalon motor ) {
         try {
@@ -127,13 +155,15 @@ public class Drive extends PIDSubsystem {
             {
                 //motor.configMaxOutputVoltage(12.0);
                 motor.setFeedbackDevice(FeedbackDevice.QuadEncoder); //motor.setSpeedMode(CANTalon.kQuadEncoder, 256, .4, .01, 0);
-            	//We don't tell the motor controller the number of ticks per encoder revolution
-                //The Talon needs to be told the number of encoder ticks per 10 ms to rotate
-                motor.setPID(.1, 0, 0);
+                // Apply Calibrated P,I,D,F Constants
+                motor.setPID(8, 0, 0);
+                motor.setF(5);
                 motor.changeControlMode(CANTalon.TalonControlMode.Speed);
+                // In Speed Mode, the Talon Velocity PID Setpoint is in units of RPMs.
+                // The RPMs calculation is based upon the codesPerRev configuration.
+                motor.configEncoderCodesPerRev(codesPerRev);
                 //motor.setCloseLoopRampRate(0);
             }
-            //hello
             else
             {
             	motor.changeControlMode(CANTalon.TalonControlMode.PercentVbus);
@@ -146,47 +176,29 @@ public class Drive extends PIDSubsystem {
         }
     }    
     
-    public CANTalon.ControlMode getMode() {
+    public CANTalon.TalonControlMode getMode() {
     	return currControlMode;
     }
     
-    public void setMode( CANTalon.ControlMode controlMode ) {
+    public void setMode( CANTalon.TalonControlMode controlMode ) {
         
         currControlMode = controlMode;
 
         if ( currControlMode == CANTalon.TalonControlMode.Speed )
         {
-                maxOutputSpeed = maxTicksPer100MS;
+    		maxOutputSpeed = maxRPMsAtWheel;
         }
         else // kPercentVbus
         {
-                maxOutputSpeed = 1;
+            maxOutputSpeed = 1;
         }
         
         initMotor(leftFrontSC);
         initMotor(rightFrontSC);
-        initMotor(leftRearSC);
         initMotor(rightRearSC);    
+        initMotor(leftRearSC);
     }    
     
-    void checkForRestartedMotor( CANTalon motor, String strDescription )
-    {
-        if ( currControlMode != CANTalon.TalonControlMode.Speed )   // kSpeed is the default
-        {
-            try {
-            	if ( !motor.isAlive() )
-                {
-                    Timer.delay(0.10); // Wait 100 ms
-                    initMotor( motor );
-                    String error = "\n\n>>>>" + strDescription + "Jaguar Power Cycled - re-initializing";
-                    System.out.println(error);
-                }
-            } catch (Exception ex) {
-                ex.printStackTrace();
-            }
-        }
-    }    
-
     void mecanumDriveFwdKinematics( double wheelSpeeds[], double velocities[] )
     {
         for ( int i = 0; i < 3; i++ )
@@ -241,55 +253,7 @@ public class Drive extends PIDSubsystem {
         vX = temp;
         
         try {
-            double excessRatio = (double)1.0 / ( Math.abs(vX) + Math.abs(vY) + Math.abs(vRot) );
-            if ( excessRatio < 1.0 )
-            {
-                vX      *= excessRatio;
-                vY      *= excessRatio;
-                vRot    *= excessRatio;
-            }
-            
-            vRot *= (1/cRotK);
-            vRot *= ROTATE_DIRECTION;
-            
-            SmartDashboard.putNumber( "vRot", vRot);
-            double wheelSpeeds[] = new double[4];
-            double velocities[] = new double[3];
-            velocities[0] = vX;
-            velocities[1] = vY;
-            velocities[2] = vRot;
-            
-            mecanumDriveInvKinematics( velocities, wheelSpeeds );
-            
-            byte syncGroup = (byte)0x80;
-            
-            /*checkForRestartedMotor( leftFrontSC, "Front Left" );
-            checkForRestartedMotor( rightFrontSC, "Front Right" );
-            checkForRestartedMotor( leftRearSC, "Rear Left" );
-            checkForRestartedMotor( rightRearSC, "Rear Right" );*/
-            
-            leftFrontSC.set(maxOutputSpeed * wheelSpeeds[0] * -1, syncGroup );
-            rightFrontSC.set(maxOutputSpeed * wheelSpeeds[1], syncGroup);
-            leftRearSC.set(maxOutputSpeed * wheelSpeeds[2] * -1, syncGroup);
-            rightRearSC.set(maxOutputSpeed * wheelSpeeds[3], syncGroup);
-			
-			//CANTalon.updateSyncGroup(syncGroup);
-            
-            SmartDashboard.putNumber( "SpeedOut_FrontLeft", maxOutputSpeed * wheelSpeeds[0] * -1);
-            SmartDashboard.putNumber( "SpeedOut_RearLeft", maxOutputSpeed * wheelSpeeds[2] * -1);
-            SmartDashboard.putNumber( "SpeedOut_FrontRight", maxOutputSpeed * wheelSpeeds[1]);
-            SmartDashboard.putNumber( "SpeedOut_RearRight", maxOutputSpeed * wheelSpeeds[3]);
-            
-            SmartDashboard.putNumber( "Speed_FrontLeft", leftFrontSC.getEncVelocity());
-            SmartDashboard.putNumber( "Speed_RearLeft", leftRearSC.getEncVelocity());
-            SmartDashboard.putNumber( "Speed_FrontRight", rightFrontSC.getEncVelocity());
-            SmartDashboard.putNumber( "Speed_RearRight", rightRearSC.getEncVelocity());
-            
-            SmartDashboard.putNumber("Position_FrontLeft", leftFrontSC.getPosition());
-            SmartDashboard.putNumber("Position_RearLeft", leftRearSC.getPosition());
-            SmartDashboard.putNumber("Position_FrontRight", rightFrontSC.getPosition());
-            SmartDashboard.putNumber("Position_RearRight", rightRearSC.getPosition());
-            
+            doMecanumInternal(vX, vY, vRot);			
         } catch (Exception ex) {
             ex.printStackTrace();
         }        
@@ -380,74 +344,129 @@ public class Drive extends PIDSubsystem {
     	}
     }
     
-    public enum SpeedPIDTuneDirection { Forward, Strafe, Rotate }    
-    
-    boolean speed_pid_test_active;
-    boolean last_speed_pid_test_success;
-    double last_speed_pid_test_time_to_sucess;
-    double last_speed_pid_test_start_time;
-    double speed_pid_test_timeout_seconds;
-    double last_speed_pid_test_duration;
-    double last_speed_pid_test_velocity;
     public boolean startSpeedPIDTuneRun( SpeedPIDTuneDirection dir, double vel_ratio, 
-    								  double p, double i, double d, double timeout_seconds ) {
+    								  double p, double i, double d, double ff, double timeout_seconds ) {
     	
     	/* Verify wheel encoder velocities are zero. */
     	if (speed_pid_test_active || !isAvgWheelVelocityAtStopped()) {
     		return false;
     	}
     	
+    	prev_speed_pid_p = leftFrontSC.getP();
+    	prev_speed_pid_i = leftFrontSC.getI();
+    	prev_speed_pid_d = leftFrontSC.getD();
+    	prev_speed_pid_ff = leftFrontSC.getF();
+    	
     	speed_pid_test_active = true;
         last_speed_pid_test_success = false;
         last_speed_pid_test_time_to_sucess = 0.0;
         last_speed_pid_test_start_time = Timer.getFPGATimestamp();
         last_speed_pid_test_duration = 0;
+        non_zero_error_seen_once = false;
         
         speed_pid_test_timeout_seconds = timeout_seconds;
 
     	/* reprogram PID values */
-        prepMotorForSpeedPIDTuning(leftFrontSC,p,i,d);
-        prepMotorForSpeedPIDTuning(rightFrontSC,p,i,d);
-        prepMotorForSpeedPIDTuning(rightRearSC,p,i,d);
-        prepMotorForSpeedPIDTuning(leftRearSC,p,i,d);    
-		
+        prepMotorForSpeedPIDTuning(leftFrontSC,p,i,d,ff);
+        prepMotorForSpeedPIDTuning(rightFrontSC,p,i,d,ff);
+        prepMotorForSpeedPIDTuning(rightRearSC,p,i,d,ff);
+        prepMotorForSpeedPIDTuning(leftRearSC,p,i,d,ff);            
+        
         /* start the motors */
         last_speed_pid_test_velocity = vel_ratio;
-        		
-        double wheelSpeeds[] = new double[4];
-        double velocities[] = new double[3];
-        velocities[0] = (dir == SpeedPIDTuneDirection.Strafe) ? vel_ratio : 0;
-        velocities[1] = (dir == SpeedPIDTuneDirection.Forward) ? vel_ratio : 0;
-        velocities[2] = (dir == SpeedPIDTuneDirection.Rotate) ? vel_ratio : 0;
+
+        double vX = (dir == SpeedPIDTuneDirection.Strafe) ? vel_ratio : 0;
+        double vY = (dir == SpeedPIDTuneDirection.Forward) ? vel_ratio : 0;
+        double vRot = (dir == SpeedPIDTuneDirection.Rotate) ? vel_ratio : 0;        
         
-        mecanumDriveInvKinematics( velocities, wheelSpeeds );
-        
-        leftFrontSC.set(maxOutputSpeed * wheelSpeeds[0] * -1 );
-        rightFrontSC.set(maxOutputSpeed * wheelSpeeds[1]);
-        leftRearSC.set(maxOutputSpeed * wheelSpeeds[2]);
-        rightRearSC.set(maxOutputSpeed * wheelSpeeds[3]);
+        doMecanumInternal(vX, vY, vRot);
         
         return true;
     }
+
+	private void doMecanumInternal(double vX, double vY, double vRot) {
+		
+    	/* Scale input values if any of them exceeds 1.0*/
+        double excessRatio = (double)1.0 / ( Math.abs(vX) + Math.abs(vY) + Math.abs(vRot) );
+        if ( excessRatio < 1.0 )
+        {
+            vX      *= excessRatio;
+            vY      *= excessRatio;
+            vRot    *= excessRatio;
+        }		
+		
+		vRot *= (1/cRotK);
+        
+        SmartDashboard.putNumber( "vRot", vRot);
+        
+        double wheelSpeeds[] = new double[4];
+        double velocities[] = new double[3];
+        velocities[0] = vX;
+        velocities[1] = vY;
+        velocities[2] = vRot;       
+               
+        mecanumDriveInvKinematics( velocities, wheelSpeeds );
+        
+        double left_front_speed = maxOutputSpeed * wheelSpeeds[0] * -1;
+        double right_front_speed = maxOutputSpeed * wheelSpeeds[1];
+        double right_rear_speed = maxOutputSpeed * wheelSpeeds[2];
+        double left_rear_speed = maxOutputSpeed * wheelSpeeds[3] * -1;
+        
+        leftFrontSC.set(left_front_speed);
+        rightFrontSC.set(right_front_speed);
+        leftRearSC.set(left_rear_speed);
+        rightRearSC.set(right_rear_speed);
+        
+        SmartDashboard.putNumber( "SpeedOut_FrontLeft", left_front_speed);
+        SmartDashboard.putNumber( "SpeedOut_FrontRight", right_front_speed);
+        SmartDashboard.putNumber( "SpeedOut_RearRight", right_rear_speed);
+        SmartDashboard.putNumber( "SpeedOut_RearLeft", left_rear_speed);
+        
+        SmartDashboard.putNumber( "Speed_FrontLeft", leftFrontSC.getEncVelocity());
+        SmartDashboard.putNumber( "Speed_FrontRight", rightFrontSC.getEncVelocity());
+        SmartDashboard.putNumber( "Speed_RearRight", rightRearSC.getEncVelocity());
+        SmartDashboard.putNumber( "Speed_RearLeft", leftRearSC.getEncVelocity());
+        
+        SmartDashboard.putNumber("Position_FrontLeft", leftFrontSC.getPosition());
+        SmartDashboard.putNumber("Position_FrontRight", rightFrontSC.getPosition());
+        SmartDashboard.putNumber("Position_RearRight", rightRearSC.getPosition());        
+        SmartDashboard.putNumber("Position_RearLeft", leftRearSC.getPosition());
+	}
     
-    public void prepMotorForSpeedPIDTuning( CANTalon motor, double p, double i, double d) {
+    public void prepMotorForSpeedPIDTuning( CANTalon motor, double p, double i, double d, double ff) {
         motor.setFeedbackDevice(FeedbackDevice.QuadEncoder); //motor.setSpeedMode(CANTalon.kQuadEncoder, 256, .4, .01, 0);
     	//We don't tell the motor controller the number of ticks per encoder revolution
         //The Talon needs to be told the number of encoder ticks per 10 ms to rotate
         motor.setPID(p,i,d);
-        motor.changeControlMode(CANTalon.TalonControlMode.Speed);    	
+        motor.setF(ff);
+        //motor.setCloseLoopRampRate(rampRate);
+        //motor.setProfile(profile_int);
+        //motor.setIZone(izone_int);
+        motor.changeControlMode(CANTalon.TalonControlMode.Speed);    
+        motor.setStatusFrameRateMs(StatusFrameRate.QuadEncoder, 10);
+        motor.setStatusFrameRateMs(StatusFrameRate.General, 10);
+        motor.setStatusFrameRateMs(StatusFrameRate.Feedback, 10);
+        motor.enableForwardSoftLimit(false);
+    	motor.enableReverseSoftLimit(false);
+        motor.configEncoderCodesPerRev(codesPerRev);
     }
     
-    final int TERM_VELOCITY_THRESHOLD = 5;
+    public int getAvgWheelClosedLoopError() {
+        lfe = leftFrontSC.getClosedLoopError();
+        rfe = rightFrontSC.getClosedLoopError();
+        rre = rightRearSC.getClosedLoopError();
+        lre = leftRearSC.getClosedLoopError();
+
+    	SmartDashboard.putNumber("RightFrontWheelSpeedClosedLoopError", lfe);        
+        
+        int avg = (Math.abs(lfe) + Math.abs(rfe) + Math.abs(rre) + Math.abs(lre)) / 4;
+        
+        return avg;
+    }
     
     public boolean isAvgWheelVelocityAtTarget() {
-        int lfe = leftFrontSC.getClosedLoopError();
-        int rfe = rightFrontSC.getClosedLoopError();
-        int rre = rightRearSC.getClosedLoopError();
-        int lre = leftRearSC.getClosedLoopError();
-
-        int avg = (lfe + rfe + rre + lre) / 4;
- 
+    	int avg = getAvgWheelClosedLoopError();
+    	SmartDashboard.putNumber("AvgWheelSpeedClosedLoopError", avg);    	
         return (avg <= TERM_VELOCITY_THRESHOLD);
     }
     
@@ -465,6 +484,7 @@ public class Drive extends PIDSubsystem {
     }
     
     public boolean isSpeedPIDTuneActive() {
+    	boolean stop = false;
     	if ( speed_pid_test_active ) {
     		/* check and see if either error is 0, or timeout has occurred. */
     		double test_duration = Timer.getFPGATimestamp() - last_speed_pid_test_start_time;
@@ -472,23 +492,44 @@ public class Drive extends PIDSubsystem {
     			/* Timeout */
     			speed_pid_test_active = false;
     			last_speed_pid_test_duration = speed_pid_test_timeout_seconds;
+    			stop = true;
     		} else {
-    			if ( isAvgWheelVelocityAtTarget() ) {
-    				speed_pid_test_active = false;
-    				last_speed_pid_test_duration = test_duration;
+    			if ( !non_zero_error_seen_once ) {
+    				if ( getAvgWheelClosedLoopError() > TERM_VELOCITY_THRESHOLD ) {
+    					non_zero_error_seen_once = true;
+    					start_moving_time = Timer.getFPGATimestamp();
+    				}
+    			} else {
+    				boolean at_target = isAvgWheelVelocityAtTarget();
+	    			if ( at_target || (Timer.getFPGATimestamp() - start_moving_time) > moving_time ) {
+	    				speed_pid_test_active = false;
+	    				last_speed_pid_test_duration = test_duration;
+	    				stop = true;
+	    				if ( at_target ) {
+	    					stop = at_target;
+	    				}
+	    			}
     			}
     		}
-    		/* stop the motors */
-    		leftFrontSC.set(0.0);
-    		rightFrontSC.set(0.0);
-    		rightRearSC.set(0.0);
-    		leftRearSC.set(0.0);
+    		if ( stop ) {
+	    		/* stop the motors */
+	    		leftFrontSC.set(0.0);
+	    		rightFrontSC.set(0.0);
+	    		rightRearSC.set(0.0);
+	    		leftRearSC.set(0.0);
+	    		/* restore Speed PID Coefficients. */
+	            prepMotorForSpeedPIDTuning(leftFrontSC,prev_speed_pid_p,prev_speed_pid_i,prev_speed_pid_d,prev_speed_pid_ff);
+	            prepMotorForSpeedPIDTuning(rightFrontSC,prev_speed_pid_p,prev_speed_pid_i,prev_speed_pid_d,prev_speed_pid_ff);
+	            prepMotorForSpeedPIDTuning(rightRearSC,prev_speed_pid_p,prev_speed_pid_i,prev_speed_pid_d,prev_speed_pid_ff);
+	            prepMotorForSpeedPIDTuning(leftRearSC,prev_speed_pid_p,prev_speed_pid_i,prev_speed_pid_d,prev_speed_pid_ff);
+    		}
     	}
     	return speed_pid_test_active;
     }
         
-    public boolean getLastSpeedPIDTuneStats( double time_to_success_seconds ) {    
+    public boolean getLastSpeedPIDTuneStats( Double time_to_success_seconds ) {    
     	
+    	time_to_success_seconds = last_speed_pid_test_duration;
     	return last_speed_pid_test_success;
     }
 

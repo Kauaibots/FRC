@@ -205,8 +205,7 @@ public class RobotMap {
             LiveWindow.addActuator("Drive", "LeftFrontSC", driveLeftFrontSC);
         } catch (Exception ex) {
             ex.printStackTrace();
-        }
-	
+        }	
         
         try { 
             driveRightFrontSC = new CANTalon(2);
@@ -214,22 +213,20 @@ public class RobotMap {
         } catch (Exception ex) {
             ex.printStackTrace();
         }
-	
-        
-        try { 
-            driveLeftRearSC = new CANTalon(4);
-            LiveWindow.addActuator("Drive", "LeftRearSC", driveLeftRearSC);
-        } catch (Exception ex) {
-            ex.printStackTrace();
-        }
-	
-        
+	        
         try { 
             driveRightRearSC = new CANTalon(3);
             LiveWindow.addActuator("Drive", "RightRearSC", driveRightRearSC);
         } catch (Exception ex) {
             ex.printStackTrace();
         }
+        
+        try { 
+            driveLeftRearSC = new CANTalon(4);
+            LiveWindow.addActuator("Drive", "LeftRearSC", driveLeftRearSC);
+        } catch (Exception ex) {
+            ex.printStackTrace();
+        }        
         
         try {
 	        robotDrive = new RobotDrive(driveLeftFrontSC, driveLeftRearSC,
