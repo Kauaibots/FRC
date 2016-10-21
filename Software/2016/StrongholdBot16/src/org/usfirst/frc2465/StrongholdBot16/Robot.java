@@ -108,6 +108,7 @@ public class Robot extends IterativeRobot {
         autoChooser = new SendableChooser();
         autoChooser.addDefault("Frozen", new AutonomousCommand());
         autoChooser.addObject("LowBar", new LowBar());
+        autoChooser.addObject("RockyTerrain", new RockyTerrain());
         SmartDashboard.putData("Autonomous Chooser", autoChooser);
         
 

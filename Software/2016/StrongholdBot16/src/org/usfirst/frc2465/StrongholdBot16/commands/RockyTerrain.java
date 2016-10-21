@@ -13,12 +13,11 @@ public class RockyTerrain extends CommandGroup {
 	
 	public RockyTerrain(){
 		requires(Robot.drive);
-		this.addParallel( new DriveDistance(55f, .5f, 0f));
+		this.addSequential( new DriveDistance(55f, .25f, 0f));
 		this.addSequential( new AutoRotate(180));
-		this.addSequential( new DriveDistance(-55f, .5f, 0f));
-		
+		this.addSequential( new DriveDistance(55f, .25f, 0f));		
 	}
-
+/*
     // Called just before this Command runs the first time
     protected void initialize() {
     }
@@ -41,4 +40,5 @@ public class RockyTerrain extends CommandGroup {
     protected void interrupted() {
     	end();
     }
+    */
 }

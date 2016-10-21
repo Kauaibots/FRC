@@ -109,8 +109,12 @@ public class  StickDrive extends Command {
         Joystick driver = Robot.oi.driver;
         Joystick op = Robot.oi.opJoystick;
         double vX = driver.getX();
-        double vY = driver.getY();
+        double vY = driver.getY() * -1; /* FOrward on flight joysticks is negative Y - NOT GOOD FOR ROBOTS! */
         double vRot = driver.getRawAxis(3);
+        
+        SmartDashboard.putNumber("JoystickX",  vX);
+        SmartDashboard.putNumber("JoystickY",  vY);
+        SmartDashboard.putNumber("JoystickZ",  vRot);
                          
         if ( driver.getRawButton(4) )
         {
