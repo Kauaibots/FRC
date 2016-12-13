@@ -29,6 +29,7 @@ public class DriveDistance extends Command {
     	Robot.drive.setFODEnabled(false);
     	RobotMap.imu.zeroYaw();
     	Robot.drive.enableAutoStop(distance_inches);
+    	System.out.println("DriveDistance command initialized.");
     }
 
     // Called repeatedly when this Command is scheduled to run
@@ -43,8 +44,11 @@ public class DriveDistance extends Command {
 
     // Called once after isFinished returns true
     protected void end() {
+    	Robot.drive.doMecanum(0, 0, 0); /* Stop the Robot */
     	Robot.drive.disableAutoStop();
     	Robot.drive.setFODEnabled(fod_enabled);
+    	boolean stopped = Robot.drive.isStopped();
+    	System.out.println("DriveDistance command complete.");
     }
 
     // Called when another command which requires one or more of the same

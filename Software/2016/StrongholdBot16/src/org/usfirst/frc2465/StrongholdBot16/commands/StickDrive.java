@@ -175,7 +175,7 @@ public class  StickDrive extends Command {
         else if (driver.getRawButton(8))
         {
         	Robot.drive.setAutoRotation(true);
-        	Robot.drive.setSetpoint(-179.0);
+        	Robot.drive.setSetpoint(180.0);
         }
         else if (driver.getRawButton(9))
         {
@@ -217,6 +217,9 @@ public class  StickDrive extends Command {
         {
         	Robot.drive.doMecanum(vX, vY, vRot);
         }
+        SmartDashboard.putNumber("AutoRotate Error", Robot.drive.getPIDController().getError());
+        SmartDashboard.putNumber("AutoRotate Setpoint", Robot.drive.getPIDController().getSetpoint());
+        SmartDashboard.putBoolean("AutoRotate On Target", Robot.drive.getPIDController().onTarget());
     }
 
     // Make this return true when this Command no longer needs to run execute()

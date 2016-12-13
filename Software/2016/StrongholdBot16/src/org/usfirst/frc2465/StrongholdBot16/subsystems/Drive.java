@@ -184,13 +184,13 @@ public class Drive extends PIDSubsystem {
                 // The RPMs calculation is based upon the codesPerRev configuration.
                 motor.configEncoderCodesPerRev(codesPerRev);
                 //motor.setCloseLoopRampRate(0);
-                motor.reverseOutput(invert_direction); /* Invert motor direction for Speed Mode */
-                motor.reverseSensor(invert_direction); /* Invert encoder direction for Speed Mode */
+                //motor.reverseOutput(invert_direction); /* Invert motor direction for Speed Mode */
+                //motor.reverseSensor(invert_direction); /* Invert encoder direction for Speed Mode */
             }
             else
             {
             	motor.changeControlMode(CANTalon.TalonControlMode.PercentVbus);
-                motor.setInverted(invert_direction); /* Invert motor direction for PercentVbus Mode */
+                //motor.setInverted(invert_direction); /* Invert motor direction for PercentVbus Mode */
             }
             motor.enableBrakeMode(true);
             motor.setVoltageRampRate(0);
@@ -319,8 +319,9 @@ public class Drive extends PIDSubsystem {
         return fod_enable;
     }
     
-    public void configureAutoStop(CANTalon sc, double distance_revolutions) {
+    public void configureAutoStop(CANTalon sc, double distance_revolutions, boolean invert) {
     	sc.setPosition(0);
+    	
     	/*
     	if ( distance_revolutions > 0 ) {
     		sc.enableLimitSwitch(true, false);
@@ -335,10 +336,10 @@ public class Drive extends PIDSubsystem {
     	}
     	*/
 		sc.enableLimitSwitch(true, true);
-		sc.setForwardSoftLimit(distance_revolutions);
+		sc.setForwardSoftLimit(invert ? -distance_revolutions : distance_revolutions);
 		sc.ConfigFwdLimitSwitchNormallyOpen(true);
 		sc.enableForwardSoftLimit(true);
-		sc.setReverseSoftLimit(-distance_revolutions);
+		sc.setReverseSoftLimit(invert ? -distance_revolutions : distance_revolutions);
 		sc.ConfigRevLimitSwitchNormallyOpen(true);
 		sc.enableReverseSoftLimit(true);
 
@@ -350,10 +351,10 @@ public class Drive extends PIDSubsystem {
     	if(!auto_stop) {
     		auto_stop = true;
     		double distance_in_revolutions = distance_inches / disPerRev;
-    		configureAutoStop(leftFrontSC, distance_in_revolutions);
-    		configureAutoStop(leftRearSC, distance_in_revolutions);
-    		configureAutoStop(rightFrontSC, distance_in_revolutions);
-    		configureAutoStop(rightRearSC, distance_in_revolutions);
+    		configureAutoStop(leftFrontSC, distance_in_revolutions, false);
+    		configureAutoStop(leftRearSC, distance_in_revolutions, false);
+    		configureAutoStop(rightFrontSC, distance_in_revolutions, true);
+    		configureAutoStop(rightRearSC, distance_in_revolutions, true);
     	}
     }
     
@@ -369,6 +370,7 @@ public class Drive extends PIDSubsystem {
     public void undoAutoStop(CANTalon sc) {
     	sc.enableForwardSoftLimit(false);
     	sc.enableReverseSoftLimit(false);
+		sc.enableLimitSwitch(false, false);
     }
     
     public void disableAutoStop() {
@@ -445,8 +447,8 @@ public class Drive extends PIDSubsystem {
         mecanumDriveInvKinematics( velocities, wheelSpeeds );
         
         double left_front_speed = maxOutputSpeed * wheelSpeeds[0];
-        double right_front_speed = maxOutputSpeed * wheelSpeeds[1];
-        double right_rear_speed = maxOutputSpeed * wheelSpeeds[2];
+        double right_front_speed = maxOutputSpeed * wheelSpeeds[1] * -1;
+        double right_rear_speed = maxOutputSpeed * wheelSpeeds[2] * -1;
         double left_rear_speed = maxOutputSpeed * wheelSpeeds[3];
         
         leftFrontSC.set(left_front_speed);
@@ -470,10 +472,24 @@ public class Drive extends PIDSubsystem {
         SmartDashboard.putNumber( "Speed_FrontRight", rightFrontSC.getSpeed());
         SmartDashboard.putNumber( "Speed_RearRight", rightRearSC.getSpeed());    
         
+        SmartDashboard.putNumber( "SpeedRaw_FrontLeft", leftFrontSC.getEncVelocity());
+        SmartDashboard.putNumber( "SpeedRaw_RearLeft", leftRearSC.getEncVelocity());
+        SmartDashboard.putNumber( "SpeedRaw_FrontRight", rightFrontSC.getEncVelocity());
+        SmartDashboard.putNumber( "SpeedRaw_RearRight", rightRearSC.getEncVelocity());    
+        
         SmartDashboard.putNumber("Position_FrontLeft", leftFrontSC.getPosition());
         SmartDashboard.putNumber("Position_FrontRight", rightFrontSC.getPosition());
         SmartDashboard.putNumber("Position_RearRight", rightRearSC.getPosition());        
         SmartDashboard.putNumber("Position_RearLeft", leftRearSC.getPosition());
+        
+        SmartDashboard.putString("SoftLimit_FrontLeft", ((leftFrontSC.getFaultForSoftLim() != 0) ? "Fwd/" : "/") + 
+        	((leftFrontSC.getFaultRevSoftLim() != 0) ? "Rev" : ""));
+        SmartDashboard.putString("SoftLimit_FrontRight", ((rightFrontSC.getFaultForSoftLim() != 0) ? "Fwd/" : "/") + 
+            	((rightFrontSC.getFaultRevSoftLim() != 0) ? "Rev" : ""));
+        SmartDashboard.putString("SoftLimit_RearRight", ((rightRearSC.getFaultForSoftLim() != 0) ? "Fwd/" : "/") + 
+            	((rightRearSC.getFaultRevSoftLim() != 0) ? "Rev" : ""));
+        SmartDashboard.putString("SoftLimit_RearLeft", ((leftRearSC.getFaultForSoftLim() != 0) ? "Fwd/" : "/") + 
+            	((leftRearSC.getFaultRevSoftLim() != 0) ? "Rev" : ""));
 	}
     
     public void prepMotorForSpeedPIDTuning( CANTalon motor, double p, double i, double d, double ff) {

@@ -12,6 +12,10 @@
 package org.usfirst.frc2465.StrongholdBot16.commands;
 
 import edu.wpi.first.wpilibj.command.Command;
+import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
+
+import java.io.Console;
+
 import org.usfirst.frc2465.StrongholdBot16.Robot;
 
 /**
@@ -19,13 +23,11 @@ import org.usfirst.frc2465.StrongholdBot16.Robot;
  */
 public class  AutoRotate extends Command {
 	
+	double target_angle;
 	boolean previousAutoRotate = false;
 
     public AutoRotate(float rotationAngle) {
-    	previousAutoRotate = Robot.drive.getAutoRotation();
-    	Robot.drive.setAutoRotation(true);
-    	Robot.drive.setSetpoint(rotationAngle);
-    	
+    	target_angle = rotationAngle;
         // Use requires() here to declare subsystem dependencies
         requires(Robot.drive);
 
@@ -36,11 +38,18 @@ public class  AutoRotate extends Command {
 
     // Called just before this Command runs the first time
     protected void initialize() {
+    	previousAutoRotate = Robot.drive.getAutoRotation();
+    	Robot.drive.setAutoRotation(true);
+    	Robot.drive.setSetpoint(target_angle); 
+    	System.out.println("Auto-rotate command initialized.");
     }
 
     // Called repeatedly when this Command is scheduled to run
     protected void execute() {
     	Robot.drive.doMecanum(0, 0, 0);
+        SmartDashboard.putNumber("AutoRotate Error", Robot.drive.getPIDController().getError());
+        SmartDashboard.putNumber("AutoRotate Setpoint", Robot.drive.getPIDController().getSetpoint());
+        SmartDashboard.putBoolean("AutoRotate On Target", Robot.drive.getPIDController().onTarget());
     }
 
     // Make this return true when this Command no longer needs to run execute()
@@ -50,6 +59,7 @@ public class  AutoRotate extends Command {
 
     // Called once after isFinished returns true
     protected void end() {
+    	System.out.println("Auto-rotate command complete.");
     	Robot.drive.setAutoRotation(previousAutoRotate);
     	Robot.drive.doMecanum(0, 0, 0);
     }
