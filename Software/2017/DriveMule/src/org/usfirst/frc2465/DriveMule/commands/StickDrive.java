@@ -9,16 +9,17 @@
 // it from being updated in the future.
 
 
-package org.usfirst.frc2465.StrongholdBot16.commands;
+package org.usfirst.frc2465.DriveMule.commands;
 
 import edu.wpi.first.wpilibj.CANSpeedController.ControlMode;
-import edu.wpi.first.wpilibj.CANTalon;
 import edu.wpi.first.wpilibj.Joystick;
 import edu.wpi.first.wpilibj.command.Command;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 
-import org.usfirst.frc2465.StrongholdBot16.Robot;
-import org.usfirst.frc2465.StrongholdBot16.RobotMap;
+import org.usfirst.frc2465.DriveMule.Robot;
+import org.usfirst.frc2465.DriveMule.RobotMap;
+
+import com.ctre.CANTalon;
 
 /**
  *

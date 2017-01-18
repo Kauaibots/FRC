@@ -4,9 +4,9 @@
  * and open the template in the editor.
  */
 
-package org.usfirst.frc2465.StrongholdBot16.subsystems;
+package org.usfirst.frc2465.DriveMule.subsystems;
 
-import org.usfirst.frc2465.StrongholdBot16.RobotMap;
+import org.usfirst.frc2465.DriveMule.RobotMap;
 
 import edu.wpi.first.wpilibj.AnalogInput;
 import edu.wpi.first.wpilibj.PIDSource;

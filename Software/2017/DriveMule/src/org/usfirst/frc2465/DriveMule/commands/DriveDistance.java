@@ -1,7 +1,7 @@
-package org.usfirst.frc2465.StrongholdBot16.commands;
+package org.usfirst.frc2465.DriveMule.commands;
 
-import org.usfirst.frc2465.StrongholdBot16.Robot;
-import org.usfirst.frc2465.StrongholdBot16.RobotMap;
+import org.usfirst.frc2465.DriveMule.Robot;
+import org.usfirst.frc2465.DriveMule.RobotMap;
 
 import edu.wpi.first.wpilibj.command.Command;
 

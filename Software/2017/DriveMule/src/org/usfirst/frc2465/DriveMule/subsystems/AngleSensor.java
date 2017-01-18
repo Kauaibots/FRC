@@ -4,7 +4,7 @@
  * and open the template in the editor.
  */
 
-package org.usfirst.frc2465.StrongholdBot16.subsystems;
+package org.usfirst.frc2465.DriveMule.subsystems;
 
 import edu.wpi.first.wpilibj.DigitalInput;
 import edu.wpi.first.wpilibj.DigitalOutput;

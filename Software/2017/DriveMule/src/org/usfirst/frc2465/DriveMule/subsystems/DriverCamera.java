@@ -9,10 +9,10 @@
 // it from being updated in the future.
 
 
-package org.usfirst.frc2465.StrongholdBot16.subsystems;
+package org.usfirst.frc2465.DriveMule.subsystems;
 
-import org.usfirst.frc2465.StrongholdBot16.RobotMap;
-import org.usfirst.frc2465.StrongholdBot16.commands.*;
+import org.usfirst.frc2465.DriveMule.RobotMap;
+import org.usfirst.frc2465.DriveMule.commands.*;
 
 import edu.wpi.first.wpilibj.command.Subsystem;
 

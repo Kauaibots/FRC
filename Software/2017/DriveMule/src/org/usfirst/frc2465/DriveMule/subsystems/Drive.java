@@ -9,19 +9,20 @@
 // it from being updated in the future.
 
 
-package org.usfirst.frc2465.StrongholdBot16.subsystems;
+package org.usfirst.frc2465.DriveMule.subsystems;
 
-import org.usfirst.frc2465.StrongholdBot16.RobotMap;
+import org.usfirst.frc2465.DriveMule.RobotMap;
 
 import edu.wpi.first.wpilibj.*;
-import edu.wpi.first.wpilibj.CANTalon.FeedbackDevice;
-import edu.wpi.first.wpilibj.CANTalon.StatusFrameRate;
 import edu.wpi.first.wpilibj.command.PIDSubsystem;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 
-import org.usfirst.frc2465.StrongholdBot16.RobotPreferences;
-import org.usfirst.frc2465.StrongholdBot16.commands.StickDrive;
+import org.usfirst.frc2465.DriveMule.RobotPreferences;
+import org.usfirst.frc2465.DriveMule.commands.StickDrive;
 
+import com.ctre.CANTalon;
+import com.ctre.CANTalon.FeedbackDevice;
+import com.ctre.CANTalon.StatusFrameRate;
 import com.kauailabs.navx.frc.AHRS;
 
 

@@ -1,12 +1,12 @@
-package org.usfirst.frc2465.StrongholdBot16.commands;
+package org.usfirst.frc2465.DriveMule.commands;
 
 import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 
-import org.usfirst.frc2465.StrongholdBot16.Robot;
-import org.usfirst.frc2465.StrongholdBot16.RobotMap;
+import org.usfirst.frc2465.DriveMule.Robot;
+import org.usfirst.frc2465.DriveMule.RobotMap;
 
 import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj.command.Command;
