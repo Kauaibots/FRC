@@ -271,12 +271,16 @@ public class Drive extends PIDSubsystem {
             SmartDashboard.putNumber( "SpeedOut_RearLeft", maxOutputSpeed * wheelSpeeds[2] * -1);
             SmartDashboard.putNumber( "SpeedOut_FrontRight", maxOutputSpeed * wheelSpeeds[1]);
             SmartDashboard.putNumber( "SpeedOut_RearRight", maxOutputSpeed * wheelSpeeds[3]);
-            
+            /*
             SmartDashboard.putNumber( "Speed_FrontLeft", leftFrontSC.getEncVelocity());
             SmartDashboard.putNumber( "Speed_RearLeft", leftRearSC.getEncVelocity());
             SmartDashboard.putNumber( "Speed_FrontRight", rightFrontSC.getEncVelocity());
             SmartDashboard.putNumber( "Speed_RearRight", rightRearSC.getEncVelocity());
-            
+            */
+            SmartDashboard.putNumber( "Speed_FrontLeft", leftFrontSC.getSpeed());
+            SmartDashboard.putNumber( "Speed_RearLeft", leftRearSC.getSpeed());
+            SmartDashboard.putNumber( "Speed_FrontRight", rightFrontSC.getSpeed());
+            SmartDashboard.putNumber( "Speed_RearRight", rightRearSC.getSpeed());            
         } catch (Exception ex) {
             ex.printStackTrace();
         }        
