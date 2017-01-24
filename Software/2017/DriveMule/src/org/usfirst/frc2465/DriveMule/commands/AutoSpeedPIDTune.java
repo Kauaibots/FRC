@@ -20,7 +20,7 @@ import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
  */
 public class AutoSpeedPIDTune extends Command {
 
-	public static final double MIN_FF = 5.0;
+	public static final double MIN_FF = 2.0;
 	public static final double MAX_FF = 100.0;
 	public static final double STEP_FF = 1;
 	

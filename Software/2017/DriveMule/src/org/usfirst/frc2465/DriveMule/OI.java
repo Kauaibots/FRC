@@ -82,11 +82,11 @@ public class OI {
         //ballGrabButton.whenPressed(new BallGrab());
 	    //scoreWedgeButton = new JoystickButton(driver,5);
 	    //scoreWedgeButton.whileHeld(new DoWedge(true));
-	    autoSpeedPIDTuneButton = new JoystickButton(driver,10);
+	    /*autoSpeedPIDTuneButton = new JoystickButton(driver,10);
 	    autoSpeedPIDTuneButton.toggleWhenPressed(new AutoSpeedPIDTune());
 	    autoRotatePIDTuneButton = new JoystickButton(driver,11);
 	    autoRotatePIDTuneButton.toggleWhenPressed(new AutoRotatePIDTune());
-	    
+	   */ 
         // SmartDashboard Buttons
         SmartDashboard.putData("Autonomous Command", new AutonomousCommand());
 
