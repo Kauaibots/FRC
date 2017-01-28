@@ -9,9 +9,10 @@
 // it from being updated in the future.
 
 
-package org.usfirst.frc2456.Hercules.commands;
+package org.usfirst.frc2465.Hercules.commands;
+import org.usfirst.frc2465.Hercules.Robot;
+
 import edu.wpi.first.wpilibj.command.Command;
-import org.usfirst.frc2456.Hercules.Robot;
 
 /**
  *
