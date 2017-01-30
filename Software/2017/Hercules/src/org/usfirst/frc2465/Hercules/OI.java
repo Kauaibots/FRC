@@ -79,13 +79,15 @@ public class OI {
     	driver = new Joystick(1);
         opJoystick= new Joystick(0);
         
-        closePinchersButton = new JoystickButton(driver, 2);
+        closePinchersButton = new JoystickButton(driver, 1);
         closePinchersButton.whileHeld(new ClosePincher());
         
         tiltUpPincherButton = new JoystickButton(driver, 3);
-        tiltUpPincherButton.whileHeld(new TiltPincherU());
+        tiltUpPincherButton.whenPressed(new TiltPincherU());
+        tiltUpPincherButton.whenReleased(new TiltPincherD());
+
         
-        tiltUpFunnelButton = new JoystickButton(driver, 4);
+        tiltUpFunnelButton = new JoystickButton(driver, 2);
         tiltUpFunnelButton.whileHeld(new TiltFunnelU());
 
 
