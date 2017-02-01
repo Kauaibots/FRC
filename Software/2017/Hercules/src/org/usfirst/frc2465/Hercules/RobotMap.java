@@ -46,7 +46,10 @@ public class RobotMap {
     public static DoubleSolenoid pincherFingers;
     public static DoubleSolenoid pincherTilter;
     public static DoubleSolenoid pincherEjector;
+    
     public static AnalogInput pincherGearDetector;
+    public static ProximitySensor gearDetector;
+    
     public static DoubleSolenoid funnelTilter;
     public static SpeedController winchController;
     public static AnalogInput airPressureSensor;
@@ -115,9 +118,6 @@ public class RobotMap {
         pincherEjector = new DoubleSolenoid(0, 4, 5);
         LiveWindow.addActuator("Pincher", "Ejector", pincherEjector);
         
-        pincherGearDetector = new AnalogInput(0);
-        LiveWindow.addSensor("Pincher", "GearDetector", pincherGearDetector);
-        
         funnelTilter = new DoubleSolenoid(0, 6, 7);
         LiveWindow.addActuator("Funnel", "Tilter", funnelTilter);
         
@@ -128,6 +128,11 @@ public class RobotMap {
         LiveWindow.addSensor("Air", "AirPressureSensor", airPressureSensor);
         
         airCompressor = new Compressor(0);
+        
+        pincherGearDetector = new AnalogInput(0);
+        
+        gearDetector = new ProximitySensor(pincherGearDetector, ProximitySensor.kMediumRange);
+        LiveWindow.addSensor("Infrared", "Pincher", pincherGearDetector);
         
         
 

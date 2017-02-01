@@ -16,6 +16,7 @@ import edu.wpi.first.wpilibj.command.Command;
 import edu.wpi.first.wpilibj.command.Scheduler;
 import edu.wpi.first.wpilibj.livewindow.LiveWindow;
 import edu.wpi.first.wpilibj.smartdashboard.SendableChooser;
+import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 
 import org.usfirst.frc2465.Hercules.subsystems.Drive;
 import org.usfirst.frc2465.Hercules.Robot;
@@ -120,4 +121,13 @@ public class Robot extends IterativeRobot {
     public void testPeriodic() {
         LiveWindow.run();
     }
+    
+    public void updateDashboard() {
+    	SmartDashboard.putNumber("GearDetector", RobotMap.gearDetector.getDistanceInches());
+    	 if(Robot.drive != null)
+         {
+         	SmartDashboard.putBoolean("FOD_Enabled", Robot.drive.getFODEnabled());
+         }
+    }
+    
 }
