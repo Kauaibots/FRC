@@ -113,6 +113,10 @@ public class Robot extends IterativeRobot {
      */
     public void teleopPeriodic() {
         Scheduler.getInstance().run();
+        
+        SmartDashboard.putNumber("GearDetector", RobotMap.gearDetector.getDistanceInches());
+        SmartDashboard.putBoolean("GearPresent", Robot.pincher.detectedGear());
+
     }
 
     /**
@@ -122,15 +126,6 @@ public class Robot extends IterativeRobot {
         LiveWindow.run();
     }
     
-    public void updateDashboard() {
-    	
-    	SmartDashboard.putNumber("Gear_Detector", RobotMap.gearDetector.getDistanceInches());
-    	
-    	
-    	if(Robot.drive != null)
-         {
-         	SmartDashboard.putBoolean("FOD_Enabled", Robot.drive.getFODEnabled());
-         }
-    }
+    
     
 }
