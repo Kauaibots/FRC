@@ -123,8 +123,11 @@ public class Robot extends IterativeRobot {
     }
     
     public void updateDashboard() {
-    	SmartDashboard.putNumber("GearDetector", RobotMap.gearDetector.getDistanceInches());
-    	 if(Robot.drive != null)
+    	
+    	SmartDashboard.putNumber("Gear_Detector", RobotMap.gearDetector.getDistanceInches());
+    	
+    	
+    	if(Robot.drive != null)
          {
          	SmartDashboard.putBoolean("FOD_Enabled", Robot.drive.getFODEnabled());
          }

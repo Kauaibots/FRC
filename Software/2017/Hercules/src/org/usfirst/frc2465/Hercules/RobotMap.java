@@ -131,8 +131,8 @@ public class RobotMap {
         
         pincherGearDetector = new AnalogInput(0);
         
-        gearDetector = new ProximitySensor(pincherGearDetector, ProximitySensor.kMediumRange);
-        LiveWindow.addSensor("Infrared", "Pincher", pincherGearDetector);
+        gearDetector = new ProximitySensor(pincherGearDetector, ProximitySensor.kShortRange);
+        LiveWindow.addSensor("Pincher", "GearDetector", gearDetector);
         
         
 
