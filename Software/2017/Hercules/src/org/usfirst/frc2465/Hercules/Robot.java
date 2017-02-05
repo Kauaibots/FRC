@@ -80,6 +80,8 @@ public class Robot extends IterativeRobot {
      * This function is called when the disabled button is hit.
      * You can use it to reset subsystems before shutting down.
      */
+    
+    
     public void disabledInit(){
 
     }
@@ -106,6 +108,7 @@ public class Robot extends IterativeRobot {
         // continue until interrupted by another command, remove
         // this line or comment it out.
         if (autonomousCommand != null) autonomousCommand.cancel();
+        Robot.pincher.defaultPneumatics();
     }
 
     /**
@@ -114,9 +117,12 @@ public class Robot extends IterativeRobot {
     public void teleopPeriodic() {
         Scheduler.getInstance().run();
         
+        Robot.pincher.autoClose();
+        
         SmartDashboard.putNumber("GearDetector", RobotMap.gearDetector.getDistanceInches());
-        SmartDashboard.putBoolean("GearPresent", Robot.pincher.detectedGear());
-
+        SmartDashboard.putBoolean("GearPresent", Robot.pincher.detectGear());
+        
+        
     }
 
     /**
