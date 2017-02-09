@@ -43,6 +43,8 @@ public class RobotMap {
     public static CANTalon driveRightRearSC;
     public static RobotDrive robotDrive;   
 
+    public static Relay visionRingLightRelay;
+
     public static DoubleSolenoid pincherFingers;
     public static DoubleSolenoid pincherTilter;
     public static DoubleSolenoid pincherEjector;
@@ -109,6 +111,9 @@ public class RobotMap {
             LiveWindow.addSensor("IMU", "Gyro", imu);
         }
 
+        visionRingLightRelay = new Relay(1);
+        LiveWindow.addActuator("Vision", "RingLightRelay", visionRingLightRelay);
+        
         pincherFingers = new DoubleSolenoid(0, 0, 1);
         LiveWindow.addActuator("Pincher", "Fingers", pincherFingers);
         

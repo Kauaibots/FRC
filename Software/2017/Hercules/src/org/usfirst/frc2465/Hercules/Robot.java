@@ -109,6 +109,7 @@ public class Robot extends IterativeRobot {
         // this line or comment it out.
         if (autonomousCommand != null) autonomousCommand.cancel();
         Robot.pincher.defaultPneumatics();
+        Robot.drive.setFODEnabled(false);
     }
 
     /**
@@ -122,16 +123,12 @@ public class Robot extends IterativeRobot {
         SmartDashboard.putNumber("GearDetector", RobotMap.gearDetector.getDistanceInches());
         SmartDashboard.putBoolean("GearPresent", Robot.pincher.detectGear());
         
-        
+        SmartDashboard.putBoolean("FOD Enabled 2", Robot.drive.getFODEnabled());
     }
-
     /**
      * This function is called periodically during test mode
      */
     public void testPeriodic() {
         LiveWindow.run();
-    }
-    
-    
-    
+    } 
 }

@@ -13,8 +13,6 @@ package org.usfirst.frc2465.Hercules.subsystems;
 
 import org.usfirst.frc2465.Hercules.RobotMap;
 import org.usfirst.frc2465.Hercules.commands.*;
-
-import edu.wpi.first.wpilibj.AnalogInput;
 import edu.wpi.first.wpilibj.DoubleSolenoid;
 import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj.DoubleSolenoid.Value;
@@ -41,7 +39,7 @@ public class Pincher extends Subsystem {
     // here. Call these from Commands.
 
     public void initDefaultCommand() {
-    	//setDefaultCommand(new DefaultPneumatics());
+    	setDefaultCommand(new DefaultPneumatics());
 
     }
     
