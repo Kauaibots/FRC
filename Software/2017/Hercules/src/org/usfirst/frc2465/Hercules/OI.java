@@ -73,17 +73,17 @@ public class OI {
         
         /*
         Solenoid default commands:
-        - TiltFunnelDump
-        - OpenPincher
-        - TiltPincherD
-        - Retract
+        - TiltFunnelIntake()
+        - OpenPincher()
+        - TiltPincherD()
+        - Retract()
         */
         
         closePinchersButton = new JoystickButton(driver, 2);
         closePinchersButton.whileHeld(new ClosePincher());
         
         tiltFunnelButton = new JoystickButton(driver, 4);
-        tiltFunnelButton.whileHeld(new TiltFunnelIntake());
+        tiltFunnelButton.whileHeld(new TiltFunnelDump());
         
         /*
         fODEnableButton = new JoystickButton(driver, 3);
