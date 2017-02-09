@@ -88,6 +88,7 @@ public class Pincher extends Subsystem {
     public void defaultPneumatics(){
     	tiltDownPincher();
     	openPincher();
+    	retractEjector();
     }
     
     public void timeExtend(double time){ //gives the ball grabber extra motor time

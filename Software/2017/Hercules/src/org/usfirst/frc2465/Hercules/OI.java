@@ -71,6 +71,14 @@ public class OI {
     	driver = new Joystick(0);
         opJoystick= new Joystick(1);
         
+        /*
+        Solenoid default commands:
+        - TiltFunnelDump
+        - OpenPincher
+        - TiltPincherD
+        - Retract
+        */
+        
         closePinchersButton = new JoystickButton(driver, 2);
         closePinchersButton.whileHeld(new ClosePincher());
         
