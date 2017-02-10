@@ -63,7 +63,10 @@ public class OI {
     
     public JoystickButton closePinchersButton;
     public JoystickButton tiltFunnelButton;
-    public JoystickButton fODEnableButton;
+    public JoystickButton ejectButton;
+    public JoystickButton lowerPinchersButton;
+
+    //public JoystickButton fODEnableButton;
 
     public OI() {
         
@@ -79,8 +82,14 @@ public class OI {
         - Retract()
         */
         
+        lowerPinchersButton = new JoystickButton(driver, 1);
+        lowerPinchersButton.whileHeld(new TiltPincherU());
+        
         closePinchersButton = new JoystickButton(driver, 2);
         closePinchersButton.whileHeld(new ClosePincher());
+        
+        ejectButton = new JoystickButton(driver, 3);
+        ejectButton.whileHeld(new Deploy());
         
         tiltFunnelButton = new JoystickButton(driver, 4);
         tiltFunnelButton.whileHeld(new TiltFunnelDump());
