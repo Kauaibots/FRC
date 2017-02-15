@@ -120,7 +120,7 @@ public class Robot extends IterativeRobot {
     public void teleopPeriodic() {
         Scheduler.getInstance().run();
         
-        Robot.pincher.autoClose();
+        //Robot.pincher.autoClose();
         
         SmartDashboard.putNumber("GearDetector", RobotMap.gearDetector.getDistanceInches());
         SmartDashboard.putBoolean("GearPresent", Robot.pincher.detectGear());

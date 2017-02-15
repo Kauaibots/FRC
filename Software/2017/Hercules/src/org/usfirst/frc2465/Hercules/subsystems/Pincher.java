@@ -23,8 +23,6 @@ import edu.wpi.first.wpilibj.command.Subsystem;
  *
  */
 public class Pincher extends Subsystem {
-	double start_time = 0;
-	double timePeriod = 0;
 	
 	boolean oldGearDetected = false;
 	
