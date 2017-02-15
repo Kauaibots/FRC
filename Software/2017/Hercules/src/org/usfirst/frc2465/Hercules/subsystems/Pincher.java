@@ -43,10 +43,14 @@ public class Pincher extends Subsystem {
 
     }
     
+	boolean gearPresent;
+	
     public boolean detectGear(){
     	double distance = RobotMap.gearDetector.getDistanceInches();
-        boolean detectedGear = distance < 3;
-        return detectedGear;
+        if(distance < 3.0 && distance > 1.0){
+        	gearPresent = true;
+        	}
+    	return gearPresent;
     }
     
     public void openPincher(){
@@ -91,10 +95,6 @@ public class Pincher extends Subsystem {
     	retractEjector();
     }
     
-    public void timeExtend(double time){ //gives the ball grabber extra motor time
-		double timePeriod = time;
-		double start_time = Timer.getFPGATimestamp();
-	}
     
     
     
