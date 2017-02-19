@@ -45,9 +45,12 @@ public class Pincher extends Subsystem {
 	
     public boolean detectGear(){
     	double distance = RobotMap.gearDetector.getDistanceInches();
-        if(distance < 3.0 && distance > 1.0){
+        if(distance < 3.0){
         	gearPresent = true;
-        	}
+        }
+        else{
+        	gearPresent = false;
+        }
     	return gearPresent;
     }
     
@@ -81,16 +84,18 @@ public class Pincher extends Subsystem {
     }
     
     public void autoClose(){
-    	if(detectGear() == true && oldGearDetected == false){
-    		closeUpPincher();
+    	if(detectGear() == true){
+    		closePincher();
     	}
-    	oldGearDetected = detectGear();
+    	else{
+    		openPincher();
+    	}
     }
     
     public void defaultPneumatics(){
     	tiltDownPincher();
-    	openPincher();
     	retractEjector();
+    	autoClose();
     }
     
     

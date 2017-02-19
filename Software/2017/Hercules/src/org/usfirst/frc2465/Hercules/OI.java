@@ -61,10 +61,10 @@ public class OI {
     public JoystickButton autoRotatePIDTuneButton;
     public Trigger t;
     
-    public JoystickButton closePinchersButton;
+    public JoystickButton finalGearButton;
     public JoystickButton tiltPincherButton;
-    public JoystickButton ejectButton;
-    public JoystickButton raiseClosePinchersButton;
+    public JoystickButton dumpFunnelButton;
+    public JoystickButton climbRopeButton;
 
     //public JoystickButton fODEnableButton;
 
@@ -82,17 +82,15 @@ public class OI {
         - Retract()
         */
         
-        raiseClosePinchersButton = new JoystickButton(driver, 1);
-        raiseClosePinchersButton.whileHeld(new CloseUpPinchers());
+        climbRopeButton = new JoystickButton(driver, 1);
+        climbRopeButton.whileHeld(new WinchClimb());
         
-        closePinchersButton = new JoystickButton(driver, 2);
-        closePinchersButton.whileHeld(new ClosePincher());
+        finalGearButton = new JoystickButton(driver, 2);
+        finalGearButton.whileHeld(new FinalGear());
         
-        ejectButton = new JoystickButton(driver, 3);
-        ejectButton.whileHeld(new Deploy());
+        dumpFunnelButton = new JoystickButton(driver, 3);
+        dumpFunnelButton.whileHeld(new TiltFunnelDump());
         
-        tiltPincherButton = new JoystickButton(driver, 4);
-        tiltPincherButton.whileHeld(new TiltPincherU());
         
         /*
         fODEnableButton = new JoystickButton(driver, 3);
