@@ -82,7 +82,7 @@ public class OI {
         - Retract()
         */
         
-        climbRopeButton = new JoystickButton(driver, 1);
+        climbRopeButton = new JoystickButton(opJoystick, 1);
         climbRopeButton.whileHeld(new WinchClimb());
         
         finalGearButton = new JoystickButton(driver, 2);
