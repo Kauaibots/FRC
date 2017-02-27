@@ -112,6 +112,7 @@ public class Robot extends IterativeRobot {
         if (autonomousCommand != null) autonomousCommand.cancel();
         //Robot.pincher.defaultPneumatics();
         Robot.drive.setFODEnabled(false);
+        RobotMap.strafeEncoder.reset();
     }
 
     /**
@@ -125,7 +126,15 @@ public class Robot extends IterativeRobot {
         SmartDashboard.putNumber("GearDetector", RobotMap.gearDetector.getDistanceInches());
         SmartDashboard.putBoolean("GearPresent", Robot.pincher.detectGear());
         
+        SmartDashboard.putNumber("PressureSensor", RobotMap.airPressureSensor.getAverageValue());
+        
+        SmartDashboard.putNumber("StrafeEncoder", Robot.drive.getStrafe());
+        SmartDashboard.putBoolean("StrafingRight", Robot.drive.getStrafeDirection());
+        
         SmartDashboard.putBoolean("FOD Enabled 2", Robot.drive.getFODEnabled());
+        
+        SmartDashboard.putNumber("Yaw", RobotMap.imu.getYaw());
+        
     }
     /**
      * This function is called periodically during test mode

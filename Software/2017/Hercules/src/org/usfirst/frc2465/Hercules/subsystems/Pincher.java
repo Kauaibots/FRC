@@ -79,7 +79,7 @@ public class Pincher extends Subsystem {
     }
     
     public void closeUpPincher(){
-    	fingers.set(Value.kReverse);
+    	fingers.set(Value.kForward);
     	tilter.set(Value.kForward);
     }
     
@@ -98,9 +98,11 @@ public class Pincher extends Subsystem {
     	autoClose();
     }
     
+    public void finalGear(){
+    	deployEjector();
+    	openPincher();
+    }
     
     
-    
-    
+  
 }
-

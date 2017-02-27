@@ -65,7 +65,12 @@ public class OI {
     public JoystickButton tiltPincherButton;
     public JoystickButton dumpFunnelButton;
     public JoystickButton climbRopeButton;
+    
+    public JoystickButton tiltUPincherButton;
+    public JoystickButton openPincherslButton;
+    public JoystickButton deployButton;
 
+    public JoystickButton fODEnableButton;
     //public JoystickButton fODEnableButton;
 
     public OI() {
@@ -81,21 +86,29 @@ public class OI {
         - TiltPincherD()
         - Retract()
         */
+        tiltUPincherButton = new JoystickButton(driver, 6);
+        tiltUPincherButton.whileHeld(new TiltPincherU());
         
-        climbRopeButton = new JoystickButton(opJoystick, 1);
+        /*openPincherslButton = new JoystickButton(driver, 8);
+        openPincherslButton.whileHeld(new WinchClimb());
+        */
+        climbRopeButton = new JoystickButton(driver, 5);
         climbRopeButton.whileHeld(new WinchClimb());
         
-        finalGearButton = new JoystickButton(driver, 2);
+        /*climbRopeButton = new JoystickButton(driver, 5);
+        climbRopeButton.whileHeld(new WinchClimb());
+        */
+        
+        finalGearButton = new JoystickButton(driver, 10);
         finalGearButton.whileHeld(new FinalGear());
         
-        dumpFunnelButton = new JoystickButton(driver, 3);
+        dumpFunnelButton = new JoystickButton(driver, 11);
         dumpFunnelButton.whileHeld(new TiltFunnelDump());
+
         
         
-        /*
-        fODEnableButton = new JoystickButton(driver, 3);
-        fODEnableButton.whenPressed(new EnableFOD());
-        */
+        
+        
           
         // SmartDashboard Buttons
         SmartDashboard.putData("Autonomous Command vsdbkvsdb", new AutonomousCommand());

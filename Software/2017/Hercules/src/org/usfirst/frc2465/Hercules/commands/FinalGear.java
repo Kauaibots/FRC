@@ -14,6 +14,7 @@ import java.util.concurrent.DelayQueue;
 
 import org.usfirst.frc2465.Hercules.Robot;
 
+import edu.wpi.first.wpilibj.command.Command;
 //import edu.wpi.first.wpilibj.command.Command;
 import edu.wpi.first.wpilibj.command.CommandGroup;
 import edu.wpi.first.wpilibj.command.WaitCommand;
@@ -21,15 +22,9 @@ import edu.wpi.first.wpilibj.command.WaitCommand;
 /**
  *
  */
-public class FinalGear extends CommandGroup {
+public class FinalGear extends Command {
 
     public FinalGear() {
-    	requires(Robot.pincher);
-    	this.addParallel(new TiltPincherU());
-       	this.addSequential(new OpenPincher());
-    	//this.addSequential(new WaitCommand(0.5));
-    	this.addSequential(new Deploy());
-
 
     }
 
@@ -39,6 +34,7 @@ public class FinalGear extends CommandGroup {
 
     // Called repeatedly when this Command is scheduled to run
     protected void execute() {
+    	Robot.pincher.finalGear();
     }
 
     // Make this return true when this Command no longer needs to run execute()

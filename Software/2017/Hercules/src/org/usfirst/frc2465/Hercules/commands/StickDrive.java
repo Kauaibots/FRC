@@ -163,7 +163,7 @@ public class  StickDrive extends Command {
             Robot.drive.setFODEnabled(false);
         }
         
-        if (driver.getRawButton(6))
+        /*if (driver.getRawButton(6))
         {
         	Robot.drive.setAutoRotation(true);
         	Robot.drive.setSetpoint(0.0);
@@ -208,12 +208,12 @@ public class  StickDrive extends Command {
         {
         	Robot.drive.setAutoRotation(true);
         	Robot.drive.setSetpoint(0.0);	
-        }
+        }*/
         else
         {
         	Robot.drive.setAutoRotation(false);
         }
-        */
+        
         if(RobotMap.robotDrive != null)
         {
         	Robot.drive.doMecanum(vX, vY, vRot);
