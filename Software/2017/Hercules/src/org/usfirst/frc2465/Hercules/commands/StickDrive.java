@@ -116,13 +116,15 @@ public class  StickDrive extends Command {
         SmartDashboard.putNumber("JoystickX",  vX);
         SmartDashboard.putNumber("JoystickY",  vY);
         SmartDashboard.putNumber("JoystickZ",  vRot);
-                         
+        
+        /*
         if ( driver.getRawButton(4) )
         {
         	if ( RobotMap.imu != null ) {
 	            RobotMap.imu.zeroYaw();
         	}
         }
+        */
         
         // By default, drive mode is Speed control (encoder-based)
         // If driver presses button 3, the mode should toggle.
@@ -139,7 +141,7 @@ public class  StickDrive extends Command {
         	}
         }*/
         
-        if ( driver.getRawButton(1))
+        /*if ( driver.getRawButton(1))
         {
         	 vX = fast.transformStrafe(vX);
              vY = fast.transformForward(vY);
@@ -152,18 +154,71 @@ public class  StickDrive extends Command {
             vY = slow.transformForward(vY);
             vRot = slow.transformRotate(vRot);
             SmartDashboard.putString("DriveSpeed", "slow");
+        }*/
+        if ( driver.getRawButton(6))
+        {
+            RobotMap.imu.zeroYaw();
         }
         
-        if ( driver.getRawButton(2))
+        if ( driver.getRawButton(8))
         {
             Robot.drive.setFODEnabled(true);
         }
-        if ( driver.getRawButton(3))
+        if ( driver.getRawButton(9))
         {
             Robot.drive.setFODEnabled(false);
         }
         
-        /*if (driver.getRawButton(6))
+        if ( driver.getRawButton(5))
+        {
+        	Robot.drive.setAutoRotation(true);
+        	Robot.drive.setSetpoint(-142);
+        }
+        
+        else if ( driver.getRawButton(4))
+        {
+        	Robot.drive.setAutoRotation(true);
+        	Robot.drive.setSetpoint(142);
+        }
+        
+        else if ( driver.getRawButton(2))
+        {
+        	Robot.drive.setAutoRotation(true);
+        	Robot.drive.setSetpoint(60);
+        }
+        
+        else if ( driver.getRawButton(3))
+        {
+        	Robot.drive.setAutoRotation(true);
+        	Robot.drive.setSetpoint(-60);
+        }
+        
+        
+        else if ( driver.getRawButton(1))
+        {
+        	Robot.drive.setAutoRotation(true);
+        	Robot.drive.setSetpoint(0);
+        }
+        
+        
+        /*else if ( driver.getRawButton(10))
+        {
+        	Robot.drive.setAutoRotation(true);
+        	Robot.drive.setSetpoint(45);
+        }
+        else if ( driver.getRawButton(11))
+        {
+        	Robot.drive.setAutoRotation(true);
+        	Robot.drive.setSetpoint(90);
+        }
+        else if ( driver.getRawButton(8))
+        {
+        	Robot.drive.setAutoRotation(true);
+        	Robot.drive.setSetpoint(179);
+        }
+        
+        /*
+        if (driver.getRawButton(6))
         {
         	Robot.drive.setAutoRotation(true);
         	Robot.drive.setSetpoint(0.0);
@@ -208,7 +263,8 @@ public class  StickDrive extends Command {
         {
         	Robot.drive.setAutoRotation(true);
         	Robot.drive.setSetpoint(0.0);	
-        }*/
+        }
+        */
         else
         {
         	Robot.drive.setAutoRotation(false);

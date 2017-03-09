@@ -20,11 +20,11 @@ import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
  */
 public class AutoSpeedPIDTune extends Command {
 
-	public static final double MIN_FF = 2.0;
+	public static final double MIN_FF = 3.0;
 	public static final double MAX_FF = 100.0;
 	public static final double STEP_FF = 1;
 	
-	public static final double MIN_P = 8;
+	public static final double MIN_P = 3;
 	public static final double MAX_P = 10;
 	public static final double STEP_P = .1;
 
@@ -75,12 +75,12 @@ public class AutoSpeedPIDTune extends Command {
     }
 
     protected void outputToDashboard(){
-    	SmartDashboard.putNumber("AutoSpeedPIDTune_Velocity", velocity);
-    	SmartDashboard.putString("AutoSpeedPIDTuneDirection", dir.toString());
-    	SmartDashboard.putNumber("AutoSpeedPIDTune_P", curr_p);
-    	SmartDashboard.putNumber("AutoSpeedPIDTune_I", curr_i);
-    	SmartDashboard.putNumber("AutoSpeedPIDTune_D", curr_d);
-    	SmartDashboard.putNumber("AutoSpeedPIDTune_F", curr_ff);    	
+    	SmartDashboard.putNumber("SpeedPIDTune_Velocity", velocity);
+    	SmartDashboard.putString("SpeedPIDTuneDirection", dir.toString());
+    	SmartDashboard.putNumber("SpeedPIDTune_P", curr_p);
+    	SmartDashboard.putNumber("SpeedPIDTune_I", curr_i);
+    	SmartDashboard.putNumber("SpeedPIDTune_D", curr_d);
+    	SmartDashboard.putNumber("SpeedPIDTune_F", curr_ff);    	
     }
     
     // Called repeatedly when this Command is scheduled to run
@@ -95,12 +95,12 @@ public class AutoSpeedPIDTune extends Command {
     		}
         	test_started = Robot.drive.startSpeedPIDTuneRun(dir, velocity,  curr_p, curr_i, curr_d, curr_ff, timeout_secs);
         	if ( test_started ) {
-            	SmartDashboard.putNumber("AutoSpeedPIDTune_Velocity", velocity);
-            	SmartDashboard.putString("AutoSpeedPIDTuneDirection", dir.toString());
-            	SmartDashboard.putNumber("AutoSpeedPIDTune_P", curr_p);
-            	SmartDashboard.putNumber("AutoSpeedPIDTune_I", curr_i);
-            	SmartDashboard.putNumber("AutoSpeedPIDTune_D", curr_d);
-            	SmartDashboard.putNumber("AutoSpeedPIDTune_F", curr_ff);
+            	SmartDashboard.putNumber("SpeedPIDTune_Velocity", velocity);
+            	SmartDashboard.putString("SpeedPIDTuneDirection", dir.toString());
+            	SmartDashboard.putNumber("SpeedPIDTune_P", curr_p);
+            	SmartDashboard.putNumber("SpeedPIDTune_I", curr_i);
+            	SmartDashboard.putNumber("SpeedPIDTune_D", curr_d);
+            	SmartDashboard.putNumber("SpeedPIDTune_F", curr_ff);
             	/* Open File */
         		File file = new File(dir.toString() + Double.toString(velocity) + ".csv");
 

@@ -180,8 +180,8 @@ public class Drive extends PIDSubsystem {
                 //motor.configMaxOutputVoltage(12.0);
                 motor.setFeedbackDevice(FeedbackDevice.QuadEncoder);
                 // Apply Calibrated P,I,D,F Constants
-                motor.setPID(1, 0, 0);
-                motor.setF(5);
+                motor.setPID(4, 0, 0); // (4, 0.0015, 0)
+                motor.setF(3); // (3)
                 motor.changeControlMode(CANTalon.TalonControlMode.Speed);
                 // In Speed Mode, the Talon Velocity PID Setpoint is in units of RPMs.
                 // The RPMs calculation is based upon the codesPerRev configuration.

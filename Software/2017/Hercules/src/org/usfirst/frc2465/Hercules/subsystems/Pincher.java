@@ -11,6 +11,7 @@
 
 package org.usfirst.frc2465.Hercules.subsystems;
 
+import org.usfirst.frc2465.Hercules.Robot;
 import org.usfirst.frc2465.Hercules.RobotMap;
 import org.usfirst.frc2465.Hercules.commands.*;
 import edu.wpi.first.wpilibj.DoubleSolenoid;
@@ -96,11 +97,6 @@ public class Pincher extends Subsystem {
     	tiltDownPincher();
     	retractEjector();
     	autoClose();
-    }
-    
-    public void finalGear(){
-    	deployEjector();
-    	openPincher();
     }
     
     

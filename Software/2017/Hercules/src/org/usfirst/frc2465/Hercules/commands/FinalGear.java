@@ -22,9 +22,18 @@ import edu.wpi.first.wpilibj.command.WaitCommand;
 /**
  *
  */
-public class FinalGear extends Command {
+public class FinalGear extends CommandGroup {
 
     public FinalGear() {
+    	this.addSequential(new TiltPincherU());
+    	this.addSequential(new DriveDistance(10f, 0.1f, 0.0f));
+    	this.addSequential(new OpenPincher());
+    	this.addSequential(new WaitCommand(0.25));
+
+    	this.addSequential(new Deploy());
+    	this.addSequential(new WaitCommand(0.5));
+
+    	this.addSequential(new DriveDistance(-12f, -0.1f, 0.0f));
 
     }
 
@@ -34,7 +43,7 @@ public class FinalGear extends Command {
 
     // Called repeatedly when this Command is scheduled to run
     protected void execute() {
-    	Robot.pincher.finalGear();
+    	
     }
 
     // Make this return true when this Command no longer needs to run execute()

@@ -19,15 +19,15 @@ public class RobotPreferences {
     
     static public double getAutoRotateP() {
         //return Preferences.getInstance().getDouble("AutoRotateP", 0.0002);
-    	return 0.0025;
+    	return 0.013;
     }
     static public double getAutoRotateI() {
         //return Preferences.getInstance().getDouble("AutoRotateI", 0.00005);
-    	return 0.0;
+    	return 0.000002;
     }
     static public double getAutoRotateD() {
         //return Preferences.getInstance().getDouble("AutoRotateD", 0.00);
-    	return 0.0;
+    	return 0.0002;		//battery died 6:30 2/28/17 0.0000
     }
     static public double getAutoRotateOnTargetToleranceDegrees() {
         return 2.0; /*Preferences.getInstance().getDouble("AutoRotateOnTargetToleranceDegrees", 2.0); */

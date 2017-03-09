@@ -71,6 +71,10 @@ public class OI {
     public JoystickButton deployButton;
 
     public JoystickButton fODEnableButton;
+    
+    public JoystickButton driveForward;
+    public JoystickButton finalGear;
+    
     //public JoystickButton fODEnableButton;
 
     public OI() {
@@ -86,47 +90,42 @@ public class OI {
         - TiltPincherD()
         - Retract()
         */
-        tiltUPincherButton = new JoystickButton(driver, 6);
-        tiltUPincherButton.whileHeld(new TiltPincherU());
+        //tiltUPincherButton = new JoystickButton(driver, 7);
+        //tiltUPincherButton.toggleWhenPressed(new AutoRotatePIDTune());
         
-        /*openPincherslButton = new JoystickButton(driver, 8);
-        openPincherslButton.whileHeld(new WinchClimb());
-        */
-        climbRopeButton = new JoystickButton(driver, 5);
-        climbRopeButton.whileHeld(new WinchClimb());
-        
-        /*climbRopeButton = new JoystickButton(driver, 5);
-        climbRopeButton.whileHeld(new WinchClimb());
-        */
-        
-        finalGearButton = new JoystickButton(driver, 10);
-        finalGearButton.whileHeld(new FinalGear());
-        
-        dumpFunnelButton = new JoystickButton(driver, 11);
-        dumpFunnelButton.whileHeld(new TiltFunnelDump());
 
         
+        climbRopeButton = new JoystickButton(opJoystick, 6);
+        climbRopeButton.whileHeld(new WinchClimb());//CLIMBER
+        
+        //BUTTON 6 DS Inverted (Climber)
+        finalGearButton = new JoystickButton(opJoystick, 1);
+        finalGearButton.whileHeld(new PegGear()); //PINCHERS
         
         
+        dumpFunnelButton = new JoystickButton(opJoystick, 4);
+        dumpFunnelButton.whileHeld(new TiltFunnelDump());//FUNNEL
+        
+        //finalGear = new JoystickButton(driver, 7);
+        //finalGear.whileHeld(new FinalGear());
         
           
         // SmartDashboard Buttons
-        SmartDashboard.putData("Autonomous Command vsdbkvsdb", new AutonomousCommand());
-        SmartDashboard.putData("OpenPincher", new OpenPincher());
-        SmartDashboard.putData("ClosePincher", new ClosePincher());
-        SmartDashboard.putData("Deploy", new Deploy());
-        SmartDashboard.putData("Retract", new Retract());
-        SmartDashboard.putData("TiltPincherU", new TiltPincherU());
-        SmartDashboard.putData("TiltPincherD", new TiltPincherD());
-        SmartDashboard.putData("TiltFunnelDump", new TiltFunnelDump());
-        SmartDashboard.putData("TiltFunnelIntake", new TiltFunnelIntake());
-        SmartDashboard.putData("WinchClimb", new WinchClimb());
+//        SmartDashboard.putData("OpenPincher", new OpenPincher());
+//        SmartDashboard.putData("ClosePincher", new ClosePincher());
+//        SmartDashboard.putData("Deploy", new Deploy());
+//        SmartDashboard.putData("Retract", new Retract());
+//        SmartDashboard.putData("TiltPincherU", new TiltPincherU());
+//        SmartDashboard.putData("TiltPincherD", new TiltPincherD());
+//        SmartDashboard.putData("TiltFunnelDump", new TiltFunnelDump());
+//        SmartDashboard.putData("TiltFunnelIntake", new TiltFunnelIntake());
+//        SmartDashboard.putData("WinchClimb", new WinchClimb());
         
         SmartDashboard.putData("Autonomous Command", new AutonomousCommand());
-
-        SmartDashboard.putData("StickDrive", new StickDrive());
         
-        SmartDashboard.putData("DriveForwardTwelveInches", new DriveDistance(31.4f, 0.1f, 0.0f));
+        SmartDashboard.putData("Middle_Peg", new MiddlePeg());
+
+//        SmartDashboard.putData("StickDrive", new StickDrive());
         
     }
     public Joystick getdriver() {
