@@ -100,6 +100,7 @@ public class Robot extends IterativeRobot {
     public void autonomousInit() {
         // schedule the autonomous command (example)
         if (autonomousCommand != null) autonomousCommand.start();
+        Robot.vision.startGameTimer();
     }
 
     /**
@@ -126,14 +127,20 @@ public class Robot extends IterativeRobot {
     public void teleopPeriodic() {
         Scheduler.getInstance().run();
         
-        //Robot.pincher.autoClose();
-        //double x_val = table.getNumber("x");
-        //SmartDashboard.putNumber("x_val", x_val);
-        /*double y_val = table.getNumber("y");
+        boolean sees = Robot.vision.seePeg();
+        SmartDashboard.putBoolean("Sees?", sees);
+        
+    	Robot.table.putBoolean("Timer", Robot.vision.sendTime());
+
+        double x_val = Robot.vision.getCurrentX();
+        SmartDashboard.putNumber("x_val", x_val);
+        
+        double y_val = Robot.vision.getCurrentY();
         SmartDashboard.putNumber("y_val", y_val);
-        double z_val = table.getNumber("z");
+        
+        double z_val = Robot.vision.getCurrentZ();
         SmartDashboard.putNumber("z_val", z_val);
-        */
+        
         
         SmartDashboard.putNumber("GearDetector", RobotMap.gearDetector.getDistanceInches());
         SmartDashboard.putBoolean("GearPresent", Robot.pincher.detectGear());

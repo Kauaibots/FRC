@@ -26,7 +26,7 @@ public class PegGear extends CommandGroup {
 
     public PegGear() {
     	this.addSequential(new TiltPincherU());
-    	this.addSequential(new WaitCommand(4));
+    	this.addSequential(new WaitCommand(1));
     	this.addSequential(new OpenPincher());
     	this.addSequential(new WaitCommand(0.25));
 
