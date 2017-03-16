@@ -56,7 +56,7 @@ public class Drive extends PIDSubsystem {
     static final double pulsePerInch	= ticksPerRev / disPerRev;
     
     //STRAFE
-    static final double sWheelDiameter			= 8.0;
+    static final double sWheelDiameter			= 4.0;
     static final double sDisPerRev				= sWheelDiameter * Math.PI;
     static final double sPulsePerInch			= codesPerRev / sDisPerRev;
 
@@ -412,9 +412,13 @@ public class Drive extends PIDSubsystem {
     
     
   //STRAFE
-    public int getStrafe() {
-    	int strafe = RobotMap.strafeEncoder.get();
+    public double getStrafeEncoder() {
+    	double strafe = RobotMap.strafeEncoder.get();
     	return strafe;
+    }
+    public double getStrafeDistance() {
+    	double distance_in_inches = getStrafeEncoder() * codesPerRev * sDisPerRev;
+    	return distance_in_inches;
     }
     
     public void configureStrafeAutoStop(CANTalon sc, double distance_revolutions, boolean invert) {
@@ -462,6 +466,16 @@ public class Drive extends PIDSubsystem {
     }
     
     public void disableAutoStop() {
+    	if(auto_stop) {
+    		auto_stop = false;
+    		undoAutoStop(leftFrontSC);
+    		undoAutoStop(leftRearSC);
+    		undoAutoStop(rightFrontSC);
+    		undoAutoStop(rightRearSC);
+    	}
+    }
+    
+    public void disableStrafeAutoStop() {
     	if(auto_stop) {
     		auto_stop = false;
     		undoAutoStop(leftFrontSC);

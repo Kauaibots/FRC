@@ -32,7 +32,7 @@ public class StrafeDistance extends Command {
 
     // Called repeatedly when this Command is scheduled to run
     protected void execute() {
-    	Robot.drive.doMecanum(0, fwd, 0);
+    	Robot.drive.doMecanum(fwd , 0, 0);
     }
 
     // Make this return true when this Command no longer needs to run execute()
@@ -43,7 +43,7 @@ public class StrafeDistance extends Command {
     // Called once after isFinished returns true
     protected void end() {
     	Robot.drive.doMecanum(0, 0, 0); /* Stop the Robot */
-    	Robot.drive.disableAutoStop();
+    	Robot.drive.disableStrafeAutoStop();
     	Robot.drive.setFODEnabled(fod_enabled);
     	boolean stopped = Robot.drive.isStopped();
     	System.out.println("StrafeDistance command complete.");
