@@ -54,6 +54,13 @@ public class Drive extends PIDSubsystem {
     static final double wheelRadius     = wheelDiameter / 2;
     static final double disPerRev 		= wheelDiameter * Math.PI;
     static final double pulsePerInch	= ticksPerRev / disPerRev;
+    
+    //STRAFE
+    static final double sWheelDiameter			= 8.0;
+    static final double sDisPerRev				= sWheelDiameter * Math.PI;
+    static final double sPulsePerInch			= codesPerRev / sDisPerRev;
+
+// Per AndyMark Specs
 
 /////////////////////////////////////////////////////////////////////////////////////
 // Mecanum Constants
@@ -128,6 +135,10 @@ public class Drive extends PIDSubsystem {
     double prev_speed_pid_d;
     double prev_speed_pid_ff;
     
+    static final int AUTO_ROTATE_ERROR_HISTORY_LENGTH = 5;
+    double auto_rotate_error_history[];
+    int auto_rotate_error_history_index;
+    
     public Drive() {
         super(  "Drive",
                 RobotPreferences.getAutoRotateP(),
@@ -135,6 +146,13 @@ public class Drive extends PIDSubsystem {
                 RobotPreferences.getAutoRotateD(),
                 0,
                 0.02);
+        
+        auto_rotate_error_history = new double[AUTO_ROTATE_ERROR_HISTORY_LENGTH];
+        for ( int i = 0; i < AUTO_ROTATE_ERROR_HISTORY_LENGTH; i++) {
+        	auto_rotate_error_history[i] = 0;
+        }
+        auto_rotate_error_history_index = 0;
+        
         try {
             getPIDController().setContinuous( true );
             getPIDController().setInputRange(-180,180);
@@ -203,16 +221,9 @@ public class Drive extends PIDSubsystem {
         }
     }
     
-    //STRAFE AVERAGE
-    public int getStrafe() {
-    	int strafe = RobotMap.strafeEncoder.get();
-    	return strafe;
-    }
     
-    public boolean getStrafeDirection(){
-    	boolean direction = RobotMap.strafeEncoder.getDirection();
-    	return direction;
-    }
+    
+    
     public CANTalon.TalonControlMode getMode() {
     	return currControlMode;
     }
@@ -281,13 +292,18 @@ public class Drive extends PIDSubsystem {
         double curr_gyro_angle_degrees = 0;
         if ( fod_enable && imu_connected ) 
         {
-                curr_gyro_angle_degrees = imu.getYaw();
+                curr_gyro_angle_degrees =-imu.getYaw();
         }
         double curr_gyro_angle_radians = curr_gyro_angle_degrees * Math.PI/180;       
-          
+        
         double temp = vX * Math.cos( curr_gyro_angle_radians ) + vY * Math.sin( curr_gyro_angle_radians );
         vY = -vX * Math.sin( curr_gyro_angle_radians ) + vY * Math.cos( curr_gyro_angle_radians );
         vX = temp;
+        
+//        double theta = Math.atan(vY/vX);
+//        double distance = Math.sqrt((vY*vY)+(vX*vX));
+//        vX = Math.cos(theta + curr_gyro_angle_radians) * distance;
+//        vY = Math.sin(theta  curr_gyro_angle_radians) * distance;
         
         try {
             doMecanumInternal(vX, vY, vRot);			
@@ -308,6 +324,27 @@ public class Drive extends PIDSubsystem {
     protected void usePIDOutput(double d) {
         next_autorotate_value = d;
         SmartDashboard.putNumber( "AutoRotatePIDOutput", next_autorotate_value);
+        double curr_error = this.getPIDController().getError();
+        this.auto_rotate_error_history[this.auto_rotate_error_history_index] = curr_error;
+        this.auto_rotate_error_history_index++;
+        if ( this.auto_rotate_error_history_index >= AUTO_ROTATE_ERROR_HISTORY_LENGTH) {
+        	this.auto_rotate_error_history_index = 0;
+        }
+    }
+    
+    public boolean isAutoRotateOnTarget() {
+    	boolean on_target;
+    	double average_error = 0;
+    	for ( int i = 0; i < AUTO_ROTATE_ERROR_HISTORY_LENGTH; i++) {
+    		average_error += this.auto_rotate_error_history[i];
+    	}
+    	average_error = average_error / AUTO_ROTATE_ERROR_HISTORY_LENGTH;
+    	if (Math.abs(average_error) <= tolerance_degrees) {
+    		on_target = true;
+    	} else {
+    		on_target = false;
+    	}
+    	return on_target;
     }
     
     public void setAutoRotation(boolean enable) {
@@ -343,7 +380,7 @@ public class Drive extends PIDSubsystem {
     		sc.enableForwardSoftLimit(true);
     	} else {
     		sc.enableLimitSwitch(false, true);
-    		sc.setReverseSoftLimit(distance_revolutions);
+    		sc.setReverseoftLimit(distance_revolutions);
     		sc.ConfigRevLimitSwitchNormallyOpen(true);
     		sc.enableReverseSoftLimit(true);
     	}
@@ -370,6 +407,44 @@ public class Drive extends PIDSubsystem {
     		configureAutoStop(rightRearSC, distance_in_revolutions, true);
     	}
     }
+    
+    
+    
+    
+  //STRAFE
+    public int getStrafe() {
+    	int strafe = RobotMap.strafeEncoder.get();
+    	return strafe;
+    }
+    
+    public void configureStrafeAutoStop(CANTalon sc, double distance_revolutions, boolean invert) {
+    	sc.setPosition(0);
+    	
+		sc.enableLimitSwitch(true, true);
+		sc.setForwardSoftLimit(invert ? -distance_revolutions : distance_revolutions);
+		sc.ConfigFwdLimitSwitchNormallyOpen(true);
+		sc.enableForwardSoftLimit(true);
+		sc.setReverseSoftLimit(invert ? -distance_revolutions : distance_revolutions);
+		sc.ConfigRevLimitSwitchNormallyOpen(true);
+		sc.enableReverseSoftLimit(true);
+
+    	sc.enableBrakeMode(true); /* Why is this here??? */
+    }
+    
+    
+    public void enableStrafeAutoStop(float distance_inches) {
+    	if(!auto_stop) {
+    		auto_stop = true;
+    		double distance_in_revolutions = distance_inches / disPerRev;
+    		configureAutoStop(leftFrontSC, distance_in_revolutions, false);
+    		configureAutoStop(leftRearSC, distance_in_revolutions, false);
+    		configureAutoStop(rightFrontSC, distance_in_revolutions, true);
+    		configureAutoStop(rightRearSC, distance_in_revolutions, true);
+    	}
+    }
+    
+    
+    
     
     public boolean isStopped() {
     	boolean leftFrontStopped = (leftFrontSC.getFaultForSoftLim() != 0) || (leftFrontSC.getFaultRevSoftLim() != 0);

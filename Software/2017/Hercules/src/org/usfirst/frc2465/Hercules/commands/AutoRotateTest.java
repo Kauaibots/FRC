@@ -10,16 +10,12 @@ import edu.wpi.first.wpilibj.command.WaitCommand;
  *
  */
 // :D
-public class MiddlePeg extends CommandGroup {
+public class AutoRotateTest extends CommandGroup {
 	
-	public MiddlePeg(){
+	public AutoRotateTest(){
 		requires(Robot.drive);
 		RobotMap.imu.zeroYaw();
-		//this.addSequential(new AutoRotate(0));
-		this.addParallel(new TiltPincherU());
-		this.addSequential( new DriveDistance(61.0f, .2f, 0f));
-		this.addSequential(new WaitCommand(1));
-		this.addSequential( new FinalGear());
+		this.addSequential(new AutoRotate(90));
 	}
 /*
     // Called just before this Command runs the first time

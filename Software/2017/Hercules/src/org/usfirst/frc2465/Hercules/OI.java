@@ -99,8 +99,11 @@ public class OI {
         climbRopeButton.whileHeld(new WinchClimb());//CLIMBER
         
         //BUTTON 6 DS Inverted (Climber)
-        finalGearButton = new JoystickButton(opJoystick, 1);
-        finalGearButton.whileHeld(new PegGear()); //PINCHERS
+        tiltUPincherButton = new JoystickButton(opJoystick, 1);
+        tiltUPincherButton.whileHeld(new TiltPincherU()); //PINCHERS
+        
+        finalGearButton = new JoystickButton(opJoystick, 3);
+        finalGearButton.whileHeld(new EjectPeg()); //PINCHERS
         
         
         dumpFunnelButton = new JoystickButton(opJoystick, 4);
@@ -122,8 +125,8 @@ public class OI {
 //        SmartDashboard.putData("WinchClimb", new WinchClimb());
         
         SmartDashboard.putData("Autonomous Command", new AutonomousCommand());
-        
-        SmartDashboard.putData("Middle_Peg", new MiddlePeg());
+
+
 
 //        SmartDashboard.putData("StickDrive", new StickDrive());
         

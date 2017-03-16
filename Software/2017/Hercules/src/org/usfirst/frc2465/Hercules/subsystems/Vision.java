@@ -13,10 +13,12 @@ package org.usfirst.frc2465.Hercules.subsystems;
 
 import org.usfirst.frc2465.Hercules.Robot;
 import org.usfirst.frc2465.Hercules.RobotMap;
+import org.usfirst.frc2465.Hercules.commands.MiddlePeg;
 
 import edu.wpi.first.wpilibj.Relay;
 import edu.wpi.first.wpilibj.Relay.Value;
 import edu.wpi.first.wpilibj.command.Subsystem;
+import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj.Timer;
 
 
@@ -37,7 +39,7 @@ public class Vision extends Subsystem {
     public float previousZ = getCurrentZ();
    
     public double gameTime = 0.0;
-    public double wantedTime = 155.0;
+    public double wantedTime = 10.0;
 
     
     
@@ -95,18 +97,15 @@ public class Vision extends Subsystem {
   	   relay.set(Value.kForward);
     }
     
-    public boolean startGameTimer(){
+
+    public boolean sendTime(){
     	gameTime = Timer.getMatchTime();
-    	if(gameTime >= wantedTime){ //155
+    	if(gameTime <= wantedTime){ //155
     		sendTime = true;
     	}
     	else{
     		sendTime = false;
     	}
-    	return sendTime;
-    }
-    
-    public boolean sendTime(){
     	if(sendTime == true){
     		shouldBeRunning = false;
     	}

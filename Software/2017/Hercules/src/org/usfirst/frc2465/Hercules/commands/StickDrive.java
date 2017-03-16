@@ -80,12 +80,12 @@ public class  StickDrive extends Command {
     JoystickResponseCurveSet conservative = new JoystickResponseCurveSet(
             new JoystickResponseCurve( .40, 3, .50, DEADZONE ),
             new JoystickResponseCurve( .40, 3, .50, DEADZONE ),
-            new JoystickResponseCurve( .40, 3, .35, DEADZONE ) );
+            new JoystickResponseCurve( .25, 3, .35, DEADZONE ) );
 
     JoystickResponseCurveSet aggressive = new JoystickResponseCurveSet(
-            new JoystickResponseCurve( .40, 3, 1.0, DEADZONE ),
-            new JoystickResponseCurve( .40, 3, 1.0, DEADZONE ),
-            new JoystickResponseCurve( .40, 3, 1.0, DEADZONE ) );
+            new JoystickResponseCurve( .80, 3, 1.0, DEADZONE ),
+            new JoystickResponseCurve( .80, 3, 1.0, DEADZONE ),
+            new JoystickResponseCurve( .25, 3, 1.0, DEADZONE ) );
     
     public StickDrive() {
         // Use requires() here to declare subsystem dependencies
@@ -141,20 +141,21 @@ public class  StickDrive extends Command {
         	}
         }*/
         
-        /*if ( driver.getRawButton(1))
+        if ( driver.getRawButton(10))
         {
-        	 vX = fast.transformStrafe(vX);
-             vY = fast.transformForward(vY);
-             vRot = fast.transformRotate(vRot);
-             SmartDashboard.putString("DriveSpeed", "fast");
-        } 
-        else 
-        {
-            vX = slow.transformStrafe(vX);
+        	vX = slow.transformStrafe(vX);
             vY = slow.transformForward(vY);
             vRot = slow.transformRotate(vRot);
             SmartDashboard.putString("DriveSpeed", "slow");
-        }*/
+        } 
+        else 
+        {
+            vX = fast.transformStrafe(vX);
+            vY = fast.transformForward(vY);
+            vRot = fast.transformRotate(vRot);
+            SmartDashboard.putString("DriveSpeed", "fast");
+        }
+        
         if ( driver.getRawButton(6))
         {
             RobotMap.imu.zeroYaw();

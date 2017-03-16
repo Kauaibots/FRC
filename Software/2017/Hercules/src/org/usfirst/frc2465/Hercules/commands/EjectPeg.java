@@ -22,16 +22,11 @@ import edu.wpi.first.wpilibj.command.WaitCommand;
 /**
  *
  */
-public class PegGear extends CommandGroup {
+public class EjectPeg extends CommandGroup {
 
-    public PegGear() {
-    	this.addSequential(new TiltPincherU());
-    	this.addSequential(new WaitCommand(2));
-    	this.addSequential(new OpenPincher());
-    	this.addSequential(new WaitCommand(0.25));
-
+    public EjectPeg() {
     	this.addSequential(new Deploy());
-
+    	this.addParallel(new OpenPincher());
     }
 
     // Called just before this Command runs the first time
