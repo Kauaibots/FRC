@@ -416,35 +416,18 @@ public class Drive extends PIDSubsystem {
     	double strafe = RobotMap.strafeEncoder.get();
     	return strafe;
     }
-    public double getStrafeDistance() {
+    
+    public double getStrafeDistanceInches() {
     	double distance_in_inches = getStrafeEncoder() * codesPerRev * sDisPerRev;
     	return distance_in_inches;
     }
     
-    public void configureStrafeAutoStop(CANTalon sc, double distance_revolutions, boolean invert) {
-    	sc.setPosition(0);
-    	
-		sc.enableLimitSwitch(true, true);
-		sc.setForwardSoftLimit(invert ? -distance_revolutions : distance_revolutions);
-		sc.ConfigFwdLimitSwitchNormallyOpen(true);
-		sc.enableForwardSoftLimit(true);
-		sc.setReverseSoftLimit(invert ? -distance_revolutions : distance_revolutions);
-		sc.ConfigRevLimitSwitchNormallyOpen(true);
-		sc.enableReverseSoftLimit(true);
-
-    	sc.enableBrakeMode(true); /* Why is this here??? */
-    }
-    
-    
-    public void enableStrafeAutoStop(float distance_inches) {
-    	if(!auto_stop) {
-    		auto_stop = true;
-    		double distance_in_revolutions = distance_inches / disPerRev;
-    		configureAutoStop(leftFrontSC, distance_in_revolutions, false);
-    		configureAutoStop(leftRearSC, distance_in_revolutions, false);
-    		configureAutoStop(rightFrontSC, distance_in_revolutions, true);
-    		configureAutoStop(rightRearSC, distance_in_revolutions, true);
+    public boolean strafeAutoStop(double desired_distance){
+    	boolean stop = false;
+    	if(desired_distance == getStrafeDistanceInches()){
+    		stop = true;
     	}
+    	return stop;
     }
     
     
@@ -475,15 +458,6 @@ public class Drive extends PIDSubsystem {
     	}
     }
     
-    public void disableStrafeAutoStop() {
-    	if(auto_stop) {
-    		auto_stop = false;
-    		undoAutoStop(leftFrontSC);
-    		undoAutoStop(leftRearSC);
-    		undoAutoStop(rightFrontSC);
-    		undoAutoStop(rightRearSC);
-    	}
-    }
     
     public boolean startSpeedPIDTuneRun( SpeedPIDTuneDirection dir, double vel_ratio, 
     								  double p, double i, double d, double ff, double timeout_seconds ) {

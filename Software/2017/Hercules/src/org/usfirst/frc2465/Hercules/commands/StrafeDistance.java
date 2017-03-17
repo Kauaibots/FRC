@@ -26,26 +26,26 @@ public class StrafeDistance extends Command {
     	fod_enabled = Robot.drive.getFODEnabled();
     	Robot.drive.setFODEnabled(false);
     	RobotMap.imu.zeroYaw();
-    	Robot.drive.enableStrafeAutoStop(distance_inches);
     	System.out.println("StrafeDistance command initialized.");
     }
 
     // Called repeatedly when this Command is scheduled to run
     protected void execute() {
     	Robot.drive.doMecanum(fwd , 0, 0);
+    	Robot.drive.getStrafeDistanceInches();
+    	Robot.drive.strafeAutoStop(distance_inches);
     }
 
     // Make this return true when this Command no longer needs to run execute()
     protected boolean isFinished() {
-        return Robot.drive.isStopped();
+        return Robot.drive.strafeAutoStop(distance_inches);
     }
 
     // Called once after isFinished returns true
     protected void end() {
     	Robot.drive.doMecanum(0, 0, 0); /* Stop the Robot */
-    	Robot.drive.disableStrafeAutoStop();
     	Robot.drive.setFODEnabled(fod_enabled);
-    	boolean stopped = Robot.drive.isStopped();
+    	//boolean stopped = Robot.drive.isStopped();
     	System.out.println("StrafeDistance command complete.");
     }
 
