@@ -56,9 +56,15 @@ public class Drive extends PIDSubsystem {
     static final double pulsePerInch	= ticksPerRev / disPerRev;
     
     //STRAFE
-    static final double sWheelDiameter			= 4.0;
-    static final double sDisPerRev				= sWheelDiameter * Math.PI;
-    static final double sPulsePerInch			= codesPerRev / sDisPerRev;
+    static final double sWheelDiameter	= 4.0;
+    static final double sDisPerRev		= sWheelDiameter * Math.PI;
+    static final double sPulsePerInch	= codesPerRev / sDisPerRev;
+    
+    static final double sP 				= 0.003;
+    static final double sI 				= 0.000;
+    static final double sD 				= 0.000;
+    static final double sFF 			= 0.000;
+
 
 // Per AndyMark Specs
 
@@ -185,6 +191,32 @@ public class Drive extends PIDSubsystem {
         // Set the default command for a subsystem here.
         setDefaultCommand(new StickDrive());
     }
+  ///////////////////////////////////////////////////////////////////////////  
+  //STRAFE
+  ///////////////////////////////////////////////////////////////////////////
+    public double getStrafeEncoder() {
+    	double strafe = RobotMap.strafeEncoder.get();
+    	return strafe;
+    }
+    
+    public double getStrafeDistanceInches() {
+    	double distance_in_inches = getStrafeEncoder() * codesPerRev * sDisPerRev;	//measure Omni-wheel!!! 
+    	return distance_in_inches;													//(not accurate wheel diameter)
+    }
+    
+    public boolean strafeAutoStop(double desired_distance){							//used in StrafeDistance
+    	boolean stop = false;
+    	if(desired_distance == getStrafeDistanceInches()){
+    		stop = true;
+    	}
+    	return stop;
+    }
+    
+    public void setStrafeCoefficients()
+    {
+    	getPIDController().setPID( sP, sI, sD, sFF);
+    }
+    
     
     public void setAutoRotateCoefficients(double p, double i, double d, double ff)
     {
@@ -407,31 +439,6 @@ public class Drive extends PIDSubsystem {
     		configureAutoStop(rightRearSC, distance_in_revolutions, true);
     	}
     }
-    
-    
-    
-    
-  //STRAFE
-    public double getStrafeEncoder() {
-    	double strafe = RobotMap.strafeEncoder.get();
-    	return strafe;
-    }
-    
-    public double getStrafeDistanceInches() {
-    	double distance_in_inches = getStrafeEncoder() * codesPerRev * sDisPerRev;
-    	return distance_in_inches;
-    }
-    
-    public boolean strafeAutoStop(double desired_distance){
-    	boolean stop = false;
-    	if(desired_distance == getStrafeDistanceInches()){
-    		stop = true;
-    	}
-    	return stop;
-    }
-    
-    
-    
     
     public boolean isStopped() {
     	boolean leftFrontStopped = (leftFrontSC.getFaultForSoftLim() != 0) || (leftFrontSC.getFaultRevSoftLim() != 0);

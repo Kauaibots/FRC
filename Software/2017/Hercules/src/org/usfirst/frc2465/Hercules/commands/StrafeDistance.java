@@ -31,6 +31,7 @@ public class StrafeDistance extends Command {
 
     // Called repeatedly when this Command is scheduled to run
     protected void execute() {
+    	Robot.drive.setStrafeCoefficients();
     	Robot.drive.doMecanum(fwd , 0, 0);
     	Robot.drive.getStrafeDistanceInches();
     	Robot.drive.strafeAutoStop(distance_inches);
