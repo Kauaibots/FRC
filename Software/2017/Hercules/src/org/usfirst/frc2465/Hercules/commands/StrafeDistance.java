@@ -1,23 +1,25 @@
 package org.usfirst.frc2465.Hercules.commands;
 
 import org.usfirst.frc2465.Hercules.Robot;
-import org.usfirst.frc2465.Hercules.RobotMap;
 
+import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj.command.Command;
+import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 
 /**
  *
  */
 public class StrafeDistance extends Command {
 	
-	float distance_inches;
-	float fwd;
+	float distance_in_inches;
 	boolean fod_enabled;
+	double startTime;
+	double timeout;
 	
-    public StrafeDistance(float distance_inches, float fwd) {
-        this.distance_inches = distance_inches;
-        this.fwd = fwd;
+    public StrafeDistance(float distance_inches, double timeout) {
+        this.distance_in_inches = distance_inches;
         requires(Robot.drive);
+    	this.timeout = timeout;
     }
     
 
@@ -25,25 +27,30 @@ public class StrafeDistance extends Command {
     protected void initialize() {
     	fod_enabled = Robot.drive.getFODEnabled();
     	Robot.drive.setFODEnabled(false);
-    	RobotMap.imu.zeroYaw();
+    	Robot.drive.enableAutoStrafe(distance_in_inches);
     	System.out.println("StrafeDistance command initialized.");
+    	startTime = Timer.getFPGATimestamp();
     }
 
     // Called repeatedly when this Command is scheduled to run
     protected void execute() {
-    	Robot.drive.setStrafeCoefficients();
-    	Robot.drive.doMecanum(fwd , 0, 0);
-    	Robot.drive.getStrafeDistanceInches();
-    	Robot.drive.strafeAutoStop(distance_inches);
+    	Robot.drive.doMecanum(0, 0, 0);
+    	SmartDashboard.putNumber("AutoStrafe Error", Robot.drive.getStrafeController().getError());
+        SmartDashboard.putNumber("AutoStrafe Setpoint", Robot.drive.getStrafeController().getSetpoint());
+        SmartDashboard.putBoolean("AutoStrafe On Target", Robot.drive.getStrafeController().onTarget());
+        SmartDashboard.putBoolean("AutoStrafe Timeout", Timer.getFPGATimestamp() - startTime > timeout);
+        SmartDashboard.putNumber("AutoStrafe startTime", startTime);
+        SmartDashboard.putNumber("AutoStrafe Time", Timer.getFPGATimestamp());
     }
 
     // Make this return true when this Command no longer needs to run execute()
     protected boolean isFinished() {
-        return Robot.drive.strafeAutoStop(distance_inches);
+        return Robot.drive.isAutoStrafeOnTarget() || Timer.getFPGATimestamp() - startTime > timeout;
     }
 
     // Called once after isFinished returns true
     protected void end() {
+    	Robot.drive.disableAutoStrafe();
     	Robot.drive.doMecanum(0, 0, 0); /* Stop the Robot */
     	Robot.drive.setFODEnabled(fod_enabled);
     	//boolean stopped = Robot.drive.isStopped();

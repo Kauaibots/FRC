@@ -94,6 +94,8 @@ public class Robot extends IterativeRobot implements PIDOutput {
         autoChooser.addObject("Baseline", new Baseline());
         autoChooser.addObject("MiddleBaseline", new MiddleBaseline());
         autoChooser.addObject("AutoRotateTest", new AutoRotateTest());
+        autoChooser.addObject("AutoStrafeTest", new AutoStrafeTest());
+
 
 
         SmartDashboard.putData("Autonomous Chooser", autoChooser);
@@ -134,7 +136,8 @@ public class Robot extends IterativeRobot implements PIDOutput {
     public void autonomousPeriodic() {
         Scheduler.getInstance().run();
         SmartDashboard.putNumber("Yaw", RobotMap.imu.getYaw());
-
+        
+        SmartDashboard.putNumber("Strafe_Distance", Robot.drive.getStrafeDistanceInches());
     }
 
     public void teleopInit() {
@@ -145,7 +148,6 @@ public class Robot extends IterativeRobot implements PIDOutput {
         if (autonomousCommand != null) autonomousCommand.cancel();
         //Robot.pincher.defaultPneumatics();
         Robot.drive.setFODEnabled(true);
-        RobotMap.strafeEncoder.reset();
     }
 
     /**
@@ -171,6 +173,9 @@ public class Robot extends IterativeRobot implements PIDOutput {
         
         SmartDashboard.putNumber("GearDetector", RobotMap.gearDetector.getDistanceInches());
         SmartDashboard.putBoolean("GearPresent", Robot.pincher.detectGear());
+        
+        SmartDashboard.putNumber("Strafe_Distance", Robot.drive.getStrafeDistanceInches());
+
         
         SmartDashboard.putNumber("PressureSensor", Robot.air.getPressureSensor() );
                 
