@@ -133,6 +133,8 @@ public class Robot extends IterativeRobot implements PIDOutput {
      */
     public void autonomousPeriodic() {
         Scheduler.getInstance().run();
+        SmartDashboard.putNumber("Yaw", RobotMap.imu.getYaw());
+
     }
 
     public void teleopInit() {

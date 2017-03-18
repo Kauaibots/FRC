@@ -20,7 +20,7 @@ public class TravelToPeg extends CommandGroup {
 		
 		if(changed == true){
 		this.addSequential( new AutoRotateToPeg( Robot.vision.getCurrentZ()) );
-		this.addSequential( new AutoRotate(current_angle) );
+		this.addSequential( new AutoRotate(current_angle, 5) );
 		this.addSequential( new DriveDistance(Robot.vision.getCurrentX(), .2f, 0f) );
 		this.addSequential( new DriveDistance(0f, .2f, Robot.vision.getCurrentY()) );
 		}

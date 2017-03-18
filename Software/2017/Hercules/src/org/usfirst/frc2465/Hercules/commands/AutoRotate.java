@@ -11,6 +11,7 @@
 
 package org.usfirst.frc2465.Hercules.commands;
 
+import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj.command.Command;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 
@@ -25,9 +26,12 @@ public class  AutoRotate extends Command {
 	
 	double target_angle;
 	boolean previousAutoRotate = false;
+	double startTime;
+	double timeout;
 
-    public AutoRotate(float rotationAngle) {
+    public AutoRotate(float rotationAngle, double timeout) {
     	target_angle = rotationAngle;
+    	this.timeout = timeout;
         // Use requires() here to declare subsystem dependencies
         requires(Robot.drive);
 
@@ -42,6 +46,7 @@ public class  AutoRotate extends Command {
     	Robot.drive.setAutoRotation(true);
     	Robot.drive.setSetpoint(target_angle); 
     	System.out.println("Auto-rotate command initialized.");
+    	startTime = Timer.getFPGATimestamp();
     }
 
     // Called repeatedly when this Command is scheduled to run
@@ -50,11 +55,17 @@ public class  AutoRotate extends Command {
         SmartDashboard.putNumber("AutoRotate Error", Robot.drive.getPIDController().getError());
         SmartDashboard.putNumber("AutoRotate Setpoint", Robot.drive.getPIDController().getSetpoint());
         SmartDashboard.putBoolean("AutoRotate On Target", Robot.drive.getPIDController().onTarget());
+        SmartDashboard.putBoolean("AutoRotate Timeout", Timer.getFPGATimestamp() - startTime > timeout);
+        SmartDashboard.putNumber("AutoRotate startTime", startTime);
+        SmartDashboard.putNumber("AutoRotate Time", Timer.getFPGATimestamp());
+
+
+
     }
 
     // Make this return true when this Command no longer needs to run execute()
     protected boolean isFinished() {
-        return Robot.drive.isAutoRotateOnTarget();
+        return Robot.drive.isAutoRotateOnTarget() || Timer.getFPGATimestamp() - startTime > timeout;
     }
 
     // Called once after isFinished returns true

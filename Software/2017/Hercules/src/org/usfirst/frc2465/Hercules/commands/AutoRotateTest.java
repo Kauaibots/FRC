@@ -14,12 +14,12 @@ public class AutoRotateTest extends CommandGroup {
 	
 	public AutoRotateTest(){
 		requires(Robot.drive);
-		RobotMap.imu.zeroYaw();
-		this.addSequential(new AutoRotate(90));
+		this.addSequential(new AutoRotate(15, 2));
 	}
-/*
+
     // Called just before this Command runs the first time
     protected void initialize() {
+		RobotMap.imu.zeroYaw();
     }
 
     // Called repeatedly when this Command is scheduled to run
@@ -40,5 +40,5 @@ public class AutoRotateTest extends CommandGroup {
     protected void interrupted() {
     	end();
     }
-    */
+   
 }

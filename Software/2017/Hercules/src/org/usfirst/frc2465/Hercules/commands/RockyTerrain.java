@@ -15,7 +15,7 @@ public class RockyTerrain extends CommandGroup {
 		requires(Robot.drive);
 		RobotMap.imu.zeroYaw();
 		this.addSequential( new DriveDistance(55f, .25f, 0f));		
-		this.addSequential( new AutoRotate(179));
+		this.addSequential( new AutoRotate(179,5));
 		this.addSequential( new DriveDistance(-55f, -.25f, 0f));
 	}
 /*
