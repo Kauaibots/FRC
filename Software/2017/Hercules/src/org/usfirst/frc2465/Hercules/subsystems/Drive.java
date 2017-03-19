@@ -60,8 +60,8 @@ public class Drive extends PIDSubsystem implements PIDSource, PIDOutput {
     static final double sDisPerRev		= sWheelDiameter * Math.PI;
     static final double sPulsePerInch	= codesPerRev / sDisPerRev;
     
-    static final double sP 				= 0.03;
-    static final double sI 				= 0.000;
+    static final double sP 				= 0.020; 	//0.020
+    static final double sI 				= 0.00002;	//0.00004
     static final double sD 				= 0.000;
     static final double sFF 			= 0.000;
     

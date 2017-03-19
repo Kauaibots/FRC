@@ -11,6 +11,7 @@
 
 package org.usfirst.frc2465.Hercules.commands;
 
+import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj.command.Command;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 
@@ -22,15 +23,15 @@ import org.usfirst.frc2465.Hercules.RobotMap;
 /**
  *
  */
-public class  AutoRotateToPeg extends Command {
+public class  PiAutoRotate extends Command {
 	
-	float rotation_angle;
 	double target_angle;
 	boolean previousAutoRotate = false;
-	float current_angle = RobotMap.imu.getYaw();
+	double startTime;
+	double timeout;
 
-    public AutoRotateToPeg(float pi_Angle) {
-    	target_angle = current_angle - pi_Angle;
+    public PiAutoRotate(double timeout) {
+    	this.timeout = timeout;
         // Use requires() here to declare subsystem dependencies
         requires(Robot.drive);
 
@@ -41,10 +42,14 @@ public class  AutoRotateToPeg extends Command {
 
     // Called just before this Command runs the first time
     protected void initialize() {
+    	double current_yaw = RobotMap.imu.getYaw();
+    	double piYaw = Robot.vision.getCurrentZ();
+    	target_angle = current_yaw - piYaw;
     	previousAutoRotate = Robot.drive.getAutoRotation();
     	Robot.drive.setAutoRotation(true);
     	Robot.drive.setSetpoint(target_angle); 
     	System.out.println("Auto-rotate command initialized.");
+    	startTime = Timer.getFPGATimestamp();
     }
 
     // Called repeatedly when this Command is scheduled to run
@@ -53,11 +58,17 @@ public class  AutoRotateToPeg extends Command {
         SmartDashboard.putNumber("AutoRotate Error", Robot.drive.getPIDController().getError());
         SmartDashboard.putNumber("AutoRotate Setpoint", Robot.drive.getPIDController().getSetpoint());
         SmartDashboard.putBoolean("AutoRotate On Target", Robot.drive.getPIDController().onTarget());
+        SmartDashboard.putBoolean("AutoRotate Timeout", Timer.getFPGATimestamp() - startTime > timeout);
+        SmartDashboard.putNumber("AutoRotate startTime", startTime);
+        SmartDashboard.putNumber("AutoRotate Time", Timer.getFPGATimestamp());
+
+
+
     }
 
     // Make this return true when this Command no longer needs to run execute()
     protected boolean isFinished() {
-        return Robot.drive.onTarget();
+        return Robot.drive.isAutoRotateOnTarget() || Timer.getFPGATimestamp() - startTime > timeout;
     }
 
     // Called once after isFinished returns true

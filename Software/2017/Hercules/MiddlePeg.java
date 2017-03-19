@@ -10,11 +10,16 @@ import edu.wpi.first.wpilibj.command.WaitCommand;
  *
  */
 // :D
-public class AutoStrafeTest extends CommandGroup {
+public class MiddlePeg extends CommandGroup {
 	
-	public AutoStrafeTest(){
+	public MiddlePeg(){
 		requires(Robot.drive);
-		this.addSequential(new StrafeDistance(-21, 0, 5));
+		RobotMap.imu.zeroYaw();
+		//this.addSequential(new AutoRotate(0, 2));
+		this.addParallel(new TiltPincherU());
+		this.addSequential( new DriveDistance(55.0f, .2f, 0f));
+		this.addSequential(new WaitCommand(1));
+		this.addSequential( new FinalGear());
 	}
 
     // Called just before this Command runs the first time
@@ -23,9 +28,11 @@ public class AutoStrafeTest extends CommandGroup {
 
     // Called repeatedly when this Command is scheduled to run
     protected void execute() {
+    	Robot.drive.setAutoRotation(true);
+    	Robot.drive.setSetpoint(0);
     }
 
-    // Make this return true when this Command no longer needs to run execute()
+   /* // Make this return true when this Command no longer needs to run execute()
     protected boolean isFinished() {
 		return false;
     }
@@ -39,5 +46,5 @@ public class AutoStrafeTest extends CommandGroup {
     protected void interrupted() {
     	end();
     }
-   
+    */
 }

@@ -54,7 +54,6 @@ public class Vision extends Subsystem {
     }
     
     public Vision() {
-    	turnOnLight();
     	didChange();
     }
     

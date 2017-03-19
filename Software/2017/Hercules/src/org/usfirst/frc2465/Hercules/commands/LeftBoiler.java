@@ -10,32 +10,34 @@ import edu.wpi.first.wpilibj.command.WaitCommand;
  *
  */
 // :D
-public class TravelToPeg extends CommandGroup {
+public class LeftBoiler extends CommandGroup {
 	
-	boolean changed = Robot.vision.didChange();
-	float current_angle;
-	
-	public TravelToPeg(){
+	public LeftBoiler(){
 		requires(Robot.drive);
+		//this.addSequential(new AutoRotate(0, 2));
+		this.addParallel(new TiltPincherU());
+		this.addSequential( new DriveDistance(93.0f, .2f, 0f));
+		this.addSequential(new WaitCommand(0.25));
+		this.addSequential( new AutoRotate(58, 2));
+		this.addSequential(new WaitCommand(0.5));
+		this.addSequential(new StrafeDistance(-17, 58, 3));
+		this.addSequential( new DriveDistance(24.0f, .2f, 0f));
+		this.addSequential(new FinalGear(58));
+
 		
-		if(changed == true){
-		this.addSequential( new AutoRotateToPeg( Robot.vision.getCurrentZ()) );
-		this.addSequential( new AutoRotate(current_angle, 5) );
-		this.addSequential( new DriveDistance(Robot.vision.getCurrentX(), .2f, 0f) );
-		this.addSequential( new DriveDistance(0f, .2f, Robot.vision.getCurrentY()) );
-		}
 	}
 
     // Called just before this Command runs the first time
     protected void initialize() {
-    	current_angle = RobotMap.imu.getYaw();
-    }
-/*
-    // Called repeatedly when this Command is scheduled to run
-    protected void execute() {
     }
 
-    // Make this return true when this Command no longer needs to run execute()
+    // Called repeatedly when this Command is scheduled to run
+    protected void execute() {
+    	//Robot.drive.setAutoRotation(true);
+    	//Robot.drive.setSetpoint(0);
+    }
+
+   /* // Make this return true when this Command no longer needs to run execute()
     protected boolean isFinished() {
 		return false;
     }

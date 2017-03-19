@@ -27,7 +27,7 @@ public class DriveDistance extends Command {
     protected void initialize() {
     	fod_enabled = Robot.drive.getFODEnabled();
     	Robot.drive.setFODEnabled(false);
-    	RobotMap.imu.zeroYaw();
+    	//RobotMap.imu.zeroYaw();
     	Robot.drive.enableAutoStop(distance_inches);
     	System.out.println("DriveDistance command initialized.");
     }

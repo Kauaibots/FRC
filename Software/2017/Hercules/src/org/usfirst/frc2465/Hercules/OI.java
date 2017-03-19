@@ -75,6 +75,9 @@ public class OI {
     public JoystickButton driveForward;
     public JoystickButton finalGear;
     
+    public JoystickButton PiYaw;
+
+    
     //public JoystickButton fODEnableButton;
 
     public OI() {
@@ -99,18 +102,18 @@ public class OI {
         climbRopeButton.whileHeld(new WinchClimb());//CLIMBER
         
         //BUTTON 6 DS Inverted (Climber)
-        tiltUPincherButton = new JoystickButton(opJoystick, 1);
+        tiltUPincherButton = new JoystickButton(opJoystick, 2);
         tiltUPincherButton.whileHeld(new TiltPincherU()); //PINCHERS
         
-        finalGearButton = new JoystickButton(opJoystick, 3);
+        finalGearButton = new JoystickButton(opJoystick, 1);
         finalGearButton.whileHeld(new EjectPeg()); //PINCHERS
         
         
         dumpFunnelButton = new JoystickButton(opJoystick, 4);
         dumpFunnelButton.whileHeld(new TiltFunnelDump());//FUNNEL
         
-        //finalGear = new JoystickButton(driver, 7);
-        //finalGear.whileHeld(new FinalGear());
+        PiYaw = new JoystickButton(driver, 7);
+        PiYaw.whileHeld(new PiAutoRotate(3));
         
           
         // SmartDashboard Buttons

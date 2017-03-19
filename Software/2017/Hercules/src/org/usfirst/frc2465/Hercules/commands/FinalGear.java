@@ -13,6 +13,7 @@ package org.usfirst.frc2465.Hercules.commands;
 import java.util.concurrent.DelayQueue;
 
 import org.usfirst.frc2465.Hercules.Robot;
+import org.usfirst.frc2465.Hercules.RobotMap;
 
 import edu.wpi.first.wpilibj.command.Command;
 //import edu.wpi.first.wpilibj.command.Command;
@@ -22,18 +23,20 @@ import edu.wpi.first.wpilibj.command.WaitCommand;
 /**
  *
  */
-public class FinalGear extends CommandGroup {
 
-    public FinalGear() {
+public class FinalGear extends CommandGroup {
+	float desired_angle;
+    public FinalGear(float desired_angle) {
+    	this.desired_angle = desired_angle;
     	this.addSequential(new TiltPincherU());
-    	this.addSequential(new DriveDistance(10f, 0.1f, 0.0f));
+    	this.addSequential(new DriveDistance(12f, 0.1f, 0.0f));
     	this.addSequential(new OpenPincher());
     	this.addSequential(new WaitCommand(0.25));
 
     	this.addSequential(new Deploy());
     	this.addSequential(new WaitCommand(0.5));
 
-    	this.addSequential(new DriveDistance(-12f, -0.1f, 0.0f));
+    	this.addSequential(new DriveDistance(-14f, -0.1f, 0.0f));
 
     }
 
@@ -43,7 +46,8 @@ public class FinalGear extends CommandGroup {
 
     // Called repeatedly when this Command is scheduled to run
     protected void execute() {
-    	
+    	Robot.drive.setAutoRotation(true);
+    	Robot.drive.setSetpoint(desired_angle);
     }
 
     // Make this return true when this Command no longer needs to run execute()

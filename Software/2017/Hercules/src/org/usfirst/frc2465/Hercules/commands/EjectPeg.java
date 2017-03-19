@@ -25,8 +25,9 @@ import edu.wpi.first.wpilibj.command.WaitCommand;
 public class EjectPeg extends CommandGroup {
 
     public EjectPeg() {
+    	this.addSequential(new OpenPincher());
+		this.addSequential(new WaitCommand(0.125));
     	this.addSequential(new Deploy());
-    	this.addParallel(new OpenPincher());
     }
 
     // Called just before this Command runs the first time
