@@ -178,7 +178,7 @@ public class Robot extends IterativeRobot implements PIDOutput {
         SmartDashboard.putNumber("Strafe_Distance", Robot.drive.getStrafeDistanceInches());
 
         
-        SmartDashboard.putNumber("PressureSensor", Robot.air.getPressureSensor() );
+        SmartDashboard.putNumber("PressureSensor", Robot.air.getPressureSensor());
                 
         SmartDashboard.putBoolean("FOD Enabled", Robot.drive.getFODEnabled());
         

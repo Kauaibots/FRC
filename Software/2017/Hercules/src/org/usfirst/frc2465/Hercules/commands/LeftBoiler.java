@@ -15,12 +15,14 @@ public class LeftBoiler extends CommandGroup {
 	public LeftBoiler(){
 		requires(Robot.drive);
 		//this.addSequential(new AutoRotate(0, 2));
-		this.addParallel(new TiltPincherU());
-		this.addSequential( new DriveDistance(93.0f, .2f, 0f));
+		this.addSequential(new TiltPincherU());
+		this.addParallel(new StrafeDistance(-4, 45, 1));
+		this.addSequential(new WaitCommand(0.25));
+		this.addSequential( new DriveDistance(88.0f, .3f, 0f));
 		this.addSequential(new WaitCommand(0.25));
 		this.addSequential( new AutoRotate(58, 2));
 		this.addSequential(new WaitCommand(0.5));
-		this.addSequential(new StrafeDistance(-17, 58, 3));
+		this.addSequential(new StrafeDistance(-16, 58, 2));
 		this.addSequential( new DriveDistance(24.0f, .2f, 0f));
 		this.addSequential(new FinalGear(58));
 

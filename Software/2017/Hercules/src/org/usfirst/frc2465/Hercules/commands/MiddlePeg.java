@@ -17,8 +17,8 @@ public class MiddlePeg extends CommandGroup {
 		RobotMap.imu.zeroYaw();
 		//this.addSequential(new AutoRotate(0, 2));
 		this.addParallel(new TiltPincherU());
-		this.addSequential( new DriveDistance(55.0f, .2f, 0f));
-		this.addSequential(new WaitCommand(1));
+		this.addSequential( new DriveDistance(55.0f, .3f, 0f));
+		this.addSequential(new WaitCommand(0.5));
 		this.addSequential( new FinalGear(0));
 	}
 

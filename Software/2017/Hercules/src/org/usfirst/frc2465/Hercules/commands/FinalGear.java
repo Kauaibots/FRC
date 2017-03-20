@@ -32,7 +32,6 @@ public class FinalGear extends CommandGroup {
     	this.addSequential(new DriveDistance(12f, 0.1f, 0.0f));
     	this.addSequential(new OpenPincher());
     	this.addSequential(new WaitCommand(0.25));
-
     	this.addSequential(new Deploy());
     	this.addSequential(new WaitCommand(0.5));
 

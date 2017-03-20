@@ -17,7 +17,6 @@ public class StrafeDistance extends Command {
 	boolean fod_enabled;
 	double start_time;
 	double timeout;
-	double current_yaw = RobotMap.imu.getYaw();
 	
     public StrafeDistance(float distance_inches,float desired_angle, double timeout) {
         this.distance_in_inches = distance_inches;
