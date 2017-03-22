@@ -10,7 +10,7 @@ import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 /**
  *
  */
-public class StrafeDistance extends Command {
+public class AutoStrafe extends Command {
 	
 	float distance_in_inches;
 	float desired_angle;
@@ -18,7 +18,7 @@ public class StrafeDistance extends Command {
 	double start_time;
 	double timeout;
 	
-    public StrafeDistance(float distance_inches,float desired_angle, double timeout) {
+    public AutoStrafe(float distance_inches,float desired_angle, double timeout) {
         this.distance_in_inches = distance_inches;
         requires(Robot.drive);
     	this.timeout = timeout;

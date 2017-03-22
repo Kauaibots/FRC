@@ -24,7 +24,6 @@ import org.usfirst.frc2465.Hercules.RobotMap;
  *
  */
 public class  PiAutoRotate extends Command {
-	
 	double target_angle;
 	boolean previousAutoRotate = false;
 	double startTime;
@@ -45,23 +44,24 @@ public class  PiAutoRotate extends Command {
     	double current_yaw = RobotMap.imu.getYaw();
     	double piYaw = Robot.vision.getCurrentZ();
     	target_angle = current_yaw - piYaw;
-    	previousAutoRotate = Robot.drive.getAutoRotation();
+    	
+       	previousAutoRotate = Robot.drive.getAutoRotation();
     	Robot.drive.setAutoRotation(true);
     	Robot.drive.setSetpoint(target_angle); 
-    	System.out.println("Auto-rotate command initialized.");
+    	System.out.println("AutoPi-rotate command initialized.");
     	startTime = Timer.getFPGATimestamp();
     }
 
     // Called repeatedly when this Command is scheduled to run
     protected void execute() {
     	Robot.drive.doMecanum(0, 0, 0);
-        SmartDashboard.putNumber("AutoRotate Error", Robot.drive.getPIDController().getError());
+        /*SmartDashboard.putNumber("AutoRotate Error", Robot.drive.getPIDController().getError());
         SmartDashboard.putNumber("AutoRotate Setpoint", Robot.drive.getPIDController().getSetpoint());
         SmartDashboard.putBoolean("AutoRotate On Target", Robot.drive.getPIDController().onTarget());
         SmartDashboard.putBoolean("AutoRotate Timeout", Timer.getFPGATimestamp() - startTime > timeout);
         SmartDashboard.putNumber("AutoRotate startTime", startTime);
         SmartDashboard.putNumber("AutoRotate Time", Timer.getFPGATimestamp());
-
+*/
 
 
     }

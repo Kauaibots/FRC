@@ -113,7 +113,7 @@ public class OI {
         dumpFunnelButton.whileHeld(new TiltFunnelDump());//FUNNEL
         
         PiYaw = new JoystickButton(driver, 7);
-        PiYaw.whileHeld(new PiAutoRotate(3));
+        PiYaw.whileHeld(new PiAutoStrafe(60,3));
         
           
         // SmartDashboard Buttons

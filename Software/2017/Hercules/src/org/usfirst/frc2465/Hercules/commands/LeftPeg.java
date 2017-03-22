@@ -1,7 +1,6 @@
 package org.usfirst.frc2465.Hercules.commands;
 
 import org.usfirst.frc2465.Hercules.Robot;
-import org.usfirst.frc2465.Hercules.RobotMap;
 
 import edu.wpi.first.wpilibj.command.CommandGroup;
 import edu.wpi.first.wpilibj.command.WaitCommand;
@@ -14,7 +13,11 @@ public class LeftPeg extends CommandGroup {
 	
 	public LeftPeg(){
 		requires(Robot.drive);
-		this.addSequential( new DriveDistance(68.0f, .2f, 0f));
+		this.addSequential(new TiltPincherU());
+		this.addSequential( new DriveDistance(47.0f, .2f, 0f));
+		this.addSequential(new AutoRotate(58, 2));
+		this.addSequential( new DriveDistance(78.0f, .2f, 0f));
+		this.addSequential(new FinalGear(60));
 	}
 /*
     // Called just before this Command runs the first time

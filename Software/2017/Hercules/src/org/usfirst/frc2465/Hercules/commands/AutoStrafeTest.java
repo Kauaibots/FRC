@@ -14,7 +14,7 @@ public class AutoStrafeTest extends CommandGroup {
 	
 	public AutoStrafeTest(){
 		requires(Robot.drive);
-		this.addSequential(new StrafeDistance(-21, 0, 5));
+		this.addSequential(new AutoStrafe(-21, 0, 5));
 	}
 
     // Called just before this Command runs the first time
