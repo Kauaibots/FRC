@@ -16,7 +16,8 @@ public class LeftPeg extends CommandGroup {
 		this.addSequential(new TiltPincherU());
 		this.addSequential( new DriveDistance(47.0f, .2f, 0f));
 		this.addSequential(new AutoRotate(58, 2));
-		this.addSequential( new DriveDistance(78.0f, .2f, 0f));
+		this.addSequential( new DriveDistance(72.0f, .2f, 0f));
+		this.addSequential(new WaitCommand(1));
 		this.addSequential(new FinalGear(60));
 	}
 /*

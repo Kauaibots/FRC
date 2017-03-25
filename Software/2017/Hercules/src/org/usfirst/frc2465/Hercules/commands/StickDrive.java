@@ -11,7 +11,6 @@
 
 package org.usfirst.frc2465.Hercules.commands;
 
-import edu.wpi.first.wpilibj.CANSpeedController.ControlMode;
 import edu.wpi.first.wpilibj.Joystick;
 import edu.wpi.first.wpilibj.command.Command;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
@@ -83,9 +82,9 @@ public class  StickDrive extends Command {
             new JoystickResponseCurve( .25, 3, .35, DEADZONE ) );
 
     JoystickResponseCurveSet aggressive = new JoystickResponseCurveSet(
-            new JoystickResponseCurve( .80, 3, 1.0, DEADZONE ),
-            new JoystickResponseCurve( .80, 3, 1.0, DEADZONE ),
-            new JoystickResponseCurve( .25, 3, 1.0, DEADZONE ) );
+            new JoystickResponseCurve( 1.00, 3, 1.0, DEADZONE ),
+            new JoystickResponseCurve( 1.00, 3, 1.0, DEADZONE ),
+            new JoystickResponseCurve( .35, 3, 1.0, DEADZONE ) );
     
     public StickDrive() {
         // Use requires() here to declare subsystem dependencies
@@ -141,7 +140,7 @@ public class  StickDrive extends Command {
         	}
         }*/
         
-        if ( driver.getRawButton(10))
+        if (op.getRawButton(3))
         {
         	vX = slow.transformStrafe(vX);
             vY = slow.transformForward(vY);
@@ -193,13 +192,23 @@ public class  StickDrive extends Command {
         	Robot.drive.setAutoRotation(true);
         	Robot.drive.setSetpoint(-60);
         }
-        
+  
         
         else if ( driver.getRawButton(1))
         {
-        	Robot.drive.setAutoRotation(true);
-        	Robot.drive.setSetpoint(0);
+        	double current_angle = RobotMap.imu.getYaw();
+        	if((current_angle > 0 && current_angle < 90) || (current_angle < 0 && current_angle > -90)){
+        		Robot.drive.setAutoRotation(true);
+            	Robot.drive.setSetpoint(0);
+        	}
+        	
+        	else if((current_angle > 90 && current_angle <= 179) || (current_angle < -90 && current_angle >= -179)){
+        		Robot.drive.setAutoRotation(true);
+            	Robot.drive.setSetpoint(180);        	
+            }
         }
+        
+        
         
         
         /*else if ( driver.getRawButton(10))

@@ -1,10 +1,8 @@
 package org.usfirst.frc2465.Hercules.commands;
 
 import org.usfirst.frc2465.Hercules.Robot;
-import org.usfirst.frc2465.Hercules.RobotMap;
 
 import edu.wpi.first.wpilibj.command.CommandGroup;
-import edu.wpi.first.wpilibj.command.WaitCommand;
 
 /**
  *

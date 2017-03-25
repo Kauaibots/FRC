@@ -43,6 +43,7 @@ public class WinchClimb extends Command {
     // Called repeatedly when this Command is scheduled to run
     protected void execute() {
     	Robot.winch.climbRope();
+    	//Robot.drive.doMecanum(0, 0, 0);
     }
 
     // Make this return true when this Command no longer needs to run execute()

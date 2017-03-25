@@ -12,8 +12,6 @@
 package org.usfirst.frc2465.Hercules;
 
 import org.usfirst.frc2465.Hercules.commands.AutonomousCommand;
-import org.usfirst.frc2465.Hercules.commands.DriveDistance;
-import org.usfirst.frc2465.Hercules.commands.StickDrive;
 import org.usfirst.frc2465.Hercules.commands.*;
 
 import edu.wpi.first.wpilibj.Joystick;
@@ -62,9 +60,11 @@ public class OI {
     public Trigger t;
     
     public JoystickButton finalGearButton;
-    public JoystickButton tiltPincherButton;
+    public JoystickButton AutoRotateToCAButton;
     public JoystickButton dumpFunnelButton;
+    
     public JoystickButton climbRopeButton;
+    public JoystickButton releaseRopeButton;
     
     public JoystickButton tiltUPincherButton;
     public JoystickButton openPincherslButton;
@@ -99,7 +99,10 @@ public class OI {
 
         
         climbRopeButton = new JoystickButton(opJoystick, 6);
-        climbRopeButton.whileHeld(new WinchClimb());//CLIMBER
+        climbRopeButton.whileHeld(new WinchClimb()); //CLIMBER
+        
+        releaseRopeButton = new JoystickButton(driver, 11);
+        releaseRopeButton.whileHeld(new ReleaseClimb()); //CLIMBER
         
         //BUTTON 6 DS Inverted (Climber)
         tiltUPincherButton = new JoystickButton(opJoystick, 2);
@@ -110,7 +113,7 @@ public class OI {
         
         
         dumpFunnelButton = new JoystickButton(opJoystick, 4);
-        dumpFunnelButton.whileHeld(new TiltFunnelDump());//FUNNEL
+        dumpFunnelButton.whileHeld(new TiltFunnelDump()); //FUNNEL
         
         PiYaw = new JoystickButton(driver, 7);
         PiYaw.whileHeld(new PiAutoStrafe(60,3));

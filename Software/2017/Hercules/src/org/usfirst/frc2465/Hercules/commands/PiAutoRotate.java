@@ -13,9 +13,6 @@ package org.usfirst.frc2465.Hercules.commands;
 
 import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj.command.Command;
-import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
-
-import java.io.Console;
 
 import org.usfirst.frc2465.Hercules.Robot;
 import org.usfirst.frc2465.Hercules.RobotMap;

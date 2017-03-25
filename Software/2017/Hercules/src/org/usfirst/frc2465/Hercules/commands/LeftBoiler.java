@@ -1,7 +1,6 @@
 package org.usfirst.frc2465.Hercules.commands;
 
 import org.usfirst.frc2465.Hercules.Robot;
-import org.usfirst.frc2465.Hercules.RobotMap;
 
 import edu.wpi.first.wpilibj.command.CommandGroup;
 import edu.wpi.first.wpilibj.command.WaitCommand;
@@ -23,7 +22,7 @@ public class LeftBoiler extends CommandGroup {
 		this.addSequential( new AutoRotate(58, 2));
 		this.addSequential(new WaitCommand(0.5));
 		this.addSequential(new AutoStrafe(-16, 58, 2));
-		this.addSequential( new DriveDistance(24.0f, .2f, 0f));
+		this.addSequential( new DriveDistance(16.0f, .2f, 0f));
 		this.addSequential(new FinalGear(58));
 
 		

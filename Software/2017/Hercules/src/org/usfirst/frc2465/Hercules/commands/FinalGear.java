@@ -10,12 +10,9 @@
 
 
 package org.usfirst.frc2465.Hercules.commands;
-import java.util.concurrent.DelayQueue;
 
 import org.usfirst.frc2465.Hercules.Robot;
-import org.usfirst.frc2465.Hercules.RobotMap;
 
-import edu.wpi.first.wpilibj.command.Command;
 //import edu.wpi.first.wpilibj.command.Command;
 import edu.wpi.first.wpilibj.command.CommandGroup;
 import edu.wpi.first.wpilibj.command.WaitCommand;
@@ -29,13 +26,13 @@ public class FinalGear extends CommandGroup {
     public FinalGear(float desired_angle) {
     	this.desired_angle = desired_angle;
     	this.addSequential(new TiltPincherU());
-    	this.addSequential(new DriveDistance(12f, 0.1f, 0.0f));
+    	this.addSequential(new DriveDistance(18f, 0.1f, 0.0f));
     	this.addSequential(new OpenPincher());
     	this.addSequential(new WaitCommand(0.25));
     	this.addSequential(new Deploy());
     	this.addSequential(new WaitCommand(0.5));
 
-    	this.addSequential(new DriveDistance(-14f, -0.1f, 0.0f));
+    	this.addSequential(new DriveDistance(-20f, -0.1f, 0.0f));
 
     }
 

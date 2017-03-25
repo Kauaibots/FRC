@@ -1,7 +1,6 @@
 package org.usfirst.frc2465.Hercules.commands;
 
 import org.usfirst.frc2465.Hercules.Robot;
-import org.usfirst.frc2465.Hercules.RobotMap;
 
 import edu.wpi.first.wpilibj.command.Command;
 
@@ -47,7 +46,7 @@ public class DriveDistance extends Command {
     	Robot.drive.doMecanum(0, 0, 0); /* Stop the Robot */
     	Robot.drive.disableAutoStop();
     	Robot.drive.setFODEnabled(fod_enabled);
-    	boolean stopped = Robot.drive.isStopped();
+    	//boolean stopped = Robot.drive.isStopped();
     	System.out.println("DriveDistance command complete.");
     }
 
