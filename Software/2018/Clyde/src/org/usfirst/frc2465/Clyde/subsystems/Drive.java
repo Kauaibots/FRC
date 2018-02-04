@@ -98,7 +98,7 @@ public class Drive extends PIDSubsystem {
     
     public void arcadeDrive(double xSpeed,
             double zRotation) {
-    	robotDrive41.arcadeDrive(xSpeed, zRotation);
+    	robotDrive41.arcadeDrive(xSpeed, zRotation, false);
     }
 
 	public void setAutoRotation(boolean b) {
