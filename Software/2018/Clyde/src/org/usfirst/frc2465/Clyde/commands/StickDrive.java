@@ -135,13 +135,13 @@ public class  StickDrive extends Command {
              vY = fast.transformForward(vY);
              vRot = fast.transformRotate(vRot);
              SmartDashboard.putString("DriveSpeed", "fast");
-        /*} 
-        else 
-        {
-            vY = slow.transformForward(vY);
-            vRot = slow.transformRotate(vRot);
-            SmartDashboard.putString("DriveSpeed", "slow");
-        }*/
+       // } 
+        //else 
+       // {
+          //  vY = slow.transformForward(vY);
+          //  vRot = slow.transformRotate(vRot);
+          //  SmartDashboard.putString("DriveSpeed", "slow");
+       // }
         
         if (driver.getRawButton(6))
         {
