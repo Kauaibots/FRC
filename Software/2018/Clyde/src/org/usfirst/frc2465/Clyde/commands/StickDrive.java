@@ -116,6 +116,7 @@ public class StickDrive extends Command {
 
 		SmartDashboard.putNumber("JoystickY", vY);
 		SmartDashboard.putNumber("JoystickZ", vRot);
+		SmartDashboard.putNumber("navX yaw", RobotMap.imu.getAngle());
 
 		skew = .65 + driver.getY()*.16;
 
@@ -186,7 +187,7 @@ public class StickDrive extends Command {
 		 * Robot.drive.setAutoRotation(true); Robot.drive.setSetpoint(0.0); } else {
 		 * Robot.drive.setAutoRotation(false); }
 		 */
-		if (RobotMap.driveRobotDrive41 != null) {
+		if (RobotMap.robotDrive != null) {
 			Robot.drive.arcadeDrive(vY, vRot);
 		}
 		SmartDashboard.putNumber("AutoRotate Error", Robot.drive.getPIDController().getError());
