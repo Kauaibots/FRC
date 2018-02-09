@@ -13,6 +13,7 @@ package org.usfirst.frc2465.Clyde.subsystems;
 
 import org.usfirst.frc2465.Clyde.Robot;
 import org.usfirst.frc2465.Clyde.RobotMap;
+import org.usfirst.frc2465.Clyde.RobotPreferences;
 import org.usfirst.frc2465.Clyde.commands.*;
 
 import edu.wpi.first.wpilibj.command.PIDSubsystem;
@@ -63,16 +64,13 @@ public class Drive extends PIDSubsystem {
                 0,
                 0.02);
         try {
-            getPIDController().setContinuous( true );
             getPIDController().setInputRange(-180,180);
+            getPIDController().setContinuous( true );
             getPIDController().setOutputRange(-1, 1);
             tolerance_degrees = Robot.preferences.getAutoRotateOnTargetToleranceDegrees();
             getPIDController().setAbsoluteTolerance(tolerance_degrees);
-            setSetpoint(0.0/*RobotPreferences.getAutoRotateDefaultTargetDegrees()*/);
+            setSetpoint(RobotPreferences.getAutoRotateDefaultTaretDegrees());
             disable();
-        setAbsoluteTolerance(0.2);
-        getPIDController().setContinuous(false);
-        LiveWindow.addActuator("Drive", "PIDSubsystem Controller", getPIDController());
         } catch (Exception e) {
         	e.printStackTrace();
         };
@@ -121,8 +119,10 @@ public class Drive extends PIDSubsystem {
     
     public void arcadeDrive(double xSpeed,
             double zRotation) {
+    	SmartDashboard.putNumber("ZRotation", zRotation);
+    	SmartDashboard.putNumber("XSpeed", xSpeed);
     	robotDrive.arcadeDrive(xSpeed, zRotation, false);
-    }
+    } 
 
 	public void setAutoRotation(boolean b) {
 		// TODO Auto-generated method stub

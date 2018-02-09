@@ -112,7 +112,7 @@ public class StickDrive extends Command {
 
 		Joystick driver = Robot.oi.driveStick;
 		double vY = driver.getY() * -1; /* FOrward on flight joysticks is negative Y - NOT GOOD FOR ROBOTS! */
-		double vRot = driver.getRawAxis(3);
+		double vRot = driver.getRawAxis(3) * -1; //Differential Drive by default rotates robot left when stick is turned right
 
 		SmartDashboard.putNumber("JoystickY", vY);
 		SmartDashboard.putNumber("JoystickZ", vRot);

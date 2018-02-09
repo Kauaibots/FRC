@@ -72,19 +72,19 @@ public class RobotMap {
         talon1 = new WPI_TalonSRX(1);        
         talon2 = new WPI_TalonSRX(2);
         SpeedControllerGroup m_left = new SpeedControllerGroup(talon1, talon2);
-        m_left.setInverted(true);
+        m_left.setInverted(false);
         
         
         talon3 = new WPI_TalonSRX(3);
         talon4 = new WPI_TalonSRX(4);
         SpeedControllerGroup m_right = new SpeedControllerGroup(talon3, talon4);
-        m_right.setInverted(true);
+        m_right.setInverted(false);
         
         
         robotDrive = new DifferentialDrive(m_left, m_right);
         
         robotDrive.setSafetyEnabled(true);
-        robotDrive.setExpiration(0.1);
+        robotDrive.setExpiration(0.5);
         robotDrive.setMaxOutput(1.0);
         elevatorEncoder = new Encoder(0, 1, false, EncodingType.k4X);
         LiveWindow.addSensor("Elevator", "Encoder", elevatorEncoder);
