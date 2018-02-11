@@ -17,6 +17,8 @@ import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 
 import org.usfirst.frc2465.Clyde.*;
 
+import org.usfirst.frc2465.Clyde.subsystems.Elevator;
+
 /**
  *
  */
@@ -173,9 +175,17 @@ public class StickDrive extends Command {
 			Robot.drive.setAutoRotation(true);
 			Robot.drive.setSetpoint(-90.0);
 		} 
+		//!!Next 6 lines are temporary!!! Remove once the elevator commands are finished. These are only for testing elevator.
+		else if (driver.getRawButton(10)) {
+			Robot.elevator.elevatorMotor.set(-0.8);
+		}
+		else if (driver.getRawButton(11)) {
+			Robot.elevator.elevatorMotor.set(0.8);
+		}
 		else 
 		{
 			Robot.drive.setAutoRotation(false);
+			Robot.elevator.elevatorMotor.set(0);
 		}
 
 		/*
