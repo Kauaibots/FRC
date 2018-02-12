@@ -3,6 +3,7 @@ package org.usfirst.frc2465.Clyde.commands;
 import edu.wpi.first.wpilibj.command.Command;
 
 import org.usfirst.frc2465.Clyde.Robot;
+import org.usfirst.frc2465.Clyde.RobotPreferences;
 import org.usfirst.frc2465.Clyde.subsystems.Elevator;
 import org.usfirst.frc2465.Clyde.subsystems.Elevator.*;
 
@@ -33,23 +34,39 @@ public class CalibrateElevator extends Command {
 			state  = State.GOING_TO_BOTTOM;
 		}
 		else if (state == State.GOING_TO_BOTTOM) {
+			
 			if (elevator.isBottom() == false) {
 				elevator.setMotion(Elevator.Motion.DOWN);
-			}
-			else {
+			} else {
 				elevator.setMotion(Elevator.Motion.STOP);
 				elevator.setHome();
 				state = State.GOING_TO_TOP;
 			}
 		}
 		else if (state == State.GOING_TO_TOP) {
+			
 			if (elevator.isTop() == false) {
 				elevator.setMotion(Elevator.Motion.UP);
 			}
 			else {
 				elevator.setMotion(Elevator.Motion.STOP);
+				elevator.setTop();
 				state = State.RETURN_TO_BOTTOM;
 			}
+		}
+		else if (state == State.RETURN_TO_BOTTOM) {
+				
+			if (elevator.isBottom() == false) {
+				elevator.setMotion(Elevator.Motion.DOWN);
+			} else {
+				elevator.setMotion(Elevator.Motion.STOP);
+				state = State.DONE;
+			}
+			
+		}
+		else if (state == State.DONE ) {
+			
+			elevator.getPIDController().setInputRange(0 , RobotPreferences.getTopEncoderPos());
 		}
 	}
 	
