@@ -154,17 +154,11 @@ public class Elevator extends PIDSubsystem {
     public void setMotion(Motion motion) {
     	
     	if (getPIDController().isEnabled() == false){
-    		if (motion == Motion.UP) {
-    			elevatorMotor.set(SPEED); 
+    		switch(motion) {
+            case UP:          elevatorMotor.set(SPEED); break;
+            case DOWN:    elevatorMotor.set(-SPEED); break;
+            case STOP:     elevatorMotor.set(0); break;
     		}
-    		else if (motion == Motion.DOWN) {
-    			elevatorMotor.set(-SPEED);
-    		}
-    		else if (motion == Motion.STOP) {
-    			elevatorMotor.set(0);
-    		}
-    	} else {
-    		elevatorMotor.set(0);
     	}
     }
     
