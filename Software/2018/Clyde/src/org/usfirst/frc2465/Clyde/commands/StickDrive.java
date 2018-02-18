@@ -14,10 +14,7 @@ import edu.wpi.first.wpilibj.command.Command;
 import org.usfirst.frc2465.Clyde.Robot;
 import edu.wpi.first.wpilibj.Joystick;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
-
 import org.usfirst.frc2465.Clyde.*;
-
-import org.usfirst.frc2465.Clyde.subsystems.Elevator;
 
 /**
  *
@@ -113,7 +110,7 @@ public class StickDrive extends Command {
 		JoystickResponseCurveSet fast = aggressive;
 
 		Joystick driver = Robot.oi.driveStick;
-		double vY = driver.getY() * -1; /* FOrward on flight joysticks is negative Y - NOT GOOD FOR ROBOTS! */
+		double vY = driver.getY(); /* FOrward on flight joysticks is negative Y - NOT GOOD FOR ROBOTS! */
 		double vRot = driver.getRawAxis(3) * -1; //Differential Drive by default rotates robot left when stick is turned right
 
 		SmartDashboard.putNumber("JoystickY", vY);
@@ -154,7 +151,7 @@ public class StickDrive extends Command {
 			SmartDashboard.putString("DriveSpeed", "fast");
 		}
 
-		if (driver.getRawButton(6)) 
+		/*if (driver.getRawButton(6)) 
 		{
 			Robot.drive.setAutoRotation(true);
 			Robot.drive.setSetpoint(0.0);
@@ -175,7 +172,10 @@ public class StickDrive extends Command {
 			Robot.drive.setAutoRotation(true);
 			Robot.drive.setSetpoint(-90.0);
 		} 
+		*/
+		
 		//!!Next 6 lines are temporary!!! Remove once the elevator commands are finished. These are only for testing elevator.
+		/*
 		else if (driver.getRawButton(10)) {
 			Robot.elevator.elevatorMotor.set(-0.8);
 		}
@@ -187,7 +187,10 @@ public class StickDrive extends Command {
 			Robot.drive.setAutoRotation(false);
 			Robot.elevator.elevatorMotor.set(0);
 		}
-
+		*/
+		
+		Robot.drive.setAutoRotation(false);
+		
 		/*
 		 * if ( op.getRawButton(7)) { Robot.drive.setAutoRotation(true);
 		 * Robot.drive.setSetpoint(-90.0); } else if ( op.getRawButton(8)) {

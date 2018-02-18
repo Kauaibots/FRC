@@ -5,7 +5,6 @@ import edu.wpi.first.wpilibj.command.Command;
 import org.usfirst.frc2465.Clyde.Robot;
 import org.usfirst.frc2465.Clyde.RobotPreferences;
 import org.usfirst.frc2465.Clyde.subsystems.Elevator;
-import org.usfirst.frc2465.Clyde.subsystems.Elevator.*;
 
 public class CalibrateElevator extends Command {
 

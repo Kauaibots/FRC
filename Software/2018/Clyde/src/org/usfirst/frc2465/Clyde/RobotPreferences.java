@@ -60,13 +60,13 @@ public class RobotPreferences {
     
     static public double getElevatorHeight() {
     	
-    	//CHANGE ME
-    	return 62.0;
+    	// Low sensor to bottom of carriage at high sensor
+    	return 75.0;
     }
     
     static public double getFloorOffset() {
     	
-    	//CHANGE ME
-    	return 6;
+    	// Floor to bottom of carriage at low sensor
+    	return 7.75;
     }
 }

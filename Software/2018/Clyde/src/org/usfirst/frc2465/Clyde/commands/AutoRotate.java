@@ -12,10 +12,7 @@ package org.usfirst.frc2465.Clyde.commands;
 
 import edu.wpi.first.wpilibj.command.Command;
 import org.usfirst.frc2465.Clyde.Robot;
-import edu.wpi.first.wpilibj.Joystick;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
-
-import org.usfirst.frc2465.Clyde.*;
 
 /**
  *

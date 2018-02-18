@@ -32,7 +32,7 @@ public class ElevatorGoToInch extends Command {
         SmartDashboard.putNumber("GoToInch Error", Robot.elevator.getPIDController().getError());
         SmartDashboard.putNumber("GoToInch Setpoint", Robot.elevator.getPIDController().getSetpoint());
         SmartDashboard.putBoolean("GoToInch On Target", Robot.elevator.getPIDController().onTarget());
-		Robot.elevator.updateDashboard();
+		
 	}
 	
 	@Override
