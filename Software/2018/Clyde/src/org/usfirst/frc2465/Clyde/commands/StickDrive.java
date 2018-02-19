@@ -151,12 +151,12 @@ public class StickDrive extends Command {
 			SmartDashboard.putString("DriveSpeed", "fast");
 		}
 
-		/*if (driver.getRawButton(6)) 
+		if (driver.getRawButton(6)) 
 		{
-			Robot.drive.setAutoRotation(true);
-			Robot.drive.setSetpoint(0.0);
+			Robot.elevator.setGoToInch(true);
+			Robot.elevator.setSetpoint(30);
 		} 
-		
+		/*
 		else if (driver.getRawButton(7)) 
 		{
 			Robot.drive.setAutoRotation(true);
@@ -171,8 +171,8 @@ public class StickDrive extends Command {
 		{
 			Robot.drive.setAutoRotation(true);
 			Robot.drive.setSetpoint(-90.0);
-		} 
-		*/
+		} */
+		
 		
 		//!!Next 6 lines are temporary!!! Remove once the elevator commands are finished. These are only for testing elevator.
 		/*

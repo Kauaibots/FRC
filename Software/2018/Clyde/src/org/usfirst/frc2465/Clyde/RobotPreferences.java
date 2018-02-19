@@ -55,7 +55,7 @@ public class RobotPreferences {
     
     static public double getTopEncoderPos() {
     	
-    	return Preferences.getInstance().getDouble("EncoderTopPos", 0.0);
+    	return Preferences.getInstance().getDouble("encoderTopPos", 0.0);
     }
     
     static public double getElevatorHeight() {

@@ -1,6 +1,7 @@
 package org.usfirst.frc2465.Clyde.commands;
 
 import edu.wpi.first.wpilibj.command.Command;
+import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 
 import org.usfirst.frc2465.Clyde.Robot;
 import org.usfirst.frc2465.Clyde.RobotPreferences;
@@ -25,6 +26,8 @@ public class CalibrateElevator extends Command {
 	}
 	
 	protected void execute() {
+		SmartDashboard.putString("state", state.toString());
+		
 		if ((state == State.IDLE) && (elevator.isBottom())) {
 			elevator.setHome();
 			state = State.GOING_TO_TOP;
