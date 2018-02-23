@@ -3,70 +3,81 @@ package org.usfirst.frc2465.Clyde;
 import edu.wpi.first.wpilibj.Preferences;
 
 public class RobotPreferences {
-    
-    // PID Controller Settings
+
+	// PID Controller Settings
 	// the good kine :D P:0.0022 I:0.000010 D:0.00001
-	    
-    static public double getAutoRotateP() {
-        //return Preferences.getInstance().getDouble("AutoRotateP", 0.0002);
-    	return 0.0025;
-    }
-    static public double getAutoRotateI() {
-        //return Preferences.getInstance().getDouble("AutoRotateI", 0.00005);
-    	return 0.0;
-    }
-    static public double getAutoRotateD() {
-        //return Preferences.getInstance().getDouble("AutoRotateD", 0.00);
-    	return 0.0;
-    }
-    static public double getAutoRotateOnTargetToleranceDegrees() {
-        return 2.0; /*Preferences.getInstance().getDouble("AutoRotateOnTargetToleranceDegrees", 2.0); */
-    }
-    static public double getAutoRotateDefaultTaretDegrees() {
-        return Preferences.getInstance().getDouble("AutoRotateDefaultTargetDegrees",0.0);
-    }
-    
-    // Elevator PID Controller Settings
-    static public double getElevatorP() {
 
-    	return 0.0025;
-    }
-    static public double getElevatorI() {
+	static public double getAutoRotateP() {
+		// return Preferences.getInstance().getDouble("AutoRotateP", 0.0002);
+		return 0.0025;
+	}
 
-    	return 0.0;
-    }
-    static public double getElevatorD() {
+	static public double getAutoRotateI() {
+		// return Preferences.getInstance().getDouble("AutoRotateI", 0.00005);
+		return 0.0;
+	}
 
-    	return 0.0;
-    }
-    static public double getElevatorOnTargetToleranceInches() {
-        
-    	return 0.5;
-    }
-    static public double getElevatorDefaultTaretInches() {
-    	
-        return Preferences.getInstance().getDouble("ElevatorDefaultTargetInches",0.0);
-    }
-    
-    static public void setTopEncoderPos(int encoderCount) {
-    	
-    	Preferences.getInstance().putDouble("encoderTopPos", encoderCount);
-    }
-    
-    static public double getTopEncoderPos() {
-    	
-    	return Preferences.getInstance().getDouble("encoderTopPos", 0.0);
-    }
-    
-    static public double getElevatorHeight() {
-    	
-    	// Low sensor to bottom of carriage at high sensor
-    	return 75.0;
-    }
-    
-    static public double getFloorOffset() {
-    	
-    	// Floor to bottom of carriage at low sensor
-    	return 7.75;
-    }
+	static public double getAutoRotateD() {
+		// return Preferences.getInstance().getDouble("AutoRotateD", 0.00);
+		return 0.0;
+	}
+
+	static public double getAutoRotateOnTargetToleranceDegrees() {
+		return 2.0; /*
+					 * Preferences.getInstance().getDouble("AutoRotateOnTargetToleranceDegrees",
+					 * 2.0);
+					 */
+	}
+
+	static public double getAutoRotateDefaultTaretDegrees() {
+		return Preferences.getInstance().getDouble("AutoRotateDefaultTargetDegrees", 0.0);
+	}
+
+	// Elevator PID Controller Settings
+	static public double getElevatorP() {
+
+		return 0.0025;
+	}
+
+	static public double getElevatorI() {
+
+		return 0.0;
+	}
+
+	static public double getElevatorD() {
+
+		return 0.0;
+	}
+
+	static public double getElevatorOnTargetToleranceInches() {
+
+		return 0.5;
+	}
+
+	static public double getElevatorDefaultTaretInches() {
+
+		return Preferences.getInstance().getDouble("ElevatorDefaultTargetInches", 0.0);
+	}
+
+	static public void setTopEncoderPos(int encoderCount) {
+
+		Preferences.getInstance().putDouble("encoderTopPos", encoderCount);
+	}
+
+	static public double getTopEncoderPos() {
+
+		return Preferences.getInstance().getDouble("encoderTopPos", 0.0);
+	}
+
+	static public double getElevatorHeight() {
+
+		// Low sensor to bottom of carriage at high sensor
+		return 75.0;
+	}
+
+	static public double getFloorOffset() {
+
+		// Floor to bottom of carriage at low sensor
+		return 7.75;
+	}
 }

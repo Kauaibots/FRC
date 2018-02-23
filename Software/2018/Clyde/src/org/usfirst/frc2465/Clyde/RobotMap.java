@@ -46,7 +46,7 @@ public class RobotMap {
     public static DigitalInput elevatorBottomSwitch;
     public static DigitalInput elevatorTopSwitch;
     public static WPI_TalonSRX elevatorMotor;
-    public static DoubleSolenoid clawLifter;
+    public static DoubleSolenoid clawPiston;
     public static PWMVictorSPX clawMotor1;
     public static PWMVictorSPX clawMotor2;
     public static SpeedControllerGroup clawMotors;
@@ -96,8 +96,8 @@ public class RobotMap {
         elevatorMotor = new WPI_TalonSRX(5);
         LiveWindow.addActuator("Elevator", "ElevatorMotor", elevatorMotor);
         elevatorMotor.setInverted(false);
-        //clawLifter = new DoubleSolenoid(1, 0, 1);
-        //LiveWindow.addActuator("Claw", "ClawLifter", clawLifter);
+        //clawPiston = new DoubleSolenoid(1, 0, 1);
+        //LiveWindow.addActuator("Claw", "ClawPiston", clawPiston);
         
         clawMotor1 = new PWMVictorSPX(0);
         clawMotor2 = new PWMVictorSPX(1);
