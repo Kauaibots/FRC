@@ -51,7 +51,7 @@ public class RobotPreferences {
 
 	static public double getElevatorOnTargetToleranceInches() {
 
-		return 0.5;
+		return 0.1;
 	}
 
 	static public double getElevatorDefaultTaretInches() {
@@ -72,12 +72,12 @@ public class RobotPreferences {
 	static public double getElevatorHeight() {
 
 		// Low sensor to bottom of carriage at high sensor
-		return 75.0;
+		return 75.175;
 	}
 
 	static public double getFloorOffset() {
 
 		// Floor to bottom of carriage at low sensor
-		return 7.75;
+		return 8.125;
 	}
 }

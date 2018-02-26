@@ -1,13 +1,20 @@
 package org.usfirst.frc2465.Clyde.commands;
+import edu.wpi.first.wpilibj.Joystick;
 import edu.wpi.first.wpilibj.command.Command;
 import org.usfirst.frc2465.Clyde.Robot;
+import org.usfirst.frc2465.Clyde.subsystems.Claw;
+import org.usfirst.frc2465.Clyde.subsystems.Claw.Motion;
 
 
 public class ClawSpin extends Command {
 
-
- public ClawSpin() {
-
+	Claw.Motion motion;
+	
+	
+ public ClawSpin(Motion state) {
+	 
+	 
+	 requires(Robot.claw);
  }
  @Override
  protected void initialize() {
@@ -16,6 +23,18 @@ public class ClawSpin extends Command {
 
  @Override
  protected void execute() {
+	 
+		Joystick driver = Robot.oi.driveStick;
+	 
+	 if (driver.getRawButton(10)) {
+		 motion = Motion.IN;
+	 }
+	 else if (driver.getRawButton(11)) {
+		 motion = Motion.OUT;
+	 }
+	 else {
+		 motion = Motion.STOP;
+	 }
  }
 
 

@@ -3,15 +3,26 @@ import edu.wpi.first.wpilibj.command.Command;
 import org.usfirst.frc2465.Clyde.Robot;
 import org.usfirst.frc2465.Clyde.subsystems.Claw;
 
+import edu.wpi.first.wpilibj.DoubleSolenoid.Value;
+import edu.wpi.first.wpilibj.Joystick;
+
 
 public class ClawGrab extends Command {
 
+	Value state;
+	
 
- public ClawGrab(Claw.GrabState grab) {
-
+ public ClawGrab(Value state) {
+	 
+	 this.state = state;
+	 
+	 requires(Robot.claw);
  }
  @Override
  protected void initialize() {
+	 
+	 Claw.setPosition(state);
+	 
  }
 
 

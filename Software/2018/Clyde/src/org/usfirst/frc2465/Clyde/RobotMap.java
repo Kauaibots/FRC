@@ -96,8 +96,8 @@ public class RobotMap {
         elevatorMotor = new WPI_TalonSRX(5);
         LiveWindow.addActuator("Elevator", "ElevatorMotor", elevatorMotor);
         elevatorMotor.setInverted(false);
-        //clawPiston = new DoubleSolenoid(1, 0, 1);
-        //LiveWindow.addActuator("Claw", "ClawPiston", clawPiston);
+        clawPiston = new DoubleSolenoid(1, 0, 1);
+        LiveWindow.addActuator("Claw", "ClawPiston", clawPiston);
         
         clawMotor1 = new PWMVictorSPX(0);
         clawMotor2 = new PWMVictorSPX(1);

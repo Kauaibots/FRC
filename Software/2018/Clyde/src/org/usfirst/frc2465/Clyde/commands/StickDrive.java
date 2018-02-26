@@ -151,11 +151,11 @@ public class StickDrive extends Command {
 			SmartDashboard.putString("DriveSpeed", "fast");
 		}
 
-		if (driver.getRawButton(6)) 
-		{
-			Robot.elevator.setGoToInch(true);
-			Robot.elevator.setSetpoint(30);
-		} 
+		//if (driver.getRawButton(6)) 
+		//{
+		//	Robot.elevator.setGoToInch(true);
+		//	Robot.elevator.setSetpoint(30);
+		//} 
 		/*
 		else if (driver.getRawButton(7)) 
 		{

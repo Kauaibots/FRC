@@ -15,6 +15,7 @@ import org.usfirst.frc2465.Clyde.commands.*;
 import org.usfirst.frc2465.Clyde.subsystems.Elevator;
 
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
+import edu.wpi.first.wpilibj.DoubleSolenoid.Value;
 import edu.wpi.first.wpilibj.Joystick;
 import edu.wpi.first.wpilibj.buttons.Button;
 import edu.wpi.first.wpilibj.buttons.JoystickButton;
@@ -68,10 +69,16 @@ public class OI {
         Button elevatorSwitch = new JoystickButton(driveStick, 8);
         Button elevatorScaleLow = new JoystickButton(driveStick, 7);
         Button elevatorScaleHigh = new JoystickButton(driveStick, 6);
+        Button clawOpen = new JoystickButton(driveStick, 2);
+        Button clawClosed = new JoystickButton(driveStick, 3);
         
         elevatorSwitch.whileHeld(new ElevatorGoToInch(24, false));
         elevatorScaleLow.whileHeld(new ElevatorGoToInch(48, false));
         elevatorScaleHigh.whileHeld(new ElevatorGoToInch(72, false));
+        clawOpen.whileHeld(new ClawGrab(Value.kForward));
+        clawClosed.whileHeld(new ClawGrab(Value.kReverse));
+        
+        SmartDashboard.putData("Calibrate Elevator", new CalibrateElevator());
 
         
         // SmartDashboard Buttons
