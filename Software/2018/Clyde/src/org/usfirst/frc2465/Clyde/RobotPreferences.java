@@ -36,7 +36,7 @@ public class RobotPreferences {
 	// Elevator PID Controller Settings
 	static public double getElevatorP() {
 
-		return 0.0025;
+		return 0.0005;
 	}
 
 	static public double getElevatorI() {
