@@ -1,4 +1,3 @@
-#include <Arduino.h>
 JoyState_t joySt;		// Joystick state structure
 #include <LiquidCrystal.h>
 float sensorValue1 = 0;

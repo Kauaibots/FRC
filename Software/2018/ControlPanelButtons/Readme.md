@@ -18,3 +18,5 @@ Instructions:
 - Open Sketch via File->Sketchbook->ControlPanelButtons
 - Select Tools->Board->Arduino Leonardo
 - Close Arduino IDE, re-open it
+
+[More instructions/tutorial can be found here:  http://www.goblogpdx.com/blog/arduino-to-usb/]
