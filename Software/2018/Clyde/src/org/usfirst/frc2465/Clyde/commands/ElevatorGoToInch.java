@@ -34,7 +34,15 @@ public class ElevatorGoToInch extends Command {
 		SmartDashboard.putNumber("GoToInch Error", Robot.elevator.getPIDController().getError());
 		SmartDashboard.putNumber("GoToInch Setpoint", Robot.elevator.getPIDController().getSetpoint());
 		SmartDashboard.putBoolean("GoToInch On Target", Robot.elevator.getPIDController().onTarget());
-
+		
+		if (Robot.elevator.getPIDController().onTarget()) {
+			Robot.elevator.setGoToInch(false);
+			Robot.elevator.setMotion(Motion.HOLD);
+		}
+		else {
+			Robot.elevator.setGoToInch(true);
+		}
+		
 		if (Robot.elevator.isBottom() && target_inch < 1) {
 			Robot.elevator.setGoToInch(false);
 			Robot.elevator.setMotion(Motion.STOP);

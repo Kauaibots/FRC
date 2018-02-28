@@ -32,7 +32,7 @@ import com.ctre.phoenix.motorcontrol.can.WPI_TalonSRX;
  */
 public class Elevator extends PIDSubsystem {
 
-	public enum Motion {UP, DOWN, STOP};
+	public enum Motion {UP, DOWN, STOP, HOLD};
 	Motion motion;
 	
 	static final float SPEED = 0.4f;
@@ -166,6 +166,7 @@ public class Elevator extends PIDSubsystem {
             	case UP:    elevatorMotor.set(SPEED);   break;
             	case DOWN:	elevatorMotor.set(-SPEED);  break;
             	case STOP:  elevatorMotor.set(0);       break;
+            	case HOLD:  elevatorMotor.set(0.14);    break;  //0.14 is current power required to hold in place w/ cube, change if needed
     		}
     	}
     }

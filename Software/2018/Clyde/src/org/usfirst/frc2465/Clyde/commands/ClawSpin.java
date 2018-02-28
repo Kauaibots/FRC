@@ -9,10 +9,11 @@ import org.usfirst.frc2465.Clyde.subsystems.Claw.Motion;
 public class ClawSpin extends Command {
 
 	Claw.Motion motion;
+
 	
 	
  public ClawSpin(Motion state) {
-	 
+	 state = motion;
 	 
 	 requires(Robot.claw);
  }
@@ -24,7 +25,7 @@ public class ClawSpin extends Command {
  @Override
  protected void execute() {
 	 
-		Joystick driver = Robot.oi.driveStick;
+	 /*Joystick driver = Robot.oi.driveStick;
 	 
 	 if (driver.getRawButton(10)) {
 		 motion = Motion.IN;
@@ -34,13 +35,13 @@ public class ClawSpin extends Command {
 	 }
 	 else {
 		 motion = Motion.STOP;
-	 }
+	 }*/
  }
 
 
  @Override
  protected boolean isFinished() {
-     return false;
+     return true;
  }
 
 
