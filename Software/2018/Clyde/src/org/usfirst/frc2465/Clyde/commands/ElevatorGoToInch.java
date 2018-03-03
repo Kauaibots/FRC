@@ -39,6 +39,9 @@ public class ElevatorGoToInch extends Command {
 			Robot.elevator.setGoToInch(false);
 			Robot.elevator.setMotion(Motion.HOLD);
 		}
+		else {
+			Robot.elevator.setMotion(Motion.STOP);
+		}
 		
 		if (Robot.elevator.isBottom() && target_inch < 1) {
 			Robot.elevator.setGoToInch(false);

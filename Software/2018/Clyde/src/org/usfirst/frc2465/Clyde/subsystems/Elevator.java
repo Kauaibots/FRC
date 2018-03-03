@@ -166,7 +166,7 @@ public class Elevator extends PIDSubsystem {
             	case UP:    elevatorMotor.set(SPEED);   break;
             	case DOWN:	elevatorMotor.set(-SPEED);  break;
             	case STOP:  elevatorMotor.set(0);       break;
-            	case HOLD:  elevatorMotor.set(0.14);    break;  //0.14 is current power required to hold in place w/ cube, change if needed
+            	case HOLD:  elevatorMotor.set(0.11);    break;  //0.14 is current power required to hold in place w/ cube, change if needed
     		}
     	}
     }

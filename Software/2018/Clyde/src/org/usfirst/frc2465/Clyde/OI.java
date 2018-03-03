@@ -67,17 +67,23 @@ public class OI {
 
         driveStick = new Joystick(0);
         
-        Button elevatorSwitch = new JoystickButton(driveStick, 8);
-        Button elevatorScaleLow = new JoystickButton(driveStick, 7);
-        Button elevatorScaleHigh = new JoystickButton(driveStick, 6);
+        //Button elevatorSwitch = new JoystickButton(driveStick, 8);
+        //Button elevatorScaleLow = new JoystickButton(driveStick, 7);
+        //Button elevatorScaleHigh = new JoystickButton(driveStick, 6);
+        Button elevatorManUp = new JoystickButton(driveStick, 6);
+        Button elevatorManDown = new JoystickButton(driveStick, 7);
         Button clawOpen = new JoystickButton(driveStick, 2);
         Button clawClosed = new JoystickButton(driveStick, 3);
         Button clawIn = new JoystickButton(driveStick, 10);
         Button clawOut = new JoystickButton(driveStick, 11);
         
-        elevatorSwitch.whileHeld(new ElevatorGoToInch(24, false));
-        elevatorScaleLow.whileHeld(new ElevatorGoToInch(48, false));
-        elevatorScaleHigh.whileHeld(new ElevatorGoToInch(72, false));
+        //elevatorSwitch.whileHeld(new ElevatorGoToInch(24, false));
+        //elevatorScaleLow.whileHeld(new ElevatorGoToInch(48, false));
+        //elevatorScaleHigh.whileHeld(new ElevatorGoToInch(72, false));
+        elevatorManUp.whenPressed(new ElevatorManual(Elevator.Motion.UP));
+        elevatorManUp.whenReleased(new ElevatorManual(Elevator.Motion.HOLD));
+        elevatorManDown.whenPressed(new ElevatorManual(Elevator.Motion.DOWN));
+        elevatorManDown.whenReleased(new ElevatorManual(Elevator.Motion.HOLD));
         clawOpen.whileHeld(new ClawGrab(Value.kForward));
         clawClosed.whileHeld(new ClawGrab(Value.kReverse));
         clawIn.whenPressed(new ClawSpin(Motion.IN));
