@@ -83,7 +83,7 @@ public class OI {
         clawIn.whenPressed(new ClawSpin(Motion.IN));
         clawIn.whenReleased(new ClawSpin(Motion.STOP));
         clawOut.whenPressed(new ClawSpin(Motion.OUT));
-        clawOut.whenReleased(new ClawSpin(Motion.OUT));
+        clawOut.whenReleased(new ClawSpin(Motion.STOP));
         
         SmartDashboard.putData("Calibrate Elevator", new CalibrateElevator());
 

@@ -14,6 +14,8 @@ public class CalibrateElevator extends Command {
 	
 	Elevator elevator;
 	
+	boolean finished;
+	
 	public static void main(String[] args) {
 		// TODO Auto-generated method stub
 
@@ -23,6 +25,8 @@ public class CalibrateElevator extends Command {
 		
 		state = State.IDLE;
 		elevator = Robot.elevator;
+		Robot.elevator.setGoToInch(false);
+		finished = false;
 	}
 	
 	protected void execute() {
@@ -69,13 +73,14 @@ public class CalibrateElevator extends Command {
 		else if (state == State.DONE ) {
 			
 			elevator.getPIDController().setInputRange(0 , RobotPreferences.getTopEncoderPos());
+			finished = true;
 		}
 	}
 	
 	@Override
 	protected boolean isFinished() {
 		// TODO Auto-generated method stub
-		return false;
+		return finished;
 	}
 	
 	protected void end() {

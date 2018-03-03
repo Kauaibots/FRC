@@ -36,7 +36,7 @@ public class RobotPreferences {
 	// Elevator PID Controller Settings
 	static public double getElevatorP() {
 
-		return 0.0005;
+		return 0.0015;
 	}
 
 	static public double getElevatorI() {
@@ -51,7 +51,7 @@ public class RobotPreferences {
 
 	static public double getElevatorOnTargetToleranceInches() {
 
-		return 0.1;
+		return 0.5;
 	}
 
 	static public double getElevatorDefaultTaretInches() {
