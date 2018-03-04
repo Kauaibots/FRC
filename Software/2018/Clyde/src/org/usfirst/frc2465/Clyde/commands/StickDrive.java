@@ -23,8 +23,6 @@ public class StickDrive extends Command {
 
 	static final double DEADZONE = .07;
 
-	double skew = 0.65;
-
 	public boolean speed_mode;
 
 	public class JoystickResponseCurve {
@@ -82,9 +80,9 @@ public class StickDrive extends Command {
 			new JoystickResponseCurve(.00, 3, 1.0, DEADZONE));
 
 	JoystickResponseCurveSet conservative = new JoystickResponseCurveSet(
-			new JoystickResponseCurve(.40, 3, .70, DEADZONE), 
+			new JoystickResponseCurve(.40, 3, .60, DEADZONE), 
 			new JoystickResponseCurve(0, 0, 0, DEADZONE),
-			new JoystickResponseCurve(.40, 3, skew, DEADZONE));
+			new JoystickResponseCurve(.40, 3, .60, DEADZONE));
 
 	JoystickResponseCurveSet aggressive = new JoystickResponseCurveSet(
 			new JoystickResponseCurve(.40, 3, 1.0, DEADZONE),
@@ -116,8 +114,6 @@ public class StickDrive extends Command {
 		SmartDashboard.putNumber("JoystickY", vY);
 		SmartDashboard.putNumber("JoystickZ", vRot);
 		SmartDashboard.putNumber("navX yaw", RobotMap.imu.getAngle());
-
-		skew = .65 + driver.getY()*.16;
 
 		if (driver.getRawButton(4)) 
 		{

@@ -137,7 +137,7 @@ public class Elevator extends PIDSubsystem {
     
     public double getCurrentInches() {
     	
-    	return getInchesPerCount() * elevatorMotor.getSelectedSensorPosition(0);
+    	return getInchesPerCount() * elevatorMotor.getSelectedSensorPosition(0) + RobotPreferences.getFloorOffset();
     }
     
     private int InchesToCount(double inches) {
