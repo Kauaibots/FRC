@@ -11,6 +11,8 @@ public class ElevatorManual extends Command {
 
 	Motion motion;
 	
+	static final float SPEED = 0.65f;
+	static final float SLOWSPEED = 0.30f;
 
 	public ElevatorManual(Motion motion) {
 
@@ -25,11 +27,14 @@ public class ElevatorManual extends Command {
 
 	protected void execute() {
 
-		if (motion == Motion.HOLD && Robot.elevator.isBottom() || Robot.elevator.getCurrentInches() <= 2.0 && motion == Motion.HOLD) {
-			Robot.elevator.setMotion(Motion.STOP);
+		if (motion == Motion.HOLD && Robot.elevator.isBottom() || Robot.elevator.getCurrentInches() <= 11.5 && motion == Motion.HOLD) {
+			Robot.elevator.setMotion(Motion.STOP, SPEED);
+		}
+		else if (Robot.oi.driveStick.getRawButton(1)){
+			Robot.elevator.setMotion(motion, SLOWSPEED);
 		}
 		else {
-			Robot.elevator.setMotion(motion);
+			Robot.elevator.setMotion(motion, SPEED);
 		}
 	}
 

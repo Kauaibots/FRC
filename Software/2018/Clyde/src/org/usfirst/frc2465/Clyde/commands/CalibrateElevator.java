@@ -14,6 +14,8 @@ public class CalibrateElevator extends Command {
 	
 	Elevator elevator;
 	
+	static final float SPEED = 0.4f;
+	
 	boolean finished;
 	
 	public static void main(String[] args) {
@@ -42,9 +44,9 @@ public class CalibrateElevator extends Command {
 		else if (state == State.GOING_TO_BOTTOM) {
 			
 			if (elevator.isBottom() == false) {
-				elevator.setMotion(Elevator.Motion.DOWN);
+				elevator.setMotion(Elevator.Motion.DOWN, SPEED);
 			} else {
-				elevator.setMotion(Elevator.Motion.STOP);
+				elevator.setMotion(Elevator.Motion.STOP, SPEED);
 				elevator.setHome();
 				state = State.GOING_TO_TOP;
 			}
@@ -52,10 +54,10 @@ public class CalibrateElevator extends Command {
 		else if (state == State.GOING_TO_TOP) {
 			
 			if (elevator.isTop() == false) {
-				elevator.setMotion(Elevator.Motion.UP);
+				elevator.setMotion(Elevator.Motion.UP, SPEED);
 			}
 			else {
-				elevator.setMotion(Elevator.Motion.STOP);
+				elevator.setMotion(Elevator.Motion.STOP, SPEED);
 				elevator.setTop();
 				state = State.RETURN_TO_BOTTOM;
 			}
@@ -63,9 +65,9 @@ public class CalibrateElevator extends Command {
 		else if (state == State.RETURN_TO_BOTTOM) {
 				
 			if (elevator.isBottom() == false) {
-				elevator.setMotion(Elevator.Motion.DOWN);
+				elevator.setMotion(Elevator.Motion.DOWN, SPEED);
 			} else {
-				elevator.setMotion(Elevator.Motion.STOP);
+				elevator.setMotion(Elevator.Motion.STOP, SPEED);
 				state = State.DONE;
 			}
 			
