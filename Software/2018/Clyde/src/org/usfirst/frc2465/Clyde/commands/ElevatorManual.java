@@ -22,13 +22,17 @@ public class ElevatorManual extends Command {
 	}
 
 	protected void initialize() {
-
+		
+		Robot.elevator.setGoToInch(false);
 	}
 
 	protected void execute() {
 
-		if (motion == Motion.HOLD && Robot.elevator.isBottom() || Robot.elevator.getCurrentInches() <= 11.5 && motion == Motion.HOLD) {
+		if ((motion == Motion.HOLD || motion == Motion.DOWN) && Robot.elevator.isBottom() || Robot.elevator.getCurrentInches() <= 13 && motion == Motion.HOLD) {
 			Robot.elevator.setMotion(Motion.STOP, SPEED);
+		}
+		else if (Robot.elevator.getCurrentInches() <= 13 && motion == Motion.DOWN) {
+			Robot.elevator.setMotion(Motion.DOWN, 0.08f);
 		}
 		else if (Robot.oi.driveStick.getRawButton(1)){
 			Robot.elevator.setMotion(motion, SLOWSPEED);

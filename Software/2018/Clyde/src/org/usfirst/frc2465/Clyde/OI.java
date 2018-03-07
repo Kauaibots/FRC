@@ -68,7 +68,7 @@ public class OI {
         driveStick = new Joystick(0);
         
         //Button elevatorSwitch = new JoystickButton(driveStick, 8);
-        //Button elevatorScaleLow = new JoystickButton(driveStick, 7);
+        Button elevatorScaleLow = new JoystickButton(driveStick, 9);
         //Button elevatorScaleHigh = new JoystickButton(driveStick, 6);
         Button elevatorManUp = new JoystickButton(driveStick, 6);
         Button elevatorManDown = new JoystickButton(driveStick, 7);
@@ -76,9 +76,10 @@ public class OI {
         Button clawClosed = new JoystickButton(driveStick, 3);
         Button clawIn = new JoystickButton(driveStick, 10);
         Button clawOut = new JoystickButton(driveStick, 11);
+       
         
         //elevatorSwitch.whileHeld(new ElevatorGoToInch(24, false));
-        //elevatorScaleLow.whileHeld(new ElevatorGoToInch(48, false));
+        elevatorScaleLow.whileHeld(new ElevatorGoToInch(48, false));
         //elevatorScaleHigh.whileHeld(new ElevatorGoToInch(72, false));
         elevatorManUp.whenPressed(new ElevatorManual(Elevator.Motion.UP));
         elevatorManUp.whenReleased(new ElevatorManual(Elevator.Motion.HOLD));
@@ -90,6 +91,8 @@ public class OI {
         clawIn.whenReleased(new ClawSpin(Motion.STOP));
         clawOut.whenPressed(new ClawSpin(Motion.OUT));
         clawOut.whenReleased(new ClawSpin(Motion.STOP));
+        
+        elevatorScaleLow.whenReleased(new ElevatorManual(Elevator.Motion.HOLD));
         
         SmartDashboard.putData("Calibrate Elevator", new CalibrateElevator());
 

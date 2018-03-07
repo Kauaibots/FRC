@@ -1,25 +1,40 @@
 package org.usfirst.frc2465.Clyde;
 
 import edu.wpi.first.wpilibj.Preferences;
+import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 
 public class RobotPreferences {
 
 	// PID Controller Settings
 	// the good kine :D P:0.0022 I:0.000010 D:0.00001
+	
+	static double ElevatorP;
+	static double ElevatorI;
+	static double ElevatorD;
+	
+	static double rotateP;
+	static double rotateI;
+	static double rotateD;
 
 	static public double getAutoRotateP() {
 		// return Preferences.getInstance().getDouble("AutoRotateP", 0.0002);
-		return 0.0025;
+		rotateP = SmartDashboard.getNumber("RotateP", 0.0025);
+		
+		return rotateP;
 	}
 
 	static public double getAutoRotateI() {
 		// return Preferences.getInstance().getDouble("AutoRotateI", 0.00005);
-		return 0.0;
+	rotateI = SmartDashboard.getNumber("RotateI", 0.0);
+		
+		return rotateI;
 	}
 
 	static public double getAutoRotateD() {
 		// return Preferences.getInstance().getDouble("AutoRotateD", 0.00);
-		return 0.0;
+	rotateD = SmartDashboard.getNumber("RotateD", 0.0);
+		
+		return rotateD;
 	}
 
 	static public double getAutoRotateOnTargetToleranceDegrees() {
@@ -36,17 +51,23 @@ public class RobotPreferences {
 	// Elevator PID Controller Settings
 	static public double getElevatorP() {
 
-		return 0.0015;
+		ElevatorP = SmartDashboard.getNumber("ElevatorP", 0.0015);
+		
+		return ElevatorP;
 	}
 
 	static public double getElevatorI() {
 
-		return 0.0;
+		ElevatorI = SmartDashboard.getNumber("ElevatorI", 0.0);
+		
+		return ElevatorI;
 	}
 
 	static public double getElevatorD() {
 
-		return 0.0;
+		ElevatorD = SmartDashboard.getNumber("ElevatorD", 0.0);
+		
+		return ElevatorD;
 	}
 
 	static public double getElevatorOnTargetToleranceInches() {

@@ -13,6 +13,7 @@ package org.usfirst.frc2465.Clyde.commands;
 import edu.wpi.first.wpilibj.command.Command;
 import org.usfirst.frc2465.Clyde.Robot;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
+import edu.wpi.first.wpilibj.command.PIDSubsystem;
 
 /**
  *
@@ -42,7 +43,7 @@ public class  AutoRotate extends Command {
 
     // Called repeatedly when this Command is scheduled to run
     protected void execute() {
-    	Robot.drive.arcadeDrive(0, 0);
+    	Robot.drive.arcadeDrive(0.0, 0.0);
         SmartDashboard.putNumber("AutoRotate Error", Robot.drive.getPIDController().getError());
         SmartDashboard.putNumber("AutoRotate Setpoint", Robot.drive.getPIDController().getSetpoint());
         SmartDashboard.putBoolean("AutoRotate On Target", Robot.drive.getPIDController().onTarget());

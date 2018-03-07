@@ -152,12 +152,20 @@ public class StickDrive extends Command {
 		//	Robot.elevator.setGoToInch(true);
 		//	Robot.elevator.setSetpoint(30);
 		//} 
-		/*
-		else if (driver.getRawButton(7)) 
+		
+		if (driver.getRawButton(5)) 
 		{
 			Robot.drive.setAutoRotation(true);
 			Robot.drive.setSetpoint(90.0);
 		} 
+		else if (driver.getRawButton(14)) {
+			Robot.drive.setAutoRotation(true);
+			Robot.drive.setSetpoint(0.0);
+		}
+		else {
+			Robot.drive.setAutoRotation(false);
+		}
+		/*
 		else if (driver.getRawButton(8)) 
 		{
 			Robot.drive.setAutoRotation(true);
@@ -184,8 +192,6 @@ public class StickDrive extends Command {
 			Robot.elevator.elevatorMotor.set(0);
 		}
 		*/
-		
-		Robot.drive.setAutoRotation(false);
 		
 		/*
 		 * if ( op.getRawButton(7)) { Robot.drive.setAutoRotation(true);
