@@ -12,18 +12,20 @@ package org.usfirst.frc2465.Clyde.commands;
 
 import edu.wpi.first.wpilibj.command.Command;
 import org.usfirst.frc2465.Clyde.Robot;
+import org.usfirst.frc2465.Clyde.RobotMap;
+
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj.command.PIDSubsystem;
 
 /**
  *
  */
-public class  AutoRotate extends Command {
+public class  RotateToAngle extends Command {
 	
 	double target_angle;
 	boolean previousAutoRotate = false;
 
-    public AutoRotate(float rotationAngle) {
+    public RotateToAngle(float rotationAngle) {
     	target_angle = rotationAngle;
         // Use requires() here to declare subsystem dependencies
         requires(Robot.drive);
@@ -35,37 +37,43 @@ public class  AutoRotate extends Command {
 
     // Called just before this Command runs the first time
     protected void initialize() {
-    	previousAutoRotate = Robot.drive.getAutoRotation();
-    	Robot.drive.setAutoRotation(true);
-    	Robot.drive.setSetpoint(target_angle); 
-    	System.out.println("Auto-rotate command initialized.");
+    	
     }
 
     // Called repeatedly when this Command is scheduled to run
     protected void execute() {
-    	Robot.drive.arcadeDrive(0.0, 0.0);
-        SmartDashboard.putNumber("AutoRotate Error", Robot.drive.getPIDController().getError());
-        SmartDashboard.putNumber("AutoRotate Setpoint", Robot.drive.getPIDController().getSetpoint());
-        SmartDashboard.putBoolean("AutoRotate On Target", Robot.drive.getPIDController().onTarget());
+    	
+    	double speed = Math.abs(RobotMap.imu.getAngle() - target_angle) / 100.0;
+    	
+    	if (speed > 0.5) {
+    		speed = 0.5;
+    	}
+    	
+    	if (speed < 0.3) {
+    		speed = 0.3;
+    	}
+    	
+    	if (RobotMap.imu.getAngle() > target_angle) {
+    		Robot.drive.arcadeDrive(0, speed);
+    	} else {
+    		Robot.drive.arcadeDrive(0, -speed);
+    	}
+        
     }
 
     // Make this return true when this Command no longer needs to run execute()
     protected boolean isFinished() {
-        return Robot.drive.onTarget();
+        return (Math.abs(RobotMap.imu.getAngle() - target_angle) < Robot.preferences.getAutoRotateOnTargetToleranceDegrees());
     }
 
     // Called once after isFinished returns true
     protected void end() {
-    	System.out.println("Auto-rotate command complete.");
-    	Robot.drive.setAutoRotation(previousAutoRotate);
     	Robot.drive.arcadeDrive(0, 0);
     }
 
     // Called when another command which requires one or more of the same
     // subsystems is scheduled to run
     protected void interrupted() {
-    	System.out.println("Auto-rotate command interrupted. Stopping");
-    	Robot.drive.setAutoRotation(previousAutoRotate);
     	Robot.drive.arcadeDrive(0, 0);
     }
 }

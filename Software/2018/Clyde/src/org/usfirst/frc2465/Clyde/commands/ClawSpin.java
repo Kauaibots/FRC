@@ -47,5 +47,8 @@ public class ClawSpin extends Command {
 
 	@Override
 	protected void interrupted() {
+		// will stop the claw when button is released (whileHeld in OI runs this method
+		// when a button is released)
+		Robot.claw.setMotion(Motion.STOP);
 	}
 }
