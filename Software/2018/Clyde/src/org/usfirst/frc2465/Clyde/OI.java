@@ -69,8 +69,8 @@ public class OI {
         arduino = new Joystick(1);
         
 
-        Button elevatorManUp = new JoystickButton(arduino, 3);
-        Button elevatorManDown = new JoystickButton(arduino, 2);
+        Button elevatorManUp = new JoystickButton(arduino, 2);
+        Button elevatorManDown = new JoystickButton(arduino, 1);
         
         // Arduino buttons
         //Button elevatorHover = new JoystickButton(arduino, 1);
@@ -79,15 +79,15 @@ public class OI {
         //Button elevatorScaleMedium = new JoystickButton(arduino, 4);
         //Button elevatorScaleHigh = new JoystickButton(arduino, 5);
         
-        Button clawOpen = new JoystickButton(arduino, 1);
+        Button clawOpen = new JoystickButton(arduino, 6);
         Button clawOpenStick = new JoystickButton(driveStick, 2);
         Button clawIn = new JoystickButton(arduino, 7);
         Button clawOut = new JoystickButton(arduino, 8);
         
         //Button rotate0 = new JoystickButton(arduino, 9);
         //Button rotate90 = new JoystickButton(arduino, 10);
-        Button rotateNeg90 = new JoystickButton(arduino, 11);
-        Button rotate180 = new JoystickButton(arduino, 12);
+        //Button rotateNeg90 = new JoystickButton(arduino, 11);
+        //Button rotate180 = new JoystickButton(arduino, 12);
 
         // rotate buttons
         //rotate90.whenPressed(new RotateToAngle(90));

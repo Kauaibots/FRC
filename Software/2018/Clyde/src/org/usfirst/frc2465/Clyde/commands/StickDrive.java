@@ -23,6 +23,8 @@ public class StickDrive extends Command {
 	static final double DEADZONE = .07;
 
 	public boolean speed_mode;
+	
+	int counter;
 
 	public class JoystickResponseCurve {
 		double adjust;
@@ -171,11 +173,18 @@ public class StickDrive extends Command {
 			Robot.drive.setAutoRotation(true);
 			Robot.drive.setSetpoint(180.0);
 		}
-		else {
+		else if (Math.abs(Robot.drive.getPIDController().getError()) > 6.0){
+			counter = 0;
+		}
+		else if (counter == 4){
 			Robot.drive.setAutoRotation(false);
 		}
+		else if (Math.abs(Robot.drive.getPIDController().getError()) < 6.0) {
+			counter++;
+		}
 
-		
+
+		SmartDashboard.putNumber("Counter", counter);
 		
 
 		if (RobotMap.robotDrive != null) {
