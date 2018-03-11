@@ -68,67 +68,57 @@ public class OI {
         driveStick = new Joystick(0);
         arduino = new Joystick(1);
         
-        //Button elevatorSwitch = new JoystickButton(driveStick, 8);
-        Button elevatorScaleLow = new JoystickButton(driveStick, 9);
-        //Button elevatorScaleHigh = new JoystickButton(driveStick, 6);
-        Button elevatorManUp = new JoystickButton(driveStick, 6);
-        Button elevatorManDown = new JoystickButton(driveStick, 7);
-        Button clawOpen = new JoystickButton(driveStick, 2);
-        Button clawClosed = new JoystickButton(driveStick, 3);
-        Button clawIn = new JoystickButton(driveStick, 10);
-        Button clawOut = new JoystickButton(driveStick, 11);
+
+        Button elevatorManUp = new JoystickButton(arduino, 3);
+        Button elevatorManDown = new JoystickButton(arduino, 2);
         
         // Arduino buttons
-        Button elevatorTravel = new JoystickButton(arduino, 1);
-        Button elevatorSwitch = new JoystickButton(arduino, 2);
-        Button elevatorScaleLow_ar = new JoystickButton(arduino, 3);
-        Button elevatorScaleMedium = new JoystickButton(arduino, 4);
-        Button elevatorScaleHigh = new JoystickButton(arduino, 5);
+        //Button elevatorHover = new JoystickButton(arduino, 1);
+        //Button elevatorSwitch = new JoystickButton(arduino, 2);
+        //Button elevatorScaleLow = new JoystickButton(arduino, 3);
+        //Button elevatorScaleMedium = new JoystickButton(arduino, 4);
+        //Button elevatorScaleHigh = new JoystickButton(arduino, 5);
         
-        Button clawOpenClose = new JoystickButton(arduino, 6);
-        Button clawIn_ar = new JoystickButton(arduino, 7);
-        Button clawOut_ar = new JoystickButton(arduino, 8);
+        Button clawOpen = new JoystickButton(arduino, 1);
+        Button clawOpenStick = new JoystickButton(driveStick, 2);
+        Button clawIn = new JoystickButton(arduino, 7);
+        Button clawOut = new JoystickButton(arduino, 8);
         
-        Button rotate0 = new JoystickButton(arduino, 10);
-        Button rotate90 = new JoystickButton(arduino, 9);
-        Button rotateNegative90 = new JoystickButton(arduino, 11);
+        //Button rotate0 = new JoystickButton(arduino, 9);
+        //Button rotate90 = new JoystickButton(arduino, 10);
+        Button rotateNeg90 = new JoystickButton(arduino, 11);
         Button rotate180 = new JoystickButton(arduino, 12);
-        
-        
-        
-        // claw in and out
-        clawIn_ar.whileHeld(new ClawSpin(Motion.IN));
-        clawOut_ar.whileHeld(new ClawSpin(Motion.OUT));
-        
+
         // rotate buttons
-        rotate90.whenPressed(new RotateToAngle(90));
-        rotateNegative90.whenPressed(new RotateToAngle(-90));
-        rotate0.whenPressed(new RotateToAngle(0));
-        rotate180.whenPressed(new RotateToAngle(180));
-       
-        
+        //rotate90.whenPressed(new RotateToAngle(90));
+        //rotateNeg90.whenPressed(new RotateToAngle(-90));
+        //rotate0.whenPressed(new RotateToAngle(0));
+        //rotate180.whenPressed(new RotateToAngle(180));
+       //Elevator
+        //elevatorHover.whileHeld(new ElevatorGoToInch(14, false));
         //elevatorSwitch.whileHeld(new ElevatorGoToInch(24, false));
-        elevatorScaleLow.whileHeld(new ElevatorGoToInch(48, false));
-        //elevatorScaleHigh.whileHeld(new ElevatorGoToInch(72, false));
+        //elevatorScaleLow.whileHeld(new ElevatorGoToInch(54, false));
+        //elevatorScaleMedium.whileHeld(new ElevatorGoToInch(65, false));
+        //elevatorScaleHigh.whileHeld(new ElevatorGoToInch(76, false));
         elevatorManUp.whenPressed(new ElevatorManual(Elevator.Motion.UP));
         elevatorManUp.whenReleased(new ElevatorManual(Elevator.Motion.HOLD));
         elevatorManDown.whenPressed(new ElevatorManual(Elevator.Motion.DOWN));
         elevatorManDown.whenReleased(new ElevatorManual(Elevator.Motion.HOLD));
-        clawOpen.whileHeld(new ClawGrab(Value.kForward));
-        clawClosed.whileHeld(new ClawGrab(Value.kReverse));
-        clawIn.whenPressed(new ClawSpin(Motion.IN));
+        //Claw
+        clawOpen.whenPressed(new ClawGrab(Value.kForward));
+        clawOpen.whenReleased(new ClawGrab(Value.kReverse));
+        clawOpenStick.whenPressed(new ClawGrab(Value.kForward));
+        clawOpenStick.whenReleased(new ClawGrab(Value.kReverse));
+        clawIn.whileHeld(new ClawSpin(Motion.IN));
         clawIn.whenReleased(new ClawSpin(Motion.STOP));
-        clawOut.whenPressed(new ClawSpin(Motion.OUT));
+        clawOut.whileHeld(new ClawSpin(Motion.OUT));
         clawOut.whenReleased(new ClawSpin(Motion.STOP));
         
-        elevatorScaleLow.whenReleased(new ElevatorManual(Elevator.Motion.HOLD));
+        //elevatorScaleLow.whenReleased(new ElevatorManual(Elevator.Motion.HOLD));
         
         SmartDashboard.putData("Calibrate Elevator", new CalibrateElevator());
 
-        
-        // SmartDashboard Buttons
-        SmartDashboard.putData("Autonomous Command", new AutonomousCommand());
-        SmartDashboard.putData("StickDrive", new StickDrive());
+        SmartDashboard.putData("DriveStraight", new DriveStraight());
 
     // END AUTOGENERATED CODE, SOURCE=ROBOTBUILDER ID=CONSTRUCTORS
     }

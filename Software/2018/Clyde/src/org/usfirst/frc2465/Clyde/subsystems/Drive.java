@@ -58,7 +58,7 @@ public class Drive extends PIDSubsystem {
                 RobotPreferences.getAutoRotateP(),
                 RobotPreferences.getAutoRotateI(),
                 RobotPreferences.getAutoRotateD(),
-                0,
+                0.0,
                 0.02);
         try {
             getPIDController().setInputRange(-180,180);
@@ -131,8 +131,16 @@ public class Drive extends PIDSubsystem {
     	
     	SmartDashboard.putNumber("ZRotation", zRotation);
     	SmartDashboard.putNumber("XSpeed", xSpeed);
-    	robotDrive.arcadeDrive(xSpeed, zRotation, false);
+    	
+    	if (getAutoRotation() == false) {
+    		robotDrive.arcadeDrive(xSpeed, zRotation, false);
+    	}
     } 
+    
+    public void updatePID() {
+    	getPIDController().setPID(SmartDashboard.getNumber("RotateP", 0.0025), SmartDashboard.getNumber("RotateI", 0.0), SmartDashboard.getNumber("RotateD", 0.0));
+    }
+    
 
 	public void setAutoRotation(boolean b) {
 		// TODO Auto-generated method stub
@@ -143,6 +151,7 @@ public class Drive extends PIDSubsystem {
             getPIDController().disable();
         }
 	}
+	
 	
 	public boolean getAutoRotation() {
         SmartDashboard.putBoolean( "AutoRotateEnabled", getPIDController().isEnabled());

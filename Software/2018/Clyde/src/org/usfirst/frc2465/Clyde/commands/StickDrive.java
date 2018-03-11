@@ -11,7 +11,6 @@
 package org.usfirst.frc2465.Clyde.commands;
 
 import edu.wpi.first.wpilibj.command.Command;
-import org.usfirst.frc2465.Clyde.Robot;
 import edu.wpi.first.wpilibj.Joystick;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import org.usfirst.frc2465.Clyde.*;
@@ -108,6 +107,7 @@ public class StickDrive extends Command {
 		JoystickResponseCurveSet fast = aggressive;
 
 		Joystick driver = Robot.oi.driveStick;
+		Joystick arduino = Robot.oi.arduino;
 		double vY = driver.getY(); /* FOrward on flight joysticks is negative Y - NOT GOOD FOR ROBOTS! */
 		double vRot = driver.getRawAxis(3) * -1; //Differential Drive by default rotates robot left when stick is turned right
 
@@ -147,61 +147,37 @@ public class StickDrive extends Command {
 			SmartDashboard.putString("DriveSpeed", "fast");
 		}
 
-		//if (driver.getRawButton(6)) 
-		//{
-		//	Robot.elevator.setGoToInch(true);
-		//	Robot.elevator.setSetpoint(30);
-		//} 
 		
-		if (driver.getRawButton(5)) 
+		//Auto rotate      Commented updatePID lines are for PID tuning
+		if (arduino.getRawButton(9)) 
 		{
+			//Robot.drive.updatePID();
 			Robot.drive.setAutoRotation(true);
 			Robot.drive.setSetpoint(90.0);
 		} 
-		else if (driver.getRawButton(14)) {
+		else if (arduino.getRawButton(10)) {
+			//Robot.drive.updatePID();
 			Robot.drive.setAutoRotation(true);
 			Robot.drive.setSetpoint(0.0);
+		}
+		else if (arduino.getRawButton(11)) 
+		{
+			//Robot.drive.updatePID();
+			Robot.drive.setAutoRotation(true);
+			Robot.drive.setSetpoint(-90.0);
+		} 
+		else if (arduino.getRawButton(12)) {
+			//Robot.drive.updatePID();
+			Robot.drive.setAutoRotation(true);
+			Robot.drive.setSetpoint(180.0);
 		}
 		else {
 			Robot.drive.setAutoRotation(false);
 		}
-		/*
-		else if (driver.getRawButton(8)) 
-		{
-			Robot.drive.setAutoRotation(true);
-			Robot.drive.setSetpoint(180.0);
-		} 
-		else if (driver.getRawButton(9)) 
-		{
-			Robot.drive.setAutoRotation(true);
-			Robot.drive.setSetpoint(-90.0);
-		} */
+
 		
 		
-		//!!Next 6 lines are temporary!!! Remove once the elevator commands are finished. These are only for testing elevator.
-		/*
-		else if (driver.getRawButton(10)) {
-			Robot.elevator.elevatorMotor.set(-0.8);
-		}
-		else if (driver.getRawButton(11)) {
-			Robot.elevator.elevatorMotor.set(0.8);
-		}
-		else 
-		{
-			Robot.drive.setAutoRotation(false);
-			Robot.elevator.elevatorMotor.set(0);
-		}
-		*/
-		
-		/*
-		 * if ( op.getRawButton(7)) { Robot.drive.setAutoRotation(true);
-		 * Robot.drive.setSetpoint(-90.0); } else if ( op.getRawButton(8)) {
-		 * Robot.drive.setAutoRotation(true); Robot.drive.setSetpoint(-179.0); } else if
-		 * ( op.getRawButton(9)) { Robot.drive.setAutoRotation(true);
-		 * Robot.drive.setSetpoint(90.0); } else if ( op.getRawButton(10)) {
-		 * Robot.drive.setAutoRotation(true); Robot.drive.setSetpoint(0.0); } else {
-		 * Robot.drive.setAutoRotation(false); }
-		 */
+
 		if (RobotMap.robotDrive != null) {
 			Robot.drive.arcadeDrive(vY, vRot);
 		}

@@ -2,6 +2,7 @@ package org.usfirst.frc2465.Clyde.commands;
 
 import org.usfirst.frc2465.Clyde.Robot;
 import org.usfirst.frc2465.Clyde.RobotPreferences;
+import org.usfirst.frc2465.Clyde.subsystems.Elevator;
 import org.usfirst.frc2465.Clyde.subsystems.Elevator.Motion;
 
 import edu.wpi.first.wpilibj.command.Command;
@@ -31,6 +32,10 @@ public class ElevatorGoToInch extends Command {
 	}
 
 	protected void execute() {
+		
+		//This must be commented out. Only for PID tuning.
+		Robot.elevator.updatePID();
+		
 		SmartDashboard.putNumber("GoToInch Error", Robot.elevator.getPIDController().getError());
 		SmartDashboard.putNumber("GoToInch Setpoint", Robot.elevator.getPIDController().getSetpoint());
 		SmartDashboard.putBoolean("GoToInch On Target", Robot.elevator.getPIDController().onTarget());

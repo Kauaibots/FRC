@@ -17,13 +17,14 @@ import org.usfirst.frc2465.Clyde.RobotMap;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj.command.PIDSubsystem;
 
-/**
- *
+/*
+ 	!!!!!!!!  This command is temporary and is meant to be replaced by a functioning PID controller  !!!!!!!!
  */
 public class  RotateToAngle extends Command {
 	
 	double target_angle;
 	boolean previousAutoRotate = false;
+	int counter;
 
     public RotateToAngle(float rotationAngle) {
     	target_angle = rotationAngle;
@@ -45,7 +46,11 @@ public class  RotateToAngle extends Command {
     	
     	double speed = Math.abs(RobotMap.imu.getAngle() - target_angle) / 100.0;
     	
-    	if (speed > 0.5) {
+    	if(speed > 0.75) {
+    		speed = 0.75;
+    	}
+    	
+    	if (speed < 0.5 && speed > 0.3) {
     		speed = 0.5;
     	}
     	
@@ -63,7 +68,23 @@ public class  RotateToAngle extends Command {
 
     // Make this return true when this Command no longer needs to run execute()
     protected boolean isFinished() {
-        return (Math.abs(RobotMap.imu.getAngle() - target_angle) < Robot.preferences.getAutoRotateOnTargetToleranceDegrees());
+        
+    	if (Math.abs(RobotMap.imu.getAngle() - target_angle) < Robot.preferences.getAutoRotateOnTargetToleranceDegrees() && counter < 2) {
+    		counter++;
+    	}
+    	else if(counter == 2) {
+    		return true;
+    	}
+    	else {
+    		counter = 0;
+    		return false;
+    	}
+		return false;
+    	
+    	
+
+    	
+    	//return (Math.abs(RobotMap.imu.getAngle() - target_angle) < Robot.preferences.getAutoRotateOnTargetToleranceDegrees());
     }
 
     // Called once after isFinished returns true

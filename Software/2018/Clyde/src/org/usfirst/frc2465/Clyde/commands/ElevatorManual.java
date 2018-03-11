@@ -12,7 +12,7 @@ public class ElevatorManual extends Command {
 	Motion motion;
 	
 	static final float SPEED = 0.65f;
-	static final float SLOWSPEED = 0.30f;
+	static final float SLOWSPEED = 0.65f;
 
 	public ElevatorManual(Motion motion) {
 

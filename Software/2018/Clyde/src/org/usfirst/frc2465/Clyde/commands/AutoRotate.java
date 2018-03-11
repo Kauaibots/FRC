@@ -44,6 +44,11 @@ public class  AutoRotate extends Command {
     // Called repeatedly when this Command is scheduled to run
     protected void execute() {
     	Robot.drive.arcadeDrive(0.0, 0.0);
+    	
+    	Robot.drive.updatePID();
+    	
+    	SmartDashboard.putNumber("P", Robot.drive.getPIDController().getP());
+    	
         SmartDashboard.putNumber("AutoRotate Error", Robot.drive.getPIDController().getError());
         SmartDashboard.putNumber("AutoRotate Setpoint", Robot.drive.getPIDController().getSetpoint());
         SmartDashboard.putBoolean("AutoRotate On Target", Robot.drive.getPIDController().onTarget());

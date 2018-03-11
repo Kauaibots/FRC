@@ -18,23 +18,20 @@ public class RobotPreferences {
 
 	static public double getAutoRotateP() {
 		// return Preferences.getInstance().getDouble("AutoRotateP", 0.0002);
-		rotateP = SmartDashboard.getNumber("RotateP", 0.0025);
 		
-		return rotateP;
+		return 0.024;
 	}
 
 	static public double getAutoRotateI() {
 		// return Preferences.getInstance().getDouble("AutoRotateI", 0.00005);
-	rotateI = SmartDashboard.getNumber("RotateI", 0.0);
 		
-		return rotateI;
+		return 0.00000249;
 	}
 
 	static public double getAutoRotateD() {
 		// return Preferences.getInstance().getDouble("AutoRotateD", 0.00);
-	rotateD = SmartDashboard.getNumber("RotateD", 0.0);
 		
-		return rotateD;
+		return 0.06;
 	}
 
 	static public double getAutoRotateOnTargetToleranceDegrees() {
