@@ -73,12 +73,14 @@ public class RobotMap {
         
         talon1 = new WPI_TalonSRX(1);        
         talon2 = new WPI_TalonSRX(2);
+        talon2.follow(talon1);
         SpeedControllerGroup m_left = new SpeedControllerGroup(talon1, talon2);
         m_left.setInverted(false);
         
         
         talon3 = new WPI_TalonSRX(3);
         talon4 = new WPI_TalonSRX(4);
+        talon4.follow(talon3);
         SpeedControllerGroup m_right = new SpeedControllerGroup(talon3, talon4);
         m_right.setInverted(false);
                 
@@ -101,6 +103,7 @@ public class RobotMap {
         
         clawMotor1 = new PWMVictorSPX(0);
         clawMotor2 = new PWMVictorSPX(1);
+        clawMotor1.setInverted(true);
         clawMotors = new SpeedControllerGroup(clawMotor1, clawMotor2);
         LiveWindow.addActuator("Claw", "ClawMotor", clawMotors);
         clawMotors.setInverted(false);

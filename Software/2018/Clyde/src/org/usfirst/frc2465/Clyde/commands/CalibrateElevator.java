@@ -18,9 +18,9 @@ public class CalibrateElevator extends Command {
 	
 	boolean finished;
 	
-	public static void main(String[] args) {
-		// TODO Auto-generated method stub
+	public CalibrateElevator() {
 
+		requires(Robot.elevator);
 	}
 	
 	protected void initialize() {

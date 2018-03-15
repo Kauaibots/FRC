@@ -4,6 +4,7 @@ import org.usfirst.frc2465.Clyde.Robot;
 import org.usfirst.frc2465.Clyde.RobotPreferences;
 import org.usfirst.frc2465.Clyde.subsystems.Elevator.Motion;
 
+import edu.wpi.first.wpilibj.Joystick;
 import edu.wpi.first.wpilibj.command.Command;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 
@@ -13,6 +14,7 @@ public class ElevatorManual extends Command {
 	
 	static final float SPEED = 0.65f;
 	static final float SLOWSPEED = 0.65f;
+	boolean finished = false;
 
 	public ElevatorManual(Motion motion) {
 
@@ -24,12 +26,28 @@ public class ElevatorManual extends Command {
 	protected void initialize() {
 		
 		Robot.elevator.setGoToInch(false);
+		finished = false;
 	}
 
 	protected void execute() {
+		
+		if (Robot.elevator.isBottom()) {
+			Robot.elevator.setHome();
+		}
+		
+		SmartDashboard.putString("Elevator Command", "Manual");
+		
+		Joystick arduino = Robot.oi.arduino;
+		
+		if (arduino.getRawButton(3) || arduino.getRawButton(4) || arduino.getRawButton(5)) {
+			finished = true;
+		}
 
 		if ((motion == Motion.HOLD || motion == Motion.DOWN) && Robot.elevator.isBottom() || Robot.elevator.getCurrentInches() <= 13 && motion == Motion.HOLD) {
 			Robot.elevator.setMotion(Motion.STOP, SPEED);
+		}
+		else if (motion == Motion.UP && Robot.elevator.isTop()) {
+			Robot.elevator.setMotion(Motion.HOLD, SPEED);
 		}
 		else if (Robot.elevator.getCurrentInches() <= 13 && motion == Motion.DOWN) {
 			Robot.elevator.setMotion(Motion.DOWN, 0.08f);
@@ -45,7 +63,7 @@ public class ElevatorManual extends Command {
 	@Override
 	protected boolean isFinished() {
 
-		return false;
+		return finished;
 	}
 
 	protected void end() {

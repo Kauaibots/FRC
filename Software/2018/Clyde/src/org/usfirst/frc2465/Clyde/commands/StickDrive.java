@@ -99,18 +99,18 @@ public class StickDrive extends Command {
 	}
 
 	// Called just before this Command runs the first time
-	protected void initialize() {
+	protected void initialize() {		
 	}
 
 	// Called repeatedly when this Command is scheduled to run
-	protected void execute() {
-
+	protected void execute() {		
+		
 		JoystickResponseCurveSet slow = conservative;
 		JoystickResponseCurveSet fast = aggressive;
 
 		Joystick driver = Robot.oi.driveStick;
 		Joystick arduino = Robot.oi.arduino;
-		double vY = driver.getY(); /* FOrward on flight joysticks is negative Y - NOT GOOD FOR ROBOTS! */
+		double vY = driver.getY(); /* Forward on flight joysticks is negative Y - NOT GOOD FOR ROBOTS! (regularly, but something is causing this to be good for this year's robot)*/
 		double vRot = driver.getRawAxis(3) * -1; //Differential Drive by default rotates robot left when stick is turned right
 
 		SmartDashboard.putNumber("JoystickY", vY);
@@ -193,6 +193,15 @@ public class StickDrive extends Command {
 		SmartDashboard.putNumber("AutoRotate Error", Robot.drive.getPIDController().getError());
 		SmartDashboard.putNumber("AutoRotate Setpoint", Robot.drive.getPIDController().getSetpoint());
 		SmartDashboard.putBoolean("AutoRotate On Target", Robot.drive.getPIDController().onTarget());
+	
+	
+		SmartDashboard.putNumber("EncoderL", RobotMap.talon1.getSelectedSensorPosition(0));
+		SmartDashboard.putNumber("EncoderR", RobotMap.talon3.getSelectedSensorPosition(0));
+		
+		if(driver.getRawButton(5)) {
+			RobotMap.talon1.setSelectedSensorPosition(0, 0, 0);
+		}
+		
 	}
 
 	// Make this return true when this Command no longer needs to run execute()

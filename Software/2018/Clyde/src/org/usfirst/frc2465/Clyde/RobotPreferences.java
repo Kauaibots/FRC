@@ -72,7 +72,7 @@ public class RobotPreferences {
 		return 0.5;
 	}
 
-	static public double getElevatorDefaultTaretInches() {
+	static public double getElevatorDefaultTargetInches() {
 
 		return Preferences.getInstance().getDouble("ElevatorDefaultTargetInches", 0.0);
 	}
