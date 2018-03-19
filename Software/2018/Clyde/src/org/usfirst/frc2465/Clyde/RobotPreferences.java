@@ -15,6 +15,9 @@ public class RobotPreferences {
 	static double rotateP;
 	static double rotateI;
 	static double rotateD;
+	
+	public static boolean rotateFinished;
+	public static boolean driveFinished;
 
 	static public double getAutoRotateP() {
 		// return Preferences.getInstance().getDouble("AutoRotateP", 0.0002);
@@ -90,7 +93,7 @@ public class RobotPreferences {
 	static public double getElevatorHeight() {
 
 		// Low sensor to bottom of carriage at high sensor
-		return 75.175;
+		return 74.25;
 	}
 
 	static public double getFloorOffset() {

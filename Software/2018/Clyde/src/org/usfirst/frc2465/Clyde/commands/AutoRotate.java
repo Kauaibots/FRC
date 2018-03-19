@@ -12,6 +12,8 @@ package org.usfirst.frc2465.Clyde.commands;
 
 import edu.wpi.first.wpilibj.command.Command;
 import org.usfirst.frc2465.Clyde.Robot;
+import org.usfirst.frc2465.Clyde.RobotPreferences;
+
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj.command.PIDSubsystem;
 
@@ -35,6 +37,7 @@ public class  AutoRotate extends Command {
 
     // Called just before this Command runs the first time
     protected void initialize() {
+    	RobotPreferences.rotateFinished = false;
     	previousAutoRotate = Robot.drive.getAutoRotation();
     	Robot.drive.setAutoRotation(true);
     	Robot.drive.setSetpoint(target_angle); 
@@ -61,6 +64,7 @@ public class  AutoRotate extends Command {
 
     // Called once after isFinished returns true
     protected void end() {
+    	RobotPreferences.rotateFinished = true;
     	System.out.println("Auto-rotate command complete.");
     	Robot.drive.setAutoRotation(previousAutoRotate);
     	Robot.drive.arcadeDrive(0, 0);

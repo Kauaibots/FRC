@@ -42,6 +42,8 @@ public class RobotMap {
     public static WPI_TalonSRX talon2;
     public static WPI_TalonSRX talon3;
     public static WPI_TalonSRX talon4;
+    public static SpeedControllerGroup m_left;
+    public static SpeedControllerGroup m_right;
     public static DifferentialDrive robotDrive;
     public static DigitalInput elevatorBottomSwitch;
     public static DigitalInput elevatorTopSwitch;
@@ -73,17 +75,17 @@ public class RobotMap {
         
         talon1 = new WPI_TalonSRX(1);        
         talon2 = new WPI_TalonSRX(2);
-        talon2.follow(talon1);
+        talon1.setSensorPhase(false);
         SpeedControllerGroup m_left = new SpeedControllerGroup(talon1, talon2);
         m_left.setInverted(false);
         
         
         talon3 = new WPI_TalonSRX(3);
         talon4 = new WPI_TalonSRX(4);
-        talon4.follow(talon3);
+        talon3.setSensorPhase(false);
         SpeedControllerGroup m_right = new SpeedControllerGroup(talon3, talon4);
         m_right.setInverted(false);
-                
+        
         robotDrive = new DifferentialDrive(m_left, m_right);
         
         robotDrive.setSafetyEnabled(false);

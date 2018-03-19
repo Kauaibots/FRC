@@ -78,7 +78,11 @@ public class GoToInchNoPID extends Command {
 			motion = Motion.STOP;
 		} else if (targetInch > Robot.elevator.getCurrentInches()) {
 			motion = Motion.UP;
-		} else if (targetInch < Robot.elevator.getCurrentInches()) {
+		} 
+		else if (Robot.elevator.getCurrentInches() <= 13 && motion == Motion.DOWN) {
+			Robot.elevator.setMotion(Motion.DOWN, 0.08f);
+		}
+		else if (targetInch < Robot.elevator.getCurrentInches()) {
 			motion = Motion.DOWN;
 		}
 
@@ -93,6 +97,7 @@ public class GoToInchNoPID extends Command {
 	}
 
 	protected void end() {
+
 		System.out.println("GoToInch command complete.");
 
 	}

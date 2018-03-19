@@ -1,6 +1,8 @@
 
 package org.usfirst.frc2465.Clyde.commands;
 import edu.wpi.first.wpilibj.command.Command;
+import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
+
 import org.usfirst.frc2465.Clyde.Robot;
 import org.usfirst.frc2465.Clyde.RobotMap;
 
@@ -10,12 +12,12 @@ import com.ctre.phoenix.motorcontrol.can.WPI_TalonSRX;
 public class DriveStraight extends Command {
 
 	double inches;
-	double rotationsPerInch = 231;
-	double tolerance = 20;
-	double leftCount;
-	double rightCount;
+	int rotationsPerInch = 231;
+	int leftCount;
+	int rightCount;
 	double distance;
-	float speed;
+	float speed = 0.50f;
+	boolean finished = false;
 	
 	WPI_TalonSRX left = RobotMap.talon1;
 	WPI_TalonSRX right = RobotMap.talon3;
@@ -41,12 +43,19 @@ public class DriveStraight extends Command {
     	leftCount = RobotMap.talon1.getSelectedSensorPosition(0);
     	rightCount = RobotMap.talon3.getSelectedSensorPosition(0);
     	
-    	if (distance > leftCount && distance > rightCount) {
-    		
-    	}
+		SmartDashboard.putNumber("EncoderL", leftCount);
+		SmartDashboard.putNumber("EncoderR", rightCount);
+		
+		SmartDashboard.putBoolean("Finished", Robot.drive.isStopped());
     	
-    	if (leftCount > rightCount) {
-    		
+    	if (Robot.drive.isStopped()) {
+    		Robot.drive.setMotion(0.0f, 0.0f);
+    		finished = true;
+    	}
+    	else {
+        	Robot.drive.configureAutoStop((int) distance);
+        	
+        	Robot.drive.setMotion(speed, speed);
     	}
     	
     }
@@ -60,11 +69,14 @@ public class DriveStraight extends Command {
     // Called once after isFinished returns true
     @Override
     protected void end() {
+    	
+    	Robot.drive.autoStop = false;
     }
 
     // Called when another command which requires one or more of the same
     // subsystems is scheduled to run
     @Override
     protected void interrupted() {
+    	Robot.drive.autoStop = false;
     }
 }

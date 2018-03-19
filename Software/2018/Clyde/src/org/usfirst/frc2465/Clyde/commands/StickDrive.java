@@ -198,8 +198,17 @@ public class StickDrive extends Command {
 		SmartDashboard.putNumber("EncoderL", RobotMap.talon1.getSelectedSensorPosition(0));
 		SmartDashboard.putNumber("EncoderR", RobotMap.talon3.getSelectedSensorPosition(0));
 		
-		if(driver.getRawButton(5)) {
-			RobotMap.talon1.setSelectedSensorPosition(0, 0, 0);
+		if(driver.getRawButton(6)) {
+			RobotMap.talon1.set(0.50f);
+		}
+		if(driver.getRawButton(7)) {
+			RobotMap.talon2.set(0.50f);
+		}
+		if(driver.getRawButton(8)) {
+			RobotMap.talon3.set(0.50f);
+		}
+		if(driver.getRawButton(9)) {
+			RobotMap.talon4.set(0.50f);
 		}
 		
 	}
