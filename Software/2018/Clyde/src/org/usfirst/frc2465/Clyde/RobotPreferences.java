@@ -38,7 +38,7 @@ public class RobotPreferences {
 	}
 
 	static public double getAutoRotateOnTargetToleranceDegrees() {
-		return 2.0; /*
+		return 3.0; /*
 					 * Preferences.getInstance().getDouble("AutoRotateOnTargetToleranceDegrees",
 					 * 2.0);
 					 */

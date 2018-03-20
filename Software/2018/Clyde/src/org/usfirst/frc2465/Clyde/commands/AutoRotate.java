@@ -37,19 +37,17 @@ public class  AutoRotate extends Command {
 
     // Called just before this Command runs the first time
     protected void initialize() {
-    	RobotPreferences.rotateFinished = false;
     	previousAutoRotate = Robot.drive.getAutoRotation();
     	Robot.drive.setAutoRotation(true);
     	Robot.drive.setSetpoint(target_angle); 
-    	System.out.println("Auto-rotate command initialized.");
+    	System.out.println("Auto-rotate command initialized.   Angle: " + target_angle + "\n");
+    	System.out.flush();
     }
 
     // Called repeatedly when this Command is scheduled to run
     protected void execute() {
     	Robot.drive.arcadeDrive(0.0, 0.0);
-    	
-    	Robot.drive.updatePID();
-    	
+    	   	
     	SmartDashboard.putNumber("P", Robot.drive.getPIDController().getP());
     	
         SmartDashboard.putNumber("AutoRotate Error", Robot.drive.getPIDController().getError());
@@ -64,8 +62,7 @@ public class  AutoRotate extends Command {
 
     // Called once after isFinished returns true
     protected void end() {
-    	RobotPreferences.rotateFinished = true;
-    	System.out.println("Auto-rotate command complete.");
+    	System.out.println("Auto-rotate command complete." + "\n");
     	Robot.drive.setAutoRotation(previousAutoRotate);
     	Robot.drive.arcadeDrive(0, 0);
     }
@@ -73,7 +70,7 @@ public class  AutoRotate extends Command {
     // Called when another command which requires one or more of the same
     // subsystems is scheduled to run
     protected void interrupted() {
-    	System.out.println("Auto-rotate command interrupted. Stopping");
+    	System.out.println("Auto-rotate command interrupted. Stopping" + "\n");
     	Robot.drive.setAutoRotation(previousAutoRotate);
     	Robot.drive.arcadeDrive(0, 0);
     }

@@ -111,7 +111,7 @@ public class StickDrive extends Command {
 		Joystick driver = Robot.oi.driveStick;
 		Joystick arduino = Robot.oi.arduino;
 		double vY = driver.getY(); /* Forward on flight joysticks is negative Y - NOT GOOD FOR ROBOTS! (regularly, but something is causing this to be good for this year's robot)*/
-		double vRot = driver.getRawAxis(3) * -1; //Differential Drive by default rotates robot left when stick is turned right
+		double vRot = driver.getRawAxis(4) * -1; //Differential Drive by default rotates robot left when stick is turned right
 
 		SmartDashboard.putNumber("JoystickY", vY);
 		SmartDashboard.putNumber("JoystickZ", vRot);
@@ -137,7 +137,7 @@ public class StickDrive extends Command {
 		 * Robot.drive.setMode(CANTalon.TalonControlMode.Speed); } }
 		 */
 
-		if (driver.getRawButton(1)) {
+		if (driver.getRawButton(1) || Robot.elevator.getCurrentInches() > 30) {
 			vY = slow.transformForward(vY);
 			vRot = slow.transformRotate(vRot);
 			SmartDashboard.putString("DriveSpeed", "slow");
@@ -173,13 +173,13 @@ public class StickDrive extends Command {
 			Robot.drive.setAutoRotation(true);
 			Robot.drive.setSetpoint(180.0);
 		}
-		else if (Math.abs(Robot.drive.getPIDController().getError()) > 6.0){
+		else if (Math.abs(Robot.drive.getPIDController().getError()) > 6.0 && Robot.drive.getAutoRotation()){
 			counter = 0;
 		}
-		else if (counter == 4){
+		else if (counter == 4 && Robot.drive.getAutoRotation()){
 			Robot.drive.setAutoRotation(false);
 		}
-		else if (Math.abs(Robot.drive.getPIDController().getError()) < 6.0) {
+		else if (Math.abs(Robot.drive.getPIDController().getError()) < 6.0 && Robot.drive.getAutoRotation()) {
 			counter++;
 		}
 

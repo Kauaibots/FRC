@@ -13,6 +13,7 @@ import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 public class GoToInchNoPID extends Command {
 
 	boolean auto;
+	boolean finished = false;
 	int doneCounter;
 	float speed;
 	double error;
@@ -31,8 +32,10 @@ public class GoToInchNoPID extends Command {
 	}
 
 	protected void initialize() {
+		finished = false;
 		Robot.elevator.setGoToInch(false);
-		System.out.println("GoToInch command initialized.");
+		System.out.println("GoToInch command initialized.   Auto: " + auto + " Inch: " + autoTargetInch + "\n");
+		System.out.flush();
 	}
 
 	protected void execute() {
@@ -63,10 +66,10 @@ public class GoToInchNoPID extends Command {
 
 		if (error > 8) {
 			speed = 0.7f;
-		} else if (error < 8 && error > 2) {
+		} else if (error <= 8 && error > 2) {
 			speed = 0.5f;
-		} else if (error < 2) {
-			speed = 0.2f;
+		} else if (error <= 2) {
+			speed = 0.3f;
 		}
 
 		// Set the direction and/or mode
@@ -74,6 +77,7 @@ public class GoToInchNoPID extends Command {
 			Robot.elevator.setMotion(Motion.DOWN, 0.08f);
 		} else if (error < toleranceInch && (!Robot.elevator.isBottom() || Robot.elevator.isTop())) {
 			motion = Motion.HOLD;
+			finished = true;
 		} else if (Robot.elevator.isBottom() && targetInch < 10) {
 			motion = Motion.STOP;
 		} else if (targetInch > Robot.elevator.getCurrentInches()) {
@@ -87,18 +91,33 @@ public class GoToInchNoPID extends Command {
 		}
 
 		Robot.elevator.setMotion(motion, speed);
+		SmartDashboard.putNumber("Elevator Speed", speed);
 
 	}
 
 	@Override
 	protected boolean isFinished() {
-
+		
+		if (auto) {
+			return finished;
+		}
+		else {
 		return false;
+		}
 	}
 
 	protected void end() {
 
-		System.out.println("GoToInch command complete.");
+		Robot.elevator.setMotion(Motion.HOLD, 0.0f);
+		
+		System.out.println("GoToInch command complete.   Auto: " + auto + "\n");
 
+	}
+	
+	protected void interrupted() {
+		if (auto) {
+			Robot.elevator.setMotion(Motion.HOLD, 0.0f);
+		}
+		System.out.println("GoToInch command interrupted.   Auto: " + auto + "\n");
 	}
 }

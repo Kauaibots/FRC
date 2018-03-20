@@ -1,6 +1,7 @@
 
 package org.usfirst.frc2465.Clyde.commands;
 
+import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj.command.Command;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 
@@ -20,7 +21,6 @@ public class DriveDistance extends Command {
 	float speed = 0.50f;
 	boolean finished = false;
 	boolean reverse;
-	double angle;
 
 	WPI_TalonSRX left = RobotMap.talon1;
 	WPI_TalonSRX right = RobotMap.talon3;
@@ -34,12 +34,17 @@ public class DriveDistance extends Command {
 
 	@Override
 	protected void initialize() {
-		RobotPreferences.driveFinished = false;
+		finished = false;
 		Robot.drive.zeroEncoder();
+		Timer.delay(0.02);
+		System.out.println(RobotMap.talon1.getSelectedSensorPosition(0));
+		System.out.println(RobotMap.talon3.getSelectedSensorPosition(0));
 		distance = Math.abs(rotationsPerInch * inches);
-		angle = RobotMap.imu.getAngle();
+		System.out.println("DriveDistance command initialized.   Inches: " + inches + "\n");
+		System.out.flush();
 		RobotMap.talon2.set(com.ctre.phoenix.motorcontrol.ControlMode.Follower, 1);
 		RobotMap.talon4.set(com.ctre.phoenix.motorcontrol.ControlMode.Follower, 3);
+
 	}
 
 	@Override
@@ -51,9 +56,12 @@ public class DriveDistance extends Command {
 		SmartDashboard.putNumber("EncoderL", leftCount);
 		SmartDashboard.putNumber("EncoderR", rightCount);
 
+		
 		if (!reverse) {
 			if (leftCount >= distance && rightCount >= distance) {
 				finished = true;
+				System.out.println(leftCount + "      " + rightCount +"\n");
+				System.out.flush();
 			}
 			if (leftCount > rightCount + 40 && finished == false) {
 				Robot.drive.setMotion(speed - 0.1f, speed + 0.1f);
@@ -66,16 +74,17 @@ public class DriveDistance extends Command {
 		else if (reverse) {
 			leftCount = -leftCount;
 			rightCount = -rightCount;
-			speed = -speed;
 			if (leftCount >= distance && rightCount >= distance) {
 				finished = true;
+				System.out.println(leftCount + "      " + rightCount +"\n");
+				System.out.flush();
 			}
 			if (leftCount > rightCount + 40 && finished == false) {
-				Robot.drive.setMotion(speed - 0.1f, speed + 0.1f);
+				Robot.drive.setMotion(-speed - 0.1f, -speed + 0.1f);
 			} else if (rightCount > leftCount + 40 && finished == false) {
-				Robot.drive.setMotion(speed + 0.1f, speed - 0.1f);
+				Robot.drive.setMotion(-speed + 0.1f, -speed - 0.1f);
 			} else if (finished == false) {
-				Robot.drive.setMotion(speed, speed);
+				Robot.drive.setMotion(-speed, -speed);
 			}
 		}
 
@@ -90,16 +99,16 @@ public class DriveDistance extends Command {
 	// Called once after isFinished returns true
 	@Override
 	protected void end() {
-		RobotPreferences.driveFinished = true;
-		Robot.drive.setAutoRotation(true);
-		Robot.drive.setSetpoint(angle);
-		finished = false;
+		Robot.drive.setMotion(0.0f, 0.0f);
+		System.out.println("DriveDistance command complete." + "\n");
 	}
 
 	// Called when another command which requires one or more of the same
 	// subsystems is scheduled to run
 	@Override
 	protected void interrupted() {
-		finished = false;
+		Robot.drive.setMotion(0.0f, 0.0f);
+		System.out.println("DriveDistance command interrupted." + "\n");
+
 	}
 }

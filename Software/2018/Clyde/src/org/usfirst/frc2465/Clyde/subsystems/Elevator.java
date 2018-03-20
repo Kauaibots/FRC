@@ -74,7 +74,7 @@ public class Elevator extends PIDSubsystem {
 		elevatorMotor.setSensorPhase(true);
 		motion = Motion.STOP;
 		setHome();
-		
+
 		SmartDashboard.putNumber("ElevatorP", 0.0);
 		SmartDashboard.putNumber("ElevatorI", 0.0);
 		SmartDashboard.putNumber("ElevatorD", 0.0);
@@ -191,6 +191,9 @@ public class Elevator extends PIDSubsystem {
 	}
 
 	public Motion getMotion() {
+		if (elevatorMotor.get() <= 0.12 && elevatorMotor.get() >= 0.10) {
+			return Motion.HOLD;
+		}
 		if (elevatorMotor.get() >= 0.05) {
 			return Motion.UP;
 		} else if (elevatorMotor.get() <= -0.05) {
@@ -213,7 +216,6 @@ public class Elevator extends PIDSubsystem {
 			getPIDController().disable();
 		}
 	}
-	
 
 	public boolean getGoToInch() {
 
@@ -254,7 +256,8 @@ public class Elevator extends PIDSubsystem {
 	}
 
 	public void updatePID() {
-		getPIDController().setPID(SmartDashboard.getNumber("ElevatorP", 0.0015), SmartDashboard.getNumber("ElevatorI", 0.0), SmartDashboard.getNumber("ElevatorD", 0.0));
-		
+		getPIDController().setPID(SmartDashboard.getNumber("ElevatorP", 0.0015),
+				SmartDashboard.getNumber("ElevatorI", 0.0), SmartDashboard.getNumber("ElevatorD", 0.0));
+
 	}
 }

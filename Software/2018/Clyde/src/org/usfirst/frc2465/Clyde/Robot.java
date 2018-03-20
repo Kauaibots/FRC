@@ -67,7 +67,7 @@ public class Robot extends TimedRobot {
 //Sets Auto
         autoChooser = new SendableChooser();
         autoChooser.addDefault("None", new AutonomousCommand());
-        autoChooser.addObject("Left Pass", new DriveDistance(261, false));
+        autoChooser.addObject("Left Pass", new _LeftPass());
         autoChooser.addObject("Left Red", new _LeftSwitch(true)); //True is red alliance, false is blue
         autoChooser.addObject("Calibrate Elevator", new CalibrateElevator());
         

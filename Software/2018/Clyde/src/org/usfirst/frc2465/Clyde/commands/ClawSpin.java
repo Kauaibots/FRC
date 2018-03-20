@@ -21,6 +21,9 @@ public class ClawSpin extends Command {
 	@Override
 	protected void initialize() {
 		Robot.claw.setMotion(motion);
+		
+		System.out.println("ClawSpin command initialized.   Direction: " + motion + "\n");
+		System.out.flush();
 	}
 
 	@Override
@@ -50,5 +53,6 @@ public class ClawSpin extends Command {
 		// will stop the claw when button is released (whileHeld in OI runs this method
 		// when a button is released)
 		Robot.claw.setMotion(Motion.STOP);
+		System.out.println("ClawSpin command completed." + "\n");
 	}
 }
