@@ -65,9 +65,9 @@ public class GoToInchNoPID extends Command {
 		double error = Math.abs(Robot.elevator.getCurrentInches() - targetInch);
 
 		if (error > 8) {
-			speed = 0.7f;
+			speed = 0.75f;
 		} else if (error <= 8 && error > 2) {
-			speed = 0.5f;
+			speed = 0.60f;
 		} else if (error <= 2) {
 			speed = 0.3f;
 		}

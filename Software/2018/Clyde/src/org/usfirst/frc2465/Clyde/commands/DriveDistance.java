@@ -56,6 +56,10 @@ public class DriveDistance extends Command {
 		SmartDashboard.putNumber("EncoderL", leftCount);
 		SmartDashboard.putNumber("EncoderR", rightCount);
 
+		if (Robot.elevator.getCurrentInches() > 50) {
+			speed = 0.37f;
+			}
+		
 		
 		if (!reverse) {
 			if (leftCount >= distance && rightCount >= distance) {

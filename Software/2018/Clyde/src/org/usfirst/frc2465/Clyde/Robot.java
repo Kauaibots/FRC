@@ -11,6 +11,7 @@
 
 package org.usfirst.frc2465.Clyde;
 
+import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.TimedRobot;
 import edu.wpi.first.wpilibj.command.Command;
 import edu.wpi.first.wpilibj.command.Scheduler;
@@ -67,8 +68,9 @@ public class Robot extends TimedRobot {
 //Sets Auto
         autoChooser = new SendableChooser();
         autoChooser.addDefault("None", new AutonomousCommand());
-        autoChooser.addObject("Left Pass", new _LeftPass());
-        autoChooser.addObject("Left Red", new _LeftSwitch(true)); //True is red alliance, false is blue
+        autoChooser.addObject("Pass Baseline", new _Baseline());
+        autoChooser.addObject("Always Switch", new _Switch());
+        autoChooser.addObject("Always Scale", new _Scale());
         autoChooser.addObject("Calibrate Elevator", new CalibrateElevator());
         
         SmartDashboard.putData("Autonomous Mode", autoChooser);
@@ -97,6 +99,15 @@ public class Robot extends TimedRobot {
         autonomousCommand.start();
         // schedule the autonomous command (example)
         if (autonomousCommand != null) autonomousCommand.start();
+        
+        autoChooser = new SendableChooser();
+        autoChooser.addDefault("None", new AutonomousCommand());
+        autoChooser.addObject("Pass Baseline", new _Baseline());
+        autoChooser.addObject("Always Switch", new _Switch());
+        autoChooser.addObject("Always Scale", new _Scale());
+        autoChooser.addObject("Calibrate Elevator", new CalibrateElevator());
+        
+        SmartDashboard.putData("Autonomous Mode", autoChooser);
     }
 
     /**
