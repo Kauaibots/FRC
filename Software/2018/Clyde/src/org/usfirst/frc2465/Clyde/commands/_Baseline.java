@@ -14,7 +14,7 @@ public class _Baseline extends CommandGroup {
 
 	public _Baseline() {
 
-		if (DriverStation.getInstance().getLocation() == 2) {
+		if (RobotPreferences.startingPosition == 2) {
 			if (RobotPreferences.getSwitch() == 'L') {
 				this.addSequential(new DriveDistance(60, false));
 				this.addSequential(new AutoRotate(-90));
@@ -31,7 +31,7 @@ public class _Baseline extends CommandGroup {
 				this.addSequential(new AutoRotate(0));
 				this.addSequential(new DriveDistance(60, false));
 			}
-		} else {
+		} else if (RobotPreferences.startingPosition != 0){
 			this.addSequential(new DriveDistance(261, false));
 			this.addSequential(new AutoRotate(0));
 		}

@@ -84,16 +84,16 @@ public class OI {
         Button clawIn = new JoystickButton(arduino, 7);
         Button clawOut = new JoystickButton(arduino, 8);
         
-        //Button rotate0 = new JoystickButton(arduino, 9);
-        //Button rotate90 = new JoystickButton(arduino, 10);
-        //Button rotateNeg90 = new JoystickButton(arduino, 11);
-        //Button rotate180 = new JoystickButton(arduino, 12);
+        Button rotate0 = new JoystickButton(arduino, 10);
+        Button rotate90 = new JoystickButton(arduino, 9);
+        Button rotateNeg90 = new JoystickButton(arduino, 11);
+        Button rotate180 = new JoystickButton(arduino, 12);
 
         // rotate buttons
-        //rotate90.whenPressed(new RotateToAngle(90));
-        //rotateNeg90.whenPressed(new RotateToAngle(-90));
-        //rotate0.whenPressed(new RotateToAngle(0));
-        //rotate180.whenPressed(new RotateToAngle(180));
+        rotate90.whenPressed(new AutoRotate(90));
+        rotateNeg90.whenPressed(new AutoRotate(-90));
+        rotate0.whenPressed(new AutoRotate(0));
+        rotate180.whenPressed(new AutoRotate(180));
        //Elevator
         //elevatorHover.whileHeld(new ElevatorGoToInch(14, false));
         //elevatorSwitch.whileHeld(new ElevatorGoToInch(24, false));

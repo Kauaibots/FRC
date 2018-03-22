@@ -151,7 +151,7 @@ public class StickDrive extends Command {
 
 		
 		//Auto rotate      Commented updatePID lines are for PID tuning
-		if (arduino.getRawButton(9)) 
+	/*	if (arduino.getRawButton(9)) 
 		{
 			//Robot.drive.updatePID();
 			Robot.drive.setAutoRotation(true);
@@ -182,7 +182,7 @@ public class StickDrive extends Command {
 		else if (Math.abs(Robot.drive.getPIDController().getError()) < 6.0 && Robot.drive.getAutoRotation()) {
 			counter++;
 		}
-
+*/
 
 		SmartDashboard.putNumber("Counter", counter);
 		

@@ -18,6 +18,7 @@ public class DriveDistance extends Command {
 	int leftCount;
 	int rightCount;
 	double distance;
+	double error;
 	float speed = 0.50f;
 	boolean finished = false;
 	boolean reverse;
@@ -49,6 +50,8 @@ public class DriveDistance extends Command {
 
 	@Override
 	protected void execute() {
+		
+		error = Math.abs(inches - (leftCount+rightCount)/2/rotationsPerInch);
 
 		leftCount = RobotMap.talon1.getSelectedSensorPosition(0);
 		rightCount = -RobotMap.talon3.getSelectedSensorPosition(0);
@@ -57,8 +60,11 @@ public class DriveDistance extends Command {
 		SmartDashboard.putNumber("EncoderR", rightCount);
 
 		if (Robot.elevator.getCurrentInches() > 50) {
-			speed = 0.37f;
+			speed = 0.36f;
 			}
+		else if (inches > 70 && error > 8) {
+			speed = 0.75f;
+		}
 		
 		
 		if (!reverse) {

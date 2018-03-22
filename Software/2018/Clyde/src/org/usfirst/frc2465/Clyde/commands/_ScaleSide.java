@@ -11,9 +11,9 @@ import org.usfirst.frc2465.Clyde.RobotMap;
 import org.usfirst.frc2465.Clyde.RobotPreferences;
 import org.usfirst.frc2465.Clyde.subsystems.Claw.Motion;
 
-public class _Scale extends CommandGroup {
+public class _ScaleSide extends CommandGroup {
 
-	public _Scale() {
+	public _ScaleSide() {
 
 		System.out.println("New Run \n");
 		System.out.flush();
@@ -27,19 +27,25 @@ public class _Scale extends CommandGroup {
 				this.addSequential(new ClawSpin(Motion.OUT), 1);
 				this.addSequential(new DriveDistance(20, true));
 				this.addSequential(new GoToInchNoPID(8.125f, true));
-			} else if (RobotPreferences.getScale() == 'R') {
+			} else if (RobotPreferences.getSwitch() == 'L') {
+				this.addSequential(new DriveDistance(150, false));
+				this.addSequential(new AutoRotate(90));
+				this.addSequential(new ClawSpin(Motion.IN), 0.15);
+				this.addSequential(new GoToInchNoPID(36, true));
+				this.addSequential(new DriveDistance(20, false));
+				this.addSequential(new ClawSpin(Motion.OUT), 1);
+				this.addSequential(new DriveDistance(20, true));
+				this.addSequential(new GoToInchNoPID(8.125f, true));
+			} else if (RobotPreferences.getSwitch() == 'R') {
 				this.addSequential(new DriveDistance(230, false));
 				this.addSequential(new AutoRotate(90));
 				this.addSequential(new ClawSpin(Motion.IN), 0.1);
-				this.addSequential(new DriveDistance(204, false));
-				this.addSequential(new AutoRotate(0));
-				this.addSequential(new DriveDistance(10, false));
-				this.addSequential(new AutoRotate(-45));
-				this.addSequential(new ClawSpin(Motion.IN), 0.1);
-				this.addSequential(new GoToInchNoPID(82, true));
-				this.addSequential(new DriveDistance(50, false));
+				this.addSequential(new DriveDistance(153, false));
+				this.addSequential(new AutoRotate(178));
+				this.addSequential(new GoToInchNoPID(36, true));
+				this.addSequential(new DriveDistance(18, false));
 				this.addSequential(new ClawSpin(Motion.OUT), 1);
-				this.addSequential(new DriveDistance(20, true));
+				this.addSequential(new DriveDistance(12, true));
 				this.addSequential(new GoToInchNoPID(8.125f, true));
 			}
 		} else if (RobotPreferences.startingPosition == 2) {
@@ -76,24 +82,29 @@ public class _Scale extends CommandGroup {
 				this.addSequential(new ClawSpin(Motion.OUT), 1);
 				this.addSequential(new DriveDistance(20, true));
 				this.addSequential(new GoToInchNoPID(8.125f, true));
-			} else if (RobotPreferences.getScale() == 'L') {
+			}else if (RobotPreferences.getSwitch() == 'R') {
+				this.addSequential(new DriveDistance(150, false));
+				this.addSequential(new AutoRotate(-90));
+				this.addSequential(new ClawSpin(Motion.IN), 0.15);
+				this.addSequential(new GoToInchNoPID(36, true));
+				this.addSequential(new DriveDistance(20, false));
+				this.addSequential(new ClawSpin(Motion.OUT), 1);
+				this.addSequential(new DriveDistance(20, true));
+				this.addSequential(new GoToInchNoPID(8.125f, true));
+			} else if (RobotPreferences.getSwitch() == 'L') {
 				this.addSequential(new DriveDistance(230, false));
 				this.addSequential(new AutoRotate(-90));
 				this.addSequential(new ClawSpin(Motion.IN), 0.1);
-				this.addSequential(new DriveDistance(204, false));
-				this.addSequential(new AutoRotate(0));
-				this.addSequential(new DriveDistance(10, false));
-				this.addSequential(new AutoRotate(45));
-				this.addSequential(new ClawSpin(Motion.IN), 0.1);
-				this.addSequential(new GoToInchNoPID(82, true));
-				this.addSequential(new DriveDistance(50, false));
+				this.addSequential(new DriveDistance(153, false));
+				this.addSequential(new AutoRotate(178));
+				this.addSequential(new GoToInchNoPID(36, true));
+				this.addSequential(new DriveDistance(18, false));
 				this.addSequential(new ClawSpin(Motion.OUT), 1);
-				this.addSequential(new DriveDistance(20, true));
+				this.addSequential(new DriveDistance(12, true));
 				this.addSequential(new GoToInchNoPID(8.125f, true));
 			}
 		}
 	}
-
 
 	public void initialize() {
 		RobotMap.imu.zeroYaw();

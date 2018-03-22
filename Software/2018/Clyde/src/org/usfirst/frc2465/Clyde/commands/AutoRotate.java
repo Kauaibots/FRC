@@ -42,6 +42,7 @@ public class  AutoRotate extends Command {
     	Robot.drive.setSetpoint(target_angle); 
     	System.out.println("Auto-rotate command initialized.   Angle: " + target_angle + "\n");
     	System.out.flush();
+    	setTimeout(2.8);
     }
 
     // Called repeatedly when this Command is scheduled to run
@@ -57,7 +58,7 @@ public class  AutoRotate extends Command {
 
     // Make this return true when this Command no longer needs to run execute()
     protected boolean isFinished() {
-        return Robot.drive.onTarget();
+        return Robot.drive.onTarget() || isTimedOut();
     }
 
     // Called once after isFinished returns true

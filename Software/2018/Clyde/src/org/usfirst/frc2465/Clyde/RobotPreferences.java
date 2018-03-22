@@ -22,6 +22,8 @@ public class RobotPreferences {
 	public static boolean rotateFinished;
 	public static boolean driveFinished;
 
+	public static int startingPosition;
+	
 	static public double getAutoRotateP() {
 		// return Preferences.getInstance().getDouble("AutoRotateP", 0.0002);
 

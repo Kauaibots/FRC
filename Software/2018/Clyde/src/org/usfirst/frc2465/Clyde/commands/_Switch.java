@@ -17,7 +17,7 @@ public class _Switch extends CommandGroup {
 
 		System.out.println("New Run \n");
 		System.out.flush();
-		if (DriverStation.getInstance().getLocation() == 1) {
+		if (RobotPreferences.startingPosition == 1) {
 			if (RobotPreferences.getSwitch() == 'L') {
 				this.addSequential(new DriveDistance(150, false));
 				this.addSequential(new AutoRotate(90));
@@ -28,18 +28,18 @@ public class _Switch extends CommandGroup {
 				this.addSequential(new DriveDistance(20, true));
 				this.addSequential(new GoToInchNoPID(8.125f, true));
 			} else if (RobotPreferences.getSwitch() == 'R') {
-				this.addSequential(new DriveDistance(220, false));
-				this.addSequential(new AutoRotate(88));
+				this.addSequential(new DriveDistance(230, false));
+				this.addSequential(new AutoRotate(90));
 				this.addSequential(new ClawSpin(Motion.IN), 0.1);
 				this.addSequential(new DriveDistance(153, false));
 				this.addSequential(new AutoRotate(178));
 				this.addSequential(new GoToInchNoPID(36, true));
-				this.addSequential(new DriveDistance(12, false));
+				this.addSequential(new DriveDistance(18, false));
 				this.addSequential(new ClawSpin(Motion.OUT), 1);
 				this.addSequential(new DriveDistance(12, true));
 				this.addSequential(new GoToInchNoPID(8.125f, true));
 			}
-		} else if (DriverStation.getInstance().getLocation() == 2) {
+		} else if (RobotPreferences.startingPosition == 2) {
 			if (RobotPreferences.getSwitch() == 'L') {
 				this.addSequential(new DriveDistance(60, false));
 				this.addSequential(new AutoRotate(-90));
@@ -63,7 +63,7 @@ public class _Switch extends CommandGroup {
 				this.addSequential(new DriveDistance(20, true));
 				this.addSequential(new GoToInchNoPID(8.125f, true));
 			}
-		} else if (DriverStation.getInstance().getLocation() == 3) {
+		} else if (RobotPreferences.startingPosition == 3) {
 			if (RobotPreferences.getSwitch() == 'R') {
 				this.addSequential(new DriveDistance(150, false));
 				this.addSequential(new AutoRotate(-90));
@@ -74,13 +74,13 @@ public class _Switch extends CommandGroup {
 				this.addSequential(new DriveDistance(20, true));
 				this.addSequential(new GoToInchNoPID(8.125f, true));
 			} else if (RobotPreferences.getSwitch() == 'L') {
-				this.addSequential(new DriveDistance(220, false));
-				this.addSequential(new AutoRotate(-88));
+				this.addSequential(new DriveDistance(230, false));
+				this.addSequential(new AutoRotate(-90));
 				this.addSequential(new ClawSpin(Motion.IN), 0.1);
 				this.addSequential(new DriveDistance(153, false));
 				this.addSequential(new AutoRotate(178));
 				this.addSequential(new GoToInchNoPID(36, true));
-				this.addSequential(new DriveDistance(12, false));
+				this.addSequential(new DriveDistance(18, false));
 				this.addSequential(new ClawSpin(Motion.OUT), 1);
 				this.addSequential(new DriveDistance(12, true));
 				this.addSequential(new GoToInchNoPID(8.125f, true));
