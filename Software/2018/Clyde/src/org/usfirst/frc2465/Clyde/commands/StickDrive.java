@@ -124,6 +124,10 @@ public class StickDrive extends Command {
 				RobotMap.imu.zeroYaw();
 			}
 		}
+		
+		if (driver.getRawButton(6)) {
+			Robot.drive.zeroEncoder();
+		}
 
 		// By default, drive mode is Speed control (encoder-based)
 		// If driver presses button 3, the mode should toggle.
@@ -183,8 +187,6 @@ public class StickDrive extends Command {
 			counter++;
 		}
 */
-
-		SmartDashboard.putNumber("Counter", counter);
 		
 
 		if (RobotMap.robotDrive != null) {
@@ -198,18 +200,6 @@ public class StickDrive extends Command {
 		SmartDashboard.putNumber("EncoderL", RobotMap.talon1.getSelectedSensorPosition(0));
 		SmartDashboard.putNumber("EncoderR", RobotMap.talon3.getSelectedSensorPosition(0));
 		
-		if(driver.getRawButton(6)) {
-			RobotMap.talon1.set(0.50f);
-		}
-		if(driver.getRawButton(7)) {
-			RobotMap.talon2.set(0.50f);
-		}
-		if(driver.getRawButton(8)) {
-			RobotMap.talon3.set(0.50f);
-		}
-		if(driver.getRawButton(9)) {
-			RobotMap.talon4.set(0.50f);
-		}
 		
 	}
 

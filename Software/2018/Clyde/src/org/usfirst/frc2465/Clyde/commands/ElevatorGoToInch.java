@@ -32,10 +32,7 @@ public class ElevatorGoToInch extends Command {
 	}
 
 	protected void execute() {
-		
-		//This must be commented out. Only for PID tuning.
-		Robot.elevator.updatePID();
-		
+				
 		SmartDashboard.putNumber("GoToInch Error", Robot.elevator.getPIDController().getError());
 		SmartDashboard.putNumber("GoToInch Setpoint", Robot.elevator.getPIDController().getSetpoint());
 		SmartDashboard.putBoolean("GoToInch On Target", Robot.elevator.getPIDController().onTarget());

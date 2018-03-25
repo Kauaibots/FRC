@@ -14,7 +14,7 @@ import com.ctre.phoenix.motorcontrol.can.WPI_TalonSRX;
 public class DriveDistance extends Command {
 
 	double inches;
-	int rotationsPerInch = 231;
+	int rotationsPerInch = 211;
 	int leftCount;
 	int rightCount;
 	double distance;
@@ -45,7 +45,6 @@ public class DriveDistance extends Command {
 		System.out.flush();
 		RobotMap.talon2.set(com.ctre.phoenix.motorcontrol.ControlMode.Follower, 1);
 		RobotMap.talon4.set(com.ctre.phoenix.motorcontrol.ControlMode.Follower, 3);
-
 	}
 
 	@Override
@@ -53,7 +52,7 @@ public class DriveDistance extends Command {
 		
 		error = Math.abs(inches - (leftCount+rightCount)/2/rotationsPerInch);
 
-		leftCount = RobotMap.talon1.getSelectedSensorPosition(0);
+		leftCount = -RobotMap.talon1.getSelectedSensorPosition(0);
 		rightCount = -RobotMap.talon3.getSelectedSensorPosition(0);
 
 		SmartDashboard.putNumber("EncoderL", leftCount);
@@ -62,13 +61,22 @@ public class DriveDistance extends Command {
 		if (Robot.elevator.getCurrentInches() > 50) {
 			speed = 0.36f;
 			}
-		else if (inches > 70 && error > 8) {
-			speed = 0.75f;
+		else if (inches - error < 8) {
+			speed = 0.60f;
+		}
+		else if (inches > 30 && error > 8) {
+			speed = 0.85f;
+		}
+		else if (inches > 30 && error < 5) {
+			speed = 0.40f;
+		}
+		else {
+			speed = 0.60f;
 		}
 		
 		
 		if (!reverse) {
-			if (leftCount >= distance && rightCount >= distance) {
+			if ((leftCount + rightCount)/2 >= distance) {
 				finished = true;
 				System.out.println(leftCount + "      " + rightCount +"\n");
 				System.out.flush();
@@ -84,7 +92,7 @@ public class DriveDistance extends Command {
 		else if (reverse) {
 			leftCount = -leftCount;
 			rightCount = -rightCount;
-			if (leftCount >= distance && rightCount >= distance) {
+			if ((leftCount + rightCount)/2 >= distance) {
 				finished = true;
 				System.out.println(leftCount + "      " + rightCount +"\n");
 				System.out.flush();

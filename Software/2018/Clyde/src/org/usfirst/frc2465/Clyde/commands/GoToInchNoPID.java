@@ -32,6 +32,7 @@ public class GoToInchNoPID extends Command {
 	}
 
 	protected void initialize() {
+		motion = Motion.STOP;
 		finished = false;
 		Robot.elevator.setGoToInch(false);
 		System.out.println("GoToInch command initialized.   Auto: " + auto + " Inch: " + autoTargetInch + "\n");
@@ -64,17 +65,24 @@ public class GoToInchNoPID extends Command {
 		// Set the speed
 		double error = Math.abs(Robot.elevator.getCurrentInches() - targetInch);
 
-		if (error > 8) {
-			speed = 0.80f;
+		if (targetInch - error < 5) {
+			speed = 0.75f;
+		}
+		else if (error > 8) {
+			speed = 1.0f;
 		} else if (error <= 8 && error > 2) {
-			speed = 0.65f;
+			speed = 0.75f;
 		} else if (error <= 2) {
-			speed = 0.3f;
+			speed = 0.35f;
+		}
+		else {
+			speed = 0.5f;
 		}
 
 		// Set the direction and/or mode
 		if (Robot.elevator.getCurrentInches() <= 13 && motion == Motion.DOWN && !Robot.elevator.isBottom()) {
-			Robot.elevator.setMotion(Motion.DOWN, 0.08f);
+			motion = Motion.DOWN;
+			speed = 0.08f;
 		} else if (error < toleranceInch && (!Robot.elevator.isBottom() || Robot.elevator.isTop())) {
 			motion = Motion.HOLD;
 			finished = true;

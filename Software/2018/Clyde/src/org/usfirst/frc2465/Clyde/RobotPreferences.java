@@ -27,7 +27,7 @@ public class RobotPreferences {
 	static public double getAutoRotateP() {
 		// return Preferences.getInstance().getDouble("AutoRotateP", 0.0002);
 
-		return 0.024;
+		return 0.028;
 	}
 
 	static public double getAutoRotateI() {
@@ -39,7 +39,7 @@ public class RobotPreferences {
 	static public double getAutoRotateD() {
 		// return Preferences.getInstance().getDouble("AutoRotateD", 0.00);
 
-		return 0.06;
+		return 0.115;
 	}
 
 	static public double getAutoRotateOnTargetToleranceDegrees() {
@@ -54,7 +54,7 @@ public class RobotPreferences {
 	}
 
 	// Elevator PID Controller Settings
-	static public double getElevatorP() {
+	/*static public double getElevatorP() {
 
 		ElevatorP = SmartDashboard.getNumber("ElevatorP", 0.0015);
 
@@ -73,7 +73,7 @@ public class RobotPreferences {
 		ElevatorD = SmartDashboard.getNumber("ElevatorD", 0.0);
 
 		return ElevatorD;
-	}
+	}*/
 
 	static public double getElevatorOnTargetToleranceInches() {
 
